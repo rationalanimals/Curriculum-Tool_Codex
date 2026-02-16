@@ -100,6 +100,8 @@ class Requirement(Base):
     category: Mapped[str] = mapped_column(String, default="CORE")
     major_mode: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     track_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    option_slot_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    option_slot_capacity: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
 
 class PlanItem(Base):
@@ -244,6 +246,33 @@ class CourseBucketTag(Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class CourseBasket(Base):
+    __tablename__ = "course_baskets"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    version_id: Mapped[str] = mapped_column(String, ForeignKey("curriculum_versions.id"), index=True)
+    name: Mapped[str] = mapped_column(String)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class CourseBasketItem(Base):
+    __tablename__ = "course_basket_items"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    basket_id: Mapped[str] = mapped_column(String, ForeignKey("course_baskets.id"), index=True)
+    course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class RequirementBasketLink(Base):
+    __tablename__ = "requirement_basket_links"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    requirement_id: Mapped[str] = mapped_column(String, ForeignKey("requirements.id"), index=True)
+    basket_id: Mapped[str] = mapped_column(String, ForeignKey("course_baskets.id"), index=True)
+    min_count: Mapped[int] = mapped_column(Integer, default=1)
+    max_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class ValidationRule(Base):
     __tablename__ = "validation_rules"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -358,6 +387,8 @@ class RequirementIn(BaseModel):
     category: str = "CORE"
     major_mode: Optional[str] = None
     track_name: Optional[str] = None
+    option_slot_key: Optional[str] = None
+    option_slot_capacity: Optional[int] = Field(default=None, ge=1, le=20)
 
 
 class InstructorIn(BaseModel):
@@ -499,6 +530,27 @@ class RequirementTreeNodeIn(BaseModel):
     requirement_id: str
     parent_requirement_id: Optional[str] = None
     sort_order: int = Field(ge=0)
+
+
+class CourseBasketIn(BaseModel):
+    version_id: str
+    name: str
+    description: Optional[str] = None
+    sort_order: Optional[int] = Field(default=None, ge=0)
+
+
+class CourseBasketItemIn(BaseModel):
+    basket_id: str
+    course_id: str
+    sort_order: Optional[int] = Field(default=None, ge=0)
+
+
+class RequirementBasketLinkIn(BaseModel):
+    requirement_id: str
+    basket_id: str
+    min_count: int = Field(default=1, ge=1, le=50)
+    max_count: Optional[int] = Field(default=None, ge=1, le=50)
+    sort_order: Optional[int] = Field(default=None, ge=0)
 
 
 class RequirementFulfillmentOrderIn(BaseModel):
@@ -967,6 +1019,10 @@ def ensure_runtime_migrations() -> None:
             conn.execute(text("ALTER TABLE requirements ADD COLUMN major_mode TEXT"))
         if "track_name" not in col_names:
             conn.execute(text("ALTER TABLE requirements ADD COLUMN track_name TEXT"))
+        if "option_slot_key" not in col_names:
+            conn.execute(text("ALTER TABLE requirements ADD COLUMN option_slot_key TEXT"))
+        if "option_slot_capacity" not in col_names:
+            conn.execute(text("ALTER TABLE requirements ADD COLUMN option_slot_capacity INTEGER"))
         plan_cols = conn.execute(text("PRAGMA table_info(plan_items)")).fetchall()
         plan_col_names = {c[1] for c in plan_cols}
         if "aspect" not in plan_col_names:
@@ -1010,6 +1066,45 @@ def ensure_runtime_migrations() -> None:
                     course_id TEXT NOT NULL,
                     bucket_code TEXT NOT NULL,
                     credit_hours_override REAL,
+                    sort_order INTEGER DEFAULT 0
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS course_baskets (
+                    id TEXT PRIMARY KEY,
+                    version_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    sort_order INTEGER DEFAULT 0
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS course_basket_items (
+                    id TEXT PRIMARY KEY,
+                    basket_id TEXT NOT NULL,
+                    course_id TEXT NOT NULL,
+                    sort_order INTEGER DEFAULT 0
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS requirement_basket_links (
+                    id TEXT PRIMARY KEY,
+                    requirement_id TEXT NOT NULL,
+                    basket_id TEXT NOT NULL,
+                    min_count INTEGER DEFAULT 1,
+                    max_count INTEGER,
                     sort_order INTEGER DEFAULT 0
                 )
                 """
@@ -2549,6 +2644,21 @@ def create_requirement(payload: RequirementIn, db: Session = Depends(get_db), _:
     if cat not in {"CORE", "MAJOR", "PE", "MINOR"}:
         raise HTTPException(status_code=400, detail="category must be one of CORE, MAJOR, MINOR, PE")
     data["category"] = cat
+    logic = str(data.get("logic_type") or "ALL_REQUIRED").upper()
+    if logic not in {"ALL_REQUIRED", "PICK_N", "ANY_ONE", "ONE_OF", "ANY_N", "OPTION_SLOT"}:
+        raise HTTPException(status_code=400, detail="unsupported logic_type")
+    data["logic_type"] = logic
+    if logic in {"PICK_N", "ANY_N"}:
+        data["pick_n"] = int(data.get("pick_n") or 1)
+    else:
+        data["pick_n"] = None
+    if logic == "OPTION_SLOT":
+        key = (data.get("option_slot_key") or "").strip()
+        data["option_slot_key"] = key[:120] if key else None
+        data["option_slot_capacity"] = int(data.get("option_slot_capacity") or 1)
+    else:
+        data["option_slot_key"] = None
+        data["option_slot_capacity"] = None
     if cat not in {"MAJOR", "MINOR"}:
         data["major_mode"] = None
         if cat in {"CORE", "PE", "MINOR"}:
@@ -2595,6 +2705,21 @@ def update_requirement(requirement_id: str, payload: RequirementIn, db: Session 
     if cat not in {"CORE", "MAJOR", "PE", "MINOR"}:
         raise HTTPException(status_code=400, detail="category must be one of CORE, MAJOR, MINOR, PE")
     data["category"] = cat
+    logic = str(data.get("logic_type") or r.logic_type or "ALL_REQUIRED").upper()
+    if logic not in {"ALL_REQUIRED", "PICK_N", "ANY_ONE", "ONE_OF", "ANY_N", "OPTION_SLOT"}:
+        raise HTTPException(status_code=400, detail="unsupported logic_type")
+    data["logic_type"] = logic
+    if logic in {"PICK_N", "ANY_N"}:
+        data["pick_n"] = int(data.get("pick_n") or r.pick_n or 1)
+    else:
+        data["pick_n"] = None
+    if logic == "OPTION_SLOT":
+        key = (data.get("option_slot_key") or r.option_slot_key or "").strip()
+        data["option_slot_key"] = key[:120] if key else None
+        data["option_slot_capacity"] = int(data.get("option_slot_capacity") or r.option_slot_capacity or 1)
+    else:
+        data["option_slot_key"] = None
+        data["option_slot_capacity"] = None
     if cat not in {"MAJOR", "MINOR"}:
         data["major_mode"] = None
         if cat in {"CORE", "PE", "MINOR"}:
@@ -2647,6 +2772,201 @@ def list_requirements(
     return [serialize(r) for r in db.scalars(stmt.order_by(Requirement.sort_order.asc(), Requirement.name.asc())).all()]
 
 
+@app.post("/baskets")
+def create_basket(payload: CourseBasketIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    data = payload.model_dump()
+    if data.get("sort_order") is None:
+        siblings = db.scalars(select(CourseBasket.sort_order).where(CourseBasket.version_id == payload.version_id)).all()
+        data["sort_order"] = (max(siblings) + 1) if siblings else 0
+    b = CourseBasket(**data)
+    db.add(b)
+    db.commit()
+    db.refresh(b)
+    return serialize(b)
+
+
+@app.put("/baskets/{basket_id}")
+def update_basket(basket_id: str, payload: CourseBasketIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    row = db.get(CourseBasket, basket_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Basket not found")
+    data = payload.model_dump()
+    for k, v in data.items():
+        if v is not None:
+            setattr(row, k, v)
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.delete("/baskets/{basket_id}")
+def delete_basket(basket_id: str, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    row = db.get(CourseBasket, basket_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Basket not found")
+    for item in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id == basket_id)).all():
+        db.delete(item)
+    for link in db.scalars(select(RequirementBasketLink).where(RequirementBasketLink.basket_id == basket_id)).all():
+        db.delete(link)
+    db.delete(row)
+    db.commit()
+    return {"status": "deleted"}
+
+
+@app.get("/baskets")
+def list_baskets(version_id: Optional[str] = None, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    stmt = select(CourseBasket)
+    if version_id:
+        stmt = stmt.where(CourseBasket.version_id == version_id)
+    rows = db.scalars(stmt.order_by(CourseBasket.sort_order.asc(), CourseBasket.name.asc())).all()
+    basket_ids = [r.id for r in rows]
+    items = (
+        db.scalars(
+            select(CourseBasketItem)
+            .where(CourseBasketItem.basket_id.in_(basket_ids))
+            .order_by(CourseBasketItem.basket_id.asc(), CourseBasketItem.sort_order.asc())
+        ).all()
+        if basket_ids
+        else []
+    )
+    items_by_basket: dict[str, list[dict]] = {}
+    for item in items:
+        out = serialize(item)
+        course = db.get(Course, item.course_id)
+        out["course_number"] = course.course_number if course else None
+        out["course_title"] = course.title if course else None
+        items_by_basket.setdefault(item.basket_id, []).append(out)
+    out_rows = []
+    for row in rows:
+        item = serialize(row)
+        item["items"] = items_by_basket.get(row.id, [])
+        out_rows.append(item)
+    return out_rows
+
+
+@app.post("/baskets/items")
+def create_basket_item(payload: CourseBasketItemIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    existing = db.scalar(
+        select(CourseBasketItem).where(
+            CourseBasketItem.basket_id == payload.basket_id,
+            CourseBasketItem.course_id == payload.course_id,
+        )
+    )
+    if existing:
+        return serialize(existing)
+    data = payload.model_dump()
+    if data.get("sort_order") is None:
+        siblings = db.scalars(select(CourseBasketItem.sort_order).where(CourseBasketItem.basket_id == payload.basket_id)).all()
+        data["sort_order"] = (max(siblings) + 1) if siblings else 0
+    row = CourseBasketItem(**data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.delete("/baskets/items/{item_id}")
+def delete_basket_item(item_id: str, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    row = db.get(CourseBasketItem, item_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Basket item not found")
+    db.delete(row)
+    db.commit()
+    return {"status": "deleted"}
+
+
+@app.post("/requirements/baskets")
+def create_requirement_basket_link(payload: RequirementBasketLinkIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    if payload.max_count is not None and payload.max_count < payload.min_count:
+        raise HTTPException(status_code=400, detail="max_count must be >= min_count")
+    existing = db.scalar(
+        select(RequirementBasketLink).where(
+            RequirementBasketLink.requirement_id == payload.requirement_id,
+            RequirementBasketLink.basket_id == payload.basket_id,
+        )
+    )
+    if existing:
+        existing.min_count = payload.min_count
+        existing.max_count = payload.max_count
+        db.commit()
+        db.refresh(existing)
+        return serialize(existing)
+    data = payload.model_dump()
+    if data.get("sort_order") is None:
+        siblings = db.scalars(
+            select(RequirementBasketLink.sort_order).where(RequirementBasketLink.requirement_id == payload.requirement_id)
+        ).all()
+        data["sort_order"] = (max(siblings) + 1) if siblings else 0
+    row = RequirementBasketLink(**data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.put("/requirements/baskets/{link_id}")
+def update_requirement_basket_link(
+    link_id: str, payload: RequirementBasketLinkIn, db: Session = Depends(get_db), _: User = Depends(require_design)
+):
+    if payload.max_count is not None and payload.max_count < payload.min_count:
+        raise HTTPException(status_code=400, detail="max_count must be >= min_count")
+    row = db.get(RequirementBasketLink, link_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Requirement basket link not found")
+    data = payload.model_dump()
+    for k, v in data.items():
+        if v is not None:
+            setattr(row, k, v)
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.delete("/requirements/baskets/{link_id}")
+def delete_requirement_basket_link(link_id: str, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    row = db.get(RequirementBasketLink, link_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Requirement basket link not found")
+    db.delete(row)
+    db.commit()
+    return {"status": "deleted"}
+
+
+@app.get("/requirements/baskets/by-requirement/{requirement_id}")
+def list_requirement_basket_links(requirement_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    rows = db.scalars(
+        select(RequirementBasketLink).where(RequirementBasketLink.requirement_id == requirement_id).order_by(RequirementBasketLink.sort_order.asc())
+    ).all()
+    out = []
+    for row in rows:
+        item = serialize(row)
+        basket = db.get(CourseBasket, row.basket_id)
+        item["basket_name"] = basket.name if basket else None
+        out.append(item)
+    return out
+
+
+@app.get("/requirements/baskets/version/{version_id}")
+def list_requirement_basket_links_version(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    req_ids = db.scalars(select(Requirement.id).where(Requirement.version_id == version_id)).all()
+    if not req_ids:
+        return []
+    rows = db.scalars(
+        select(RequirementBasketLink)
+        .where(RequirementBasketLink.requirement_id.in_(req_ids))
+        .order_by(RequirementBasketLink.requirement_id.asc(), RequirementBasketLink.sort_order.asc())
+    ).all()
+    basket_ids = [r.basket_id for r in rows]
+    baskets = {b.id: b for b in db.scalars(select(CourseBasket).where(CourseBasket.id.in_(basket_ids))).all()} if basket_ids else {}
+    out = []
+    for row in rows:
+        item = serialize(row)
+        basket = baskets.get(row.basket_id)
+        item["basket_name"] = basket.name if basket else None
+        out.append(item)
+    return out
+
+
 @app.post("/requirements/reorder")
 def reorder_requirements(payload: list[RequirementOrderIn], db: Session = Depends(get_db), _: User = Depends(require_design)):
     updated = 0
@@ -2688,6 +3008,52 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
         if req_ids
         else []
     )
+    basket_links = (
+        db.scalars(
+            select(RequirementBasketLink)
+            .where(RequirementBasketLink.requirement_id.in_(req_ids))
+            .order_by(RequirementBasketLink.requirement_id.asc(), RequirementBasketLink.sort_order.asc())
+        ).all()
+        if req_ids
+        else []
+    )
+    basket_ids = [x.basket_id for x in basket_links]
+    baskets = {b.id: b for b in db.scalars(select(CourseBasket).where(CourseBasket.id.in_(basket_ids))).all()} if basket_ids else {}
+    basket_items = (
+        db.scalars(
+            select(CourseBasketItem)
+            .where(CourseBasketItem.basket_id.in_(basket_ids))
+            .order_by(CourseBasketItem.basket_id.asc(), CourseBasketItem.sort_order.asc())
+        ).all()
+        if basket_ids
+        else []
+    )
+    items_by_basket: dict[str, list[dict]] = {}
+    for item in basket_items:
+        course = db.get(Course, item.course_id)
+        items_by_basket.setdefault(item.basket_id, []).append(
+            {
+                "id": item.id,
+                "course_id": item.course_id,
+                "course_number": course.course_number if course else None,
+                "course_title": course.title if course else None,
+                "sort_order": item.sort_order,
+            }
+        )
+    baskets_by_req: dict[str, list[dict]] = {}
+    for row in basket_links:
+        b = baskets.get(row.basket_id)
+        baskets_by_req.setdefault(row.requirement_id, []).append(
+            {
+                "id": row.id,
+                "basket_id": row.basket_id,
+                "basket_name": b.name if b else None,
+                "min_count": row.min_count,
+                "max_count": row.max_count,
+                "sort_order": row.sort_order,
+                "courses": items_by_basket.get(row.basket_id, []),
+            }
+        )
     links_by_req: dict[str, list[dict]] = {}
     for link in links:
         course = db.get(Course, link.course_id)
@@ -2728,7 +3094,10 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
                     "category": req.category or ("CORE" if req.program_id is None else "MAJOR"),
                     "major_mode": req.major_mode,
                     "track_name": req.track_name,
+                    "option_slot_key": req.option_slot_key,
+                    "option_slot_capacity": req.option_slot_capacity,
                     "courses": links_by_req.get(req.id, []),
+                    "baskets": baskets_by_req.get(req.id, []),
                     "children": build(req.id),
                 }
             )
@@ -3269,6 +3638,18 @@ def build_rule_sets_payload(version_id: str, db: Session) -> dict:
     programs = [serialize(p) for p in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id).order_by(AcademicProgram.name.asc())).all()]
     requirements = [serialize(r) for r in db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc(), Requirement.name.asc())).all()]
     req_ids = {r["id"] for r in requirements}
+    baskets = [serialize(b) for b in db.scalars(select(CourseBasket).where(CourseBasket.version_id == version_id).order_by(CourseBasket.sort_order.asc(), CourseBasket.name.asc())).all()]
+    basket_ids = {b["id"] for b in baskets}
+    basket_items = [
+        serialize(i)
+        for i in db.scalars(select(CourseBasketItem).order_by(CourseBasketItem.basket_id.asc(), CourseBasketItem.sort_order.asc())).all()
+        if i.basket_id in basket_ids
+    ]
+    requirement_baskets = [
+        serialize(x)
+        for x in db.scalars(select(RequirementBasketLink).order_by(RequirementBasketLink.requirement_id.asc(), RequirementBasketLink.sort_order.asc())).all()
+        if x.requirement_id in req_ids and x.basket_id in basket_ids
+    ]
     fulfillment = [
         serialize(f)
         for f in db.scalars(select(RequirementFulfillment).order_by(RequirementFulfillment.requirement_id.asc(), RequirementFulfillment.sort_order.asc())).all()
@@ -3283,6 +3664,9 @@ def build_rule_sets_payload(version_id: str, db: Session) -> dict:
     return {
         "academic_programs": programs,
         "requirements": requirements,
+        "course_baskets": baskets,
+        "course_basket_items": basket_items,
+        "requirement_basket_links": requirement_baskets,
         "requirement_fulfillment": fulfillment,
         "requirement_substitutions": req_substitutions,
         "validation_rules": validation_rules,
@@ -3428,6 +3812,9 @@ def apply_course_definitions_import(version_id: str, course_payload: dict, repla
 def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existing: bool, db: Session) -> dict:
     incoming_programs = rules_payload.get("academic_programs") or []
     incoming_requirements = rules_payload.get("requirements") or []
+    incoming_baskets = rules_payload.get("course_baskets") or []
+    incoming_basket_items = rules_payload.get("course_basket_items") or []
+    incoming_req_baskets = rules_payload.get("requirement_basket_links") or []
     incoming_fulfillment = rules_payload.get("requirement_fulfillment") or []
     incoming_req_subs = rules_payload.get("requirement_substitutions") or []
     incoming_validation = rules_payload.get("validation_rules") or []
@@ -3435,11 +3822,20 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
     if replace_existing:
         req_rows = db.scalars(select(Requirement).where(Requirement.version_id == version_id)).all()
         req_ids = {r.id for r in req_rows}
+        basket_rows = db.scalars(select(CourseBasket).where(CourseBasket.version_id == version_id)).all()
+        basket_ids = {b.id for b in basket_rows}
         if req_ids:
             for row in db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_(req_ids))).all():
                 db.delete(row)
             for row in db.scalars(select(RequirementSubstitution).where(RequirementSubstitution.requirement_id.in_(req_ids))).all():
                 db.delete(row)
+            for row in db.scalars(select(RequirementBasketLink).where(RequirementBasketLink.requirement_id.in_(req_ids))).all():
+                db.delete(row)
+        if basket_ids:
+            for row in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id.in_(basket_ids))).all():
+                db.delete(row)
+        for row in basket_rows:
+            db.delete(row)
         for row in req_rows:
             db.delete(row)
         for row in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id)).all():
@@ -3471,6 +3867,36 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
 
     req_ids = {r.id for r in db.scalars(select(Requirement).where(Requirement.version_id == version_id)).all()}
     course_ids = {c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
+    created_baskets = 0
+    for raw in incoming_baskets:
+        row = filter_model_row(CourseBasket, raw)
+        row["version_id"] = version_id
+        if row.get("id") and db.get(CourseBasket, row["id"]):
+            continue
+        db.add(CourseBasket(**row))
+        created_baskets += 1
+    db.flush()
+    basket_ids = {b.id for b in db.scalars(select(CourseBasket).where(CourseBasket.version_id == version_id)).all()}
+
+    created_basket_items = 0
+    for raw in incoming_basket_items:
+        row = filter_model_row(CourseBasketItem, raw)
+        if row.get("basket_id") not in basket_ids or row.get("course_id") not in course_ids:
+            continue
+        if row.get("id") and db.get(CourseBasketItem, row["id"]):
+            continue
+        db.add(CourseBasketItem(**row))
+        created_basket_items += 1
+
+    created_req_baskets = 0
+    for raw in incoming_req_baskets:
+        row = filter_model_row(RequirementBasketLink, raw)
+        if row.get("requirement_id") not in req_ids or row.get("basket_id") not in basket_ids:
+            continue
+        if row.get("id") and db.get(RequirementBasketLink, row["id"]):
+            continue
+        db.add(RequirementBasketLink(**row))
+        created_req_baskets += 1
 
     created_fulfillment = 0
     for raw in incoming_fulfillment:
@@ -3512,6 +3938,9 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
     return {
         "programs_created": created_programs,
         "requirements_created": created_requirements,
+        "course_baskets_created": created_baskets,
+        "course_basket_items_created": created_basket_items,
+        "requirement_basket_links_created": created_req_baskets,
         "requirement_fulfillment_created": created_fulfillment,
         "requirement_substitutions_created": created_req_subs,
         "validation_rules_created": created_validation,
@@ -3961,6 +4390,19 @@ def design_checklist(
     links_by_req: dict[str, list[RequirementFulfillment]] = {}
     for link in direct_links:
         links_by_req.setdefault(link.requirement_id, []).append(link)
+    req_basket_links = (
+        db.scalars(select(RequirementBasketLink).where(RequirementBasketLink.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
+    )
+    basket_ids = [x.basket_id for x in req_basket_links]
+    basket_items = (
+        db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id.in_(basket_ids))).all() if basket_ids else []
+    )
+    basket_course_ids_by_basket: dict[str, list[str]] = {}
+    for item in basket_items:
+        basket_course_ids_by_basket.setdefault(item.basket_id, []).append(item.course_id)
+    baskets_by_req: dict[str, list[RequirementBasketLink]] = {}
+    for bl in req_basket_links:
+        baskets_by_req.setdefault(bl.requirement_id, []).append(bl)
     req_sub_rows = (
         db.scalars(select(RequirementSubstitution).where(RequirementSubstitution.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
     )
@@ -3994,6 +4436,10 @@ def design_checklist(
             for link in direct_links_by_req.get(cur, []):
                 if link.course_id:
                     found.add(link.course_id)
+            for bl in baskets_by_req.get(cur, []):
+                for cid in basket_course_ids_by_basket.get(bl.basket_id, []):
+                    if cid:
+                        found.add(cid)
             for child in req_children.get(cur, []):
                 stack.append(child.id)
         collect_cache[req_id] = set(found)
@@ -4012,6 +4458,30 @@ def design_checklist(
         req = req_by_id[req_id]
         children = child_map.get(req_id, [])
         child_results = [evaluate(c.id) for c in children]
+        basket_results = []
+        for bl in baskets_by_req.get(req_id, []):
+            basket_course_ids = list(dict.fromkeys(basket_course_ids_by_basket.get(bl.basket_id, [])))
+            needed = max(1, int(bl.min_count or 1))
+            matched = [cid for cid in basket_course_ids if cid in planned_course_ids]
+            sat = len(matched) >= needed and len(basket_course_ids) >= needed
+            basket_results.append(
+                {
+                    "requirement_id": f"basket:{bl.id}",
+                    "node_code": None,
+                    "name": f"Basket ({needed} of {len(basket_course_ids)})",
+                    "program_id": req.program_id,
+                    "logic_type": "PICK_N",
+                    "pick_n": needed,
+                    "is_satisfied": sat,
+                    "matched_direct_course_count": len(matched),
+                    "direct_course_count": len(basket_course_ids),
+                    "satisfied_units": len(matched),
+                    "required_units": needed,
+                    "fixed_semester_violations": [],
+                    "children": [],
+                }
+            )
+        child_results = [*child_results, *basket_results]
         links = links_by_req.get(req_id, [])
         link_course_ids = [l.course_id for l in links]
         req_subs = req_sub_map.get(req_id, {})
@@ -4063,7 +4533,11 @@ def design_checklist(
         unit_satisfied = matched_count + child_pass_count
 
         logic = (req.logic_type or "ALL_REQUIRED").upper()
-        if logic in {"PICK_N", "ANY_N"}:
+        if logic == "OPTION_SLOT":
+            needed = max(1, int(req.option_slot_capacity or req.pick_n or 1))
+            is_satisfied = unit_satisfied >= needed
+            required_units = needed
+        elif logic in {"PICK_N", "ANY_N"}:
             needed = req.pick_n or 1
             is_satisfied = unit_satisfied >= needed
             required_units = needed
@@ -4338,6 +4812,17 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
     links_by_req: dict[str, list[RequirementFulfillment]] = {}
     for f in fulfillments:
         links_by_req.setdefault(f.requirement_id, []).append(f)
+    req_basket_links = (
+        db.scalars(select(RequirementBasketLink).where(RequirementBasketLink.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
+    )
+    basket_ids = [x.basket_id for x in req_basket_links]
+    basket_items = db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id.in_(basket_ids))).all() if basket_ids else []
+    basket_course_ids_by_basket: dict[str, list[str]] = {}
+    for item in basket_items:
+        basket_course_ids_by_basket.setdefault(item.basket_id, []).append(item.course_id)
+    baskets_by_req: dict[str, list[RequirementBasketLink]] = {}
+    for bl in req_basket_links:
+        baskets_by_req.setdefault(bl.requirement_id, []).append(bl)
     courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
     course_by_id = {c.id: c for c in courses}
     course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
@@ -4451,6 +4936,23 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     "min_credit_lb": credit,
                 }
             )
+        for bl in baskets_by_req.get(req_id, []):
+            basket_course_ids = list(dict.fromkeys(basket_course_ids_by_basket.get(bl.basket_id, [])))
+            needed = max(1, int(bl.min_count or 1))
+            basket_courses = [course_by_id[cid] for cid in basket_course_ids if cid in course_by_id]
+            credit_candidates = sorted([float(c.credit_hours or 0.0) for c in basket_courses])
+            basket_min_credit = sum(credit_candidates[:needed]) if len(credit_candidates) >= needed else 0.0
+            units.append(
+                {
+                    "label": f"Basket ({needed} of {len(basket_course_ids)})",
+                    "type": "basket",
+                    "course_ids": basket_course_ids,
+                    "mandatory_courses": set(),
+                    "min_credit_lb": basket_min_credit,
+                    "min_count": needed,
+                    "available_count": len(basket_course_ids),
+                }
+            )
         for child_req, child_eval in zip(children, child_results):
             units.append(
                 {
@@ -4466,7 +4968,15 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
             mandatory_courses |= set(child_eval["always_mandatory_courses"])
         logic = (req.logic_type or "ALL_REQUIRED").upper()
         available = len(units)
-        if logic in {"PICK_N", "ANY_N"}:
+        if logic == "OPTION_SLOT":
+            needed = max(1, int(req.option_slot_capacity or req.pick_n or 1))
+            if available < needed:
+                own_issues.append(f"Requires {needed} options but only {available} defined.")
+            else:
+                choice_units = sorted(units, key=lambda u: float(u["min_credit_lb"]))[:needed]
+                min_credit_lb += sum(float(u["min_credit_lb"]) for u in choice_units)
+            constraints.append(f"{req.name}: option slot requires {needed} choice(s) of {available}.")
+        elif logic in {"PICK_N", "ANY_N"}:
             needed = max(1, int(req.pick_n or 1))
             if available < needed:
                 own_issues.append(f"Requires {needed} options but only {available} defined.")
@@ -4484,6 +4994,11 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
             if not units:
                 own_issues.append("No linked courses/subrequirements defined.")
             for u in units:
+                if u["type"] == "basket":
+                    if int(u.get("available_count") or 0) < int(u.get("min_count") or 1):
+                        own_issues.append(
+                            f"{u['label']} has fewer available courses than required ({u.get('available_count', 0)}<{u.get('min_count', 1)})."
+                        )
                 mandatory_courses |= set(u["mandatory_courses"])
                 min_credit_lb += float(u["min_credit_lb"])
                 if u["type"] == "requirement":

@@ -195,6 +195,8 @@ export function DesignStudioPage() {
   const [editReqCategory, setEditReqCategory] = useState("CORE");
   const [editReqMajorMode, setEditReqMajorMode] = useState("REQUIREMENT");
   const [editReqTrackName, setEditReqTrackName] = useState("");
+  const [editReqOptionSlotKey, setEditReqOptionSlotKey] = useState("");
+  const [editReqOptionSlotCapacity, setEditReqOptionSlotCapacity] = useState("1");
   const [editReqMajorName, setEditReqMajorName] = useState("");
   const [editReqDivision, setEditReqDivision] = useState();
   const [editReqCoreTrack, setEditReqCoreTrack] = useState("");
@@ -739,6 +741,8 @@ export function DesignStudioPage() {
     setEditReqCategory("CORE");
     setEditReqMajorMode("REQUIREMENT");
     setEditReqTrackName("");
+    setEditReqOptionSlotKey("");
+    setEditReqOptionSlotCapacity("1");
     setEditReqMajorName("");
     setEditReqDivision(undefined);
     setEditReqCoreTrack("");
@@ -914,6 +918,7 @@ export function DesignStudioPage() {
       function logicLabel(logic, pickN) {
         if (logic === "PICK_N") return `Pick ${pickN || 1}`;
         if (logic === "ANY_ONE") return "Any One";
+        if (logic === "OPTION_SLOT") return `Option Slot (${Number(editReqOptionSlotCapacity || 1)})`;
         return "All Required";
       }
       const logicTxt = logicLabel(editReqLogic, Number(editReqPickN || 1));
@@ -945,6 +950,8 @@ export function DesignStudioPage() {
       parent_requirement_id: effectiveParentId,
       logic_type: editReqLogic,
       pick_n: editReqLogic === "PICK_N" ? Number(editReqPickN || 1) : null,
+      option_slot_key: editReqLogic === "OPTION_SLOT" ? (editReqOptionSlotKey || "").trim() || null : null,
+      option_slot_capacity: editReqLogic === "OPTION_SLOT" ? Number(editReqOptionSlotCapacity || 1) : null,
       sort_order: requirementNodeMap[selectedRuleNodeId]?.sort_order ?? 0,
       category: editReqCategory,
       major_mode:
@@ -1018,11 +1025,12 @@ export function DesignStudioPage() {
         return created.id;
       }
       function autoRequirementName() {
-        function logicLabel(logic, pickN) {
-          if (logic === "PICK_N") return `Pick ${pickN || 1}`;
-          if (logic === "ANY_ONE") return "Any One";
-          return "All Required";
-        }
+      function logicLabel(logic, pickN) {
+        if (logic === "PICK_N") return `Pick ${pickN || 1}`;
+        if (logic === "ANY_ONE") return "Any One";
+        if (logic === "OPTION_SLOT") return `Option Slot (${Number(editReqOptionSlotCapacity || 1)})`;
+        return "All Required";
+      }
         const logicTxt = logicLabel(editReqLogic, Number(editReqPickN || 1));
         if (!isSubNodeCreate) {
           if (editReqCategory === "CORE") return "Core";
@@ -1072,6 +1080,12 @@ export function DesignStudioPage() {
           const cLogic = String(editReqLogic || "ALL_REQUIRED").toUpperCase();
           if (rLogic !== cLogic) return false;
           if (cLogic === "PICK_N") return Number(r.pick_n || 0) === Number(editReqPickN || 1);
+          if (cLogic === "OPTION_SLOT") {
+            return (
+              String(r.option_slot_key || "").trim().toLowerCase() === String(editReqOptionSlotKey || "").trim().toLowerCase()
+              && Number(r.option_slot_capacity || 1) === Number(editReqOptionSlotCapacity || 1)
+            );
+          }
           return true;
         }
         if (editReqCategory === "CORE") {
@@ -1083,12 +1097,24 @@ export function DesignStudioPage() {
           const cLogic = String(editReqLogic || "ALL_REQUIRED").toUpperCase();
           if (rLogic !== cLogic) return false;
           if (cLogic === "PICK_N") return Number(r.pick_n || 0) === Number(editReqPickN || 1);
+          if (cLogic === "OPTION_SLOT") {
+            return (
+              String(r.option_slot_key || "").trim().toLowerCase() === String(editReqOptionSlotKey || "").trim().toLowerCase()
+              && Number(r.option_slot_capacity || 1) === Number(editReqOptionSlotCapacity || 1)
+            );
+          }
           return true;
         }
         const rLogic = String(r.logic_type || "ALL_REQUIRED").toUpperCase();
         const cLogic = String(editReqLogic || "ALL_REQUIRED").toUpperCase();
         if (rLogic !== cLogic) return false;
         if (cLogic === "PICK_N") return Number(r.pick_n || 0) === Number(editReqPickN || 1);
+        if (cLogic === "OPTION_SLOT") {
+          return (
+            String(r.option_slot_key || "").trim().toLowerCase() === String(editReqOptionSlotKey || "").trim().toLowerCase()
+            && Number(r.option_slot_capacity || 1) === Number(editReqOptionSlotCapacity || 1)
+          );
+        }
         return normalize(r.name) === normalize(autoRequirementName());
       });
       if (hasDuplicate) {
@@ -1102,6 +1128,8 @@ export function DesignStudioPage() {
         parent_requirement_id: editReqParentId || null,
         logic_type: editReqLogic,
         pick_n: editReqLogic === "PICK_N" ? Number(editReqPickN || 1) : null,
+        option_slot_key: editReqLogic === "OPTION_SLOT" ? (editReqOptionSlotKey || "").trim() || null : null,
+        option_slot_capacity: editReqLogic === "OPTION_SLOT" ? Number(editReqOptionSlotCapacity || 1) : null,
         sort_order: null,
         category: editReqCategory,
         major_mode:
@@ -2045,6 +2073,8 @@ export function DesignStudioPage() {
     if (!n && !raw) return;
     const logicType = raw?.logic_type || n?.logic_type || "ALL_REQUIRED";
     const pickN = raw?.pick_n ?? n?.pick_n;
+    const optionSlotKey = raw?.option_slot_key ?? n?.option_slot_key ?? "";
+    const optionSlotCapacity = raw?.option_slot_capacity ?? n?.option_slot_capacity ?? 1;
     const fallbackProgramType = (programsQ.data || []).find((p) => p.id === (raw?.program_id || n?.program_id))?.program_type;
     const category = (raw?.category || n?.category || fallbackProgramType || (raw?.program_id || n?.program_id ? "MAJOR" : "CORE")).toUpperCase();
     const programId = raw?.program_id || n?.program_id || undefined;
@@ -2082,6 +2112,8 @@ export function DesignStudioPage() {
     setEditReqCategory(category);
     setEditReqMajorMode(majorMode);
     setEditReqTrackName(trackName);
+    setEditReqOptionSlotKey(optionSlotKey);
+    setEditReqOptionSlotCapacity(String(optionSlotCapacity || 1));
     setEditReqMajorName(inferredMajorName);
     setEditReqDivision(programDivision);
     setEditReqCoreTrack(inferredCoreTrack);
@@ -2407,6 +2439,26 @@ export function DesignStudioPage() {
         children: [],
       };
       const childReqs = (n.children || []).map(mapNode);
+      const basketLeaves = (n.baskets || []).map((b) => ({
+        key: `basket:${b.id}`,
+        title: (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
+            <span>{`${b.basket_name || "Basket"} (${b.min_count || 1}/${(b.courses || []).length})`}</span>
+            <Tag color="blue">Basket</Tag>
+          </div>
+        ),
+        children: (b.courses || []).map((bc) => ({
+          key: `basket-course:${b.id}:${bc.id}`,
+          title: <span>{bc.course_number || "Course"}</span>,
+          isLeaf: true,
+          selectable: false,
+          disableCheckbox: true,
+          draggable: false,
+        })),
+        disableCheckbox: true,
+        selectable: false,
+        draggable: false,
+      }));
       const sourceCourses =
         (mappedByReq[n.id] && mappedByReq[n.id].length ? mappedByReq[n.id] : null) ||
         (n.courses && n.courses.length ? n.courses : []);
@@ -2541,7 +2593,9 @@ export function DesignStudioPage() {
           draggable: false,
         };
       }
-      reqNode.children = coreRuleNode ? [coreRuleNode, ...courseLeaves, ...childReqs] : [...courseLeaves, ...childReqs];
+      reqNode.children = coreRuleNode
+        ? [coreRuleNode, ...basketLeaves, ...courseLeaves, ...childReqs]
+        : [...basketLeaves, ...courseLeaves, ...childReqs];
       return reqNode;
     }
     return filteredTree.map(mapNode);
@@ -3557,6 +3611,7 @@ export function DesignStudioPage() {
                 { value: "ALL_REQUIRED", label: "ALL_REQUIRED" },
                 { value: "PICK_N", label: "PICK_N" },
                 { value: "ANY_ONE", label: "ANY_ONE" },
+                { value: "OPTION_SLOT", label: "OPTION_SLOT" },
               ]}
             />
           )}
@@ -3566,6 +3621,22 @@ export function DesignStudioPage() {
               placeholder="Pick N"
               value={editReqPickN}
               onChange={(e) => setEditReqPickN(e.target.value)}
+            />
+          )}
+          {(isSubNodeCreate || isReqEditMode) && editReqLogic === "OPTION_SLOT" && (
+            <Input
+              style={{ width: "100%" }}
+              placeholder="Option slot key (e.g., MATH_ELECTIVE)"
+              value={editReqOptionSlotKey}
+              onChange={(e) => setEditReqOptionSlotKey(e.target.value)}
+            />
+          )}
+          {(isSubNodeCreate || isReqEditMode) && editReqLogic === "OPTION_SLOT" && (
+            <Input
+              style={{ width: "100%" }}
+              placeholder="Option slot capacity"
+              value={editReqOptionSlotCapacity}
+              onChange={(e) => setEditReqOptionSlotCapacity(e.target.value)}
             />
           )}
           <Button type="primary" onClick={saveRequirementNode}>

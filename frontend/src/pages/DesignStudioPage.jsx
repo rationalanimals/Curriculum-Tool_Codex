@@ -207,6 +207,14 @@ export function DesignStudioPage() {
   const [reqCourseId, setReqCourseId] = useState();
   const [reqCourseTimingRules, setReqCourseTimingRules] = useState([]);
   const [reqSubDraftRows, setReqSubDraftRows] = useState([]);
+  const [basketModalOpen, setBasketModalOpen] = useState(false);
+  const [basketRequirementId, setBasketRequirementId] = useState();
+  const [basketLinkId, setBasketLinkId] = useState();
+  const [basketSelectedId, setBasketSelectedId] = useState();
+  const [basketName, setBasketName] = useState("");
+  const [basketDescription, setBasketDescription] = useState("");
+  const [basketMinCount, setBasketMinCount] = useState("1");
+  const [basketCourseIds, setBasketCourseIds] = useState([]);
   const [treeExpandedKeys, setTreeExpandedKeys] = useState([]);
   const [reqEditorOpen, setReqEditorOpen] = useState(false);
   const [coreRulesModalOpen, setCoreRulesModalOpen] = useState(false);
@@ -478,6 +486,11 @@ export function DesignStudioPage() {
     queryKey: ["requirement-substitutions-version", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/requirements/substitutions/version/${selectedVersion.id}`),
+  });
+  const basketsQ = useQuery({
+    queryKey: ["baskets", selectedVersion?.id],
+    enabled: !!selectedVersion?.id,
+    queryFn: () => authed(`/baskets?version_id=${selectedVersion.id}`),
   });
 
   async function move(planItemId, targetSemester, targetPosition = 0) {
@@ -800,6 +813,129 @@ export function DesignStudioPage() {
     );
     setReqSubDraftRows([]);
     setReqCourseModalOpen(true);
+  }
+
+  function resetBasketModal() {
+    setBasketRequirementId(undefined);
+    setBasketLinkId(undefined);
+    setBasketSelectedId(undefined);
+    setBasketName("");
+    setBasketDescription("");
+    setBasketMinCount("1");
+    setBasketCourseIds([]);
+  }
+
+  function openRequirementBasketModal(requirementId, basketLink) {
+    resetBasketModal();
+    setBasketRequirementId(requirementId);
+    if (basketLink) {
+      setBasketLinkId(basketLink.id);
+      setBasketSelectedId(basketLink.basket_id || undefined);
+      setBasketName(basketLink.basket_name || "");
+      setBasketMinCount(String(basketLink.min_count || 1));
+      setBasketCourseIds((basketLink.courses || []).map((x) => x.course_id).filter(Boolean));
+      const b = (basketsQ.data || []).find((x) => x.id === basketLink.basket_id);
+      setBasketDescription(b?.description || "");
+    }
+    setBasketModalOpen(true);
+  }
+
+  async function saveRequirementBasketModal() {
+    if (!selectedVersion?.id || !basketRequirementId) return;
+    const parsedMin = Number(basketMinCount || 1);
+    const minCount = Number.isFinite(parsedMin) && parsedMin > 0 ? Math.floor(parsedMin) : 1;
+    const selectedExisting = basketSelectedId ? (basketsQ.data || []).find((b) => b.id === basketSelectedId) : null;
+    let targetBasketId = selectedExisting?.id || null;
+
+    if (!targetBasketId) {
+      const trimmedName = (basketName || "").trim();
+      if (!trimmedName) return;
+      const created = await authed("/baskets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          version_id: selectedVersion.id,
+          name: trimmedName,
+          description: (basketDescription || "").trim() || null,
+          sort_order: null,
+        }),
+      });
+      targetBasketId = created.id;
+    } else {
+      await authed(`/baskets/${targetBasketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          version_id: selectedVersion.id,
+          name: (basketName || selectedExisting?.name || "").trim() || selectedExisting?.name || "Basket",
+          description: (basketDescription || "").trim() || null,
+          sort_order: selectedExisting?.sort_order ?? 0,
+        }),
+      });
+    }
+
+    const latestBaskets = await authed(`/baskets?version_id=${selectedVersion.id}`);
+    const targetBasket = (latestBaskets || []).find((b) => b.id === targetBasketId);
+    const existingItems = targetBasket?.items || [];
+    const existingCourseIds = new Set(existingItems.map((x) => x.course_id));
+    const desiredCourseIds = Array.from(new Set((basketCourseIds || []).filter(Boolean)));
+    for (const cid of desiredCourseIds) {
+      if (existingCourseIds.has(cid)) continue;
+      await authed("/baskets/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ basket_id: targetBasketId, course_id: cid, sort_order: null }),
+      });
+    }
+    for (const row of existingItems) {
+      if (desiredCourseIds.includes(row.course_id)) continue;
+      await authed(`/baskets/items/${row.id}`, { method: "DELETE" });
+    }
+
+    if (basketLinkId) {
+      await authed(`/requirements/baskets/${basketLinkId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requirement_id: basketRequirementId,
+          basket_id: targetBasketId,
+          min_count: minCount,
+          max_count: null,
+          sort_order: null,
+        }),
+      });
+    } else {
+      await authed("/requirements/baskets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requirement_id: basketRequirementId,
+          basket_id: targetBasketId,
+          min_count: minCount,
+          max_count: null,
+          sort_order: null,
+        }),
+      });
+    }
+
+    setBasketModalOpen(false);
+    resetBasketModal();
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["baskets", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+    ]);
+  }
+
+  async function unlinkRequirementBasket(linkId) {
+    if (!linkId || !selectedVersion?.id) return;
+    await authed(`/requirements/baskets/${linkId}`, { method: "DELETE" });
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+    ]);
   }
 
   async function saveRequirementCourseModal() {
@@ -2402,6 +2538,16 @@ export function DesignStudioPage() {
               >
                 Add Course
               </Button>
+              <Button
+                size="small"
+                type="primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openRequirementBasketModal(n.id);
+                }}
+              >
+                Add Basket
+              </Button>
               {isProgramNode && !n.parent_requirement_id ? (
                 <Button
                   size="small"
@@ -2444,7 +2590,28 @@ export function DesignStudioPage() {
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
             <span>{`${b.basket_name || "Basket"} (${b.min_count || 1}/${(b.courses || []).length})`}</span>
-            <Tag color="blue">Basket</Tag>
+            <Space className="tree-node-actions">
+              <Tag color="blue">Basket</Tag>
+              <Button
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openRequirementBasketModal(n.id, b);
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                size="small"
+                danger
+                onClick={(e) => {
+                  e.stopPropagation();
+                  unlinkRequirementBasket(b.id);
+                }}
+              >
+                Unlink
+              </Button>
+            </Space>
           </div>
         ),
         children: (b.courses || []).map((bc) => ({
@@ -3794,6 +3961,67 @@ export function DesignStudioPage() {
                 />
               </List.Item>
             )}
+          />
+        </Space>
+      </Modal>
+      <Modal
+        title={basketLinkId ? "Edit Requirement Basket" : "Add Requirement Basket"}
+        open={basketModalOpen}
+        onCancel={() => {
+          setBasketModalOpen(false);
+          resetBasketModal();
+        }}
+        onOk={saveRequirementBasketModal}
+        okText={basketLinkId ? "Save Basket" : "Add Basket"}
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Typography.Text type="secondary">
+            {requirementFullPathMap[basketRequirementId || ""] || requirementNodeMap[basketRequirementId || ""]?.name || "None"}
+          </Typography.Text>
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Use existing basket (optional)"
+            value={basketSelectedId}
+            onChange={(v) => {
+              setBasketSelectedId(v);
+              if (!v) return;
+              const b = (basketsQ.data || []).find((x) => x.id === v);
+              if (!b) return;
+              setBasketName(b.name || "");
+              setBasketDescription(b.description || "");
+              setBasketCourseIds((b.items || []).map((x) => x.course_id).filter(Boolean));
+            }}
+            options={(basketsQ.data || []).map((b) => ({
+              value: b.id,
+              label: `${b.name} (${(b.items || []).length})`,
+            }))}
+          />
+          <Input
+            placeholder="Basket name"
+            value={basketName}
+            onChange={(e) => setBasketName(e.target.value)}
+          />
+          <Input
+            placeholder="Basket description (optional)"
+            value={basketDescription}
+            onChange={(e) => setBasketDescription(e.target.value)}
+          />
+          <Input
+            placeholder="Min count"
+            value={basketMinCount}
+            onChange={(e) => setBasketMinCount(e.target.value)}
+          />
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Basket courses"
+            value={basketCourseIds}
+            onChange={(v) => setBasketCourseIds(v || [])}
+            options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
           />
         </Space>
       </Modal>

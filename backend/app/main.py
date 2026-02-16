@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import itertools
 import json
 import re
 import uuid
@@ -166,6 +167,9 @@ class RequirementFulfillment(Base):
     course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    required_semester: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    required_semester_min: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    required_semester_max: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
 
 class CohortAssignment(Base):
@@ -201,6 +205,15 @@ class CourseSubstitution(Base):
     is_bidirectional: Mapped[bool] = mapped_column(Boolean, default=False)
     requires_approval: Mapped[bool] = mapped_column(Boolean, default=False)
     conditions_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class RequirementSubstitution(Base):
+    __tablename__ = "requirement_substitutions"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    requirement_id: Mapped[str] = mapped_column(String, ForeignKey("requirements.id"), index=True)
+    primary_course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
+    substitute_course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
+    is_bidirectional: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ValidationRule(Base):
@@ -358,6 +371,16 @@ class RequirementFulfillmentIn(BaseModel):
     requirement_id: str
     course_id: str
     is_primary: bool = False
+    required_semester: Optional[int] = Field(default=None, ge=1, le=8)
+    required_semester_min: Optional[int] = Field(default=None, ge=1, le=8)
+    required_semester_max: Optional[int] = Field(default=None, ge=1, le=8)
+
+
+class RequirementSubstitutionIn(BaseModel):
+    requirement_id: str
+    primary_course_id: str
+    substitute_course_id: str
+    is_bidirectional: bool = False
 
 
 class MoveIn(BaseModel):
@@ -499,6 +522,104 @@ def normalize_course_number(raw: str) -> str:
     if not m:
         return re.sub(r"\s+", " ", raw.strip())
     return f"{m.group(1)} {m.group(2)}"
+
+
+def semester_constraint_allows(sem: int, required_semester: Optional[int], required_semester_min: Optional[int], required_semester_max: Optional[int]) -> bool:
+    if required_semester is not None and sem != required_semester:
+        return False
+    if required_semester_min is not None and sem < required_semester_min:
+        return False
+    if required_semester_max is not None and sem > required_semester_max:
+        return False
+    return True
+
+
+def timing_constraints_overlap(
+    a_required: Optional[int],
+    a_min: Optional[int],
+    a_max: Optional[int],
+    b_required: Optional[int],
+    b_min: Optional[int],
+    b_max: Optional[int],
+) -> bool:
+    for s in range(1, 9):
+        if semester_constraint_allows(s, a_required, a_min, a_max) and semester_constraint_allows(s, b_required, b_min, b_max):
+            return True
+    return False
+
+
+def validate_core_pathway_rule_config(cfg: dict, db: Session) -> None:
+    rule_type = str(cfg.get("type") or "").upper()
+    if rule_type not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
+        return
+    program_id = cfg.get("program_id")
+    program_name = str(cfg.get("program_name") or "").strip()
+    target_program = None
+    if program_id:
+        target_program = db.get(AcademicProgram, program_id)
+    elif program_name:
+        target_program = db.scalar(select(AcademicProgram).where(AcademicProgram.name == program_name))
+    if not target_program:
+        raise HTTPException(status_code=400, detail="Core Rules target program not found")
+    version_id = target_program.version_id
+    # Core pathway timing must be compatible with core timing constraints, not other majors/minors.
+    req_ids = [
+        r.id
+        for r in db.scalars(
+            select(Requirement).where(
+                Requirement.version_id == version_id,
+                Requirement.category == "CORE",
+                Requirement.program_id.is_(None),
+            )
+        ).all()
+    ]
+    rf_rows = (
+        db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_(req_ids))).all()
+        if req_ids
+        else []
+    )
+    courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
+    course_num_by_id = {c.id: normalize_course_number(c.course_number) for c in courses if c.course_number}
+    existing_by_course_num: dict[str, list[tuple[Optional[int], Optional[int], Optional[int]]]] = {}
+    for rf in rf_rows:
+        if rf.required_semester is None and rf.required_semester_min is None and rf.required_semester_max is None:
+            continue
+        cnum = course_num_by_id.get(rf.course_id)
+        if not cnum:
+            continue
+        existing_by_course_num.setdefault(cnum, []).append((rf.required_semester, rf.required_semester_min, rf.required_semester_max))
+
+    for idx, group in enumerate(cfg.get("required_core_groups") or []):
+        group = group or {}
+        rs = group.get("required_semester")
+        rs_min = group.get("required_semester_min")
+        rs_max = group.get("required_semester_max")
+        try:
+            rs = int(rs) if rs is not None else None
+        except Exception:
+            rs = None
+        try:
+            rs_min = int(rs_min) if rs_min is not None else None
+        except Exception:
+            rs_min = None
+        try:
+            rs_max = int(rs_max) if rs_max is not None else None
+        except Exception:
+            rs_max = None
+        if rs is not None and (rs_min is not None or rs_max is not None):
+            raise HTTPException(status_code=400, detail=f"Core Rules group {idx + 1}: fixed semester cannot be combined with range")
+        if rs_min is not None and rs_max is not None and rs_min > rs_max:
+            raise HTTPException(status_code=400, detail=f"Core Rules group {idx + 1}: no-earlier cannot be later than no-later")
+        candidate_nums = [normalize_course_number(str(x)) for x in (group.get("course_numbers") or []) if str(x).strip()]
+        if rs is None and rs_min is None and rs_max is None:
+            continue
+        for num in candidate_nums:
+            for ex_rs, ex_min, ex_max in existing_by_course_num.get(num, []):
+                if not timing_constraints_overlap(rs, rs_min, rs_max, ex_rs, ex_min, ex_max):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Core Rules timing conflicts with existing requirement timing for {num}",
+                    )
 
 
 def normalize_division(raw: Optional[str]) -> Optional[str]:
@@ -659,6 +780,25 @@ def ensure_runtime_migrations() -> None:
         rf_col_names = {c[1] for c in rf_cols}
         if "sort_order" not in rf_col_names:
             conn.execute(text("ALTER TABLE requirement_fulfillment ADD COLUMN sort_order INTEGER DEFAULT 0"))
+        if "required_semester" not in rf_col_names:
+            conn.execute(text("ALTER TABLE requirement_fulfillment ADD COLUMN required_semester INTEGER"))
+        if "required_semester_min" not in rf_col_names:
+            conn.execute(text("ALTER TABLE requirement_fulfillment ADD COLUMN required_semester_min INTEGER"))
+        if "required_semester_max" not in rf_col_names:
+            conn.execute(text("ALTER TABLE requirement_fulfillment ADD COLUMN required_semester_max INTEGER"))
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS requirement_substitutions (
+                    id TEXT PRIMARY KEY,
+                    requirement_id TEXT NOT NULL,
+                    primary_course_id TEXT NOT NULL,
+                    substitute_course_id TEXT NOT NULL,
+                    is_bidirectional BOOLEAN DEFAULT 0
+                )
+                """
+            )
+        )
         prog_cols = conn.execute(text("PRAGMA table_info(academic_programs)")).fetchall()
         prog_col_names = {c[1] for c in prog_cols}
         if "division" not in prog_col_names:
@@ -1408,7 +1548,7 @@ def create_requirement(payload: RequirementIn, db: Session = Depends(get_db), _:
     if cat not in {"CORE", "MAJOR", "PE", "MINOR"}:
         raise HTTPException(status_code=400, detail="category must be one of CORE, MAJOR, MINOR, PE")
     data["category"] = cat
-    if cat != "MAJOR":
+    if cat not in {"MAJOR", "MINOR"}:
         data["major_mode"] = None
         if cat in {"CORE", "PE", "MINOR"}:
             t = (data.get("track_name") or "").strip()
@@ -1418,10 +1558,10 @@ def create_requirement(payload: RequirementIn, db: Session = Depends(get_db), _:
     else:
         mode = (data.get("major_mode") or "REQUIREMENT").upper()
         if mode not in {"REQUIREMENT", "TRACK"}:
-            raise HTTPException(status_code=400, detail="major_mode must be REQUIREMENT or TRACK")
+            raise HTTPException(status_code=400, detail="mode must be REQUIREMENT or TRACK")
         data["major_mode"] = mode
         if mode == "TRACK" and not (data.get("track_name") or "").strip():
-            raise HTTPException(status_code=400, detail="track_name required when major_mode=TRACK")
+            raise HTTPException(status_code=400, detail="track_name required when mode=TRACK")
         if mode != "TRACK":
             data["track_name"] = None
         elif data.get("track_name"):
@@ -1454,7 +1594,7 @@ def update_requirement(requirement_id: str, payload: RequirementIn, db: Session 
     if cat not in {"CORE", "MAJOR", "PE", "MINOR"}:
         raise HTTPException(status_code=400, detail="category must be one of CORE, MAJOR, MINOR, PE")
     data["category"] = cat
-    if cat != "MAJOR":
+    if cat not in {"MAJOR", "MINOR"}:
         data["major_mode"] = None
         if cat in {"CORE", "PE", "MINOR"}:
             t = (data.get("track_name") or r.track_name or "").strip()
@@ -1464,12 +1604,12 @@ def update_requirement(requirement_id: str, payload: RequirementIn, db: Session 
     else:
         mode = (data.get("major_mode") or r.major_mode or "REQUIREMENT").upper()
         if mode not in {"REQUIREMENT", "TRACK"}:
-            raise HTTPException(status_code=400, detail="major_mode must be REQUIREMENT or TRACK")
+            raise HTTPException(status_code=400, detail="mode must be REQUIREMENT or TRACK")
         data["major_mode"] = mode
         if mode == "TRACK":
             t = (data.get("track_name") or r.track_name or "").strip()
             if not t:
-                raise HTTPException(status_code=400, detail="track_name required when major_mode=TRACK")
+                raise HTTPException(status_code=400, detail="track_name required when mode=TRACK")
             data["track_name"] = t[:120]
         else:
             data["track_name"] = None
@@ -1595,6 +1735,37 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
 
 @app.post("/requirements/fulfillment")
 def create_requirement_fulfillment(payload: RequirementFulfillmentIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    required_semester = payload.required_semester
+    required_semester_min = payload.required_semester_min
+    required_semester_max = payload.required_semester_max
+    if (
+        required_semester is None
+        and required_semester_min is not None
+        and required_semester_max is not None
+        and required_semester_min == required_semester_max
+    ):
+        # Normalize equal min/max into a fixed-semester rule.
+        required_semester = required_semester_min
+        required_semester_min = None
+        required_semester_max = None
+    if required_semester is not None and (
+        required_semester_min is not None or required_semester_max is not None
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="required_semester is mutually exclusive with required_semester_min/required_semester_max",
+        )
+    if (
+        required_semester_min is not None
+        and required_semester_max is not None
+        and required_semester_min > required_semester_max
+    ):
+        raise HTTPException(status_code=400, detail="required_semester_min cannot be greater than required_semester_max")
+    if required_semester is not None:
+        if required_semester_min is not None and required_semester < required_semester_min:
+            raise HTTPException(status_code=400, detail="required_semester must be >= required_semester_min")
+        if required_semester_max is not None and required_semester > required_semester_max:
+            raise HTTPException(status_code=400, detail="required_semester must be <= required_semester_max")
     existing = db.scalar(
         select(RequirementFulfillment).where(
             RequirementFulfillment.requirement_id == payload.requirement_id,
@@ -1602,11 +1773,21 @@ def create_requirement_fulfillment(payload: RequirementFulfillmentIn, db: Sessio
         )
     )
     if existing:
+        existing.is_primary = payload.is_primary
+        existing.required_semester = required_semester
+        existing.required_semester_min = required_semester_min
+        existing.required_semester_max = required_semester_max
+        db.commit()
+        db.refresh(existing)
         return serialize(existing)
     current_orders = db.scalars(
         select(RequirementFulfillment.sort_order).where(RequirementFulfillment.requirement_id == payload.requirement_id)
     ).all()
-    obj = RequirementFulfillment(**payload.model_dump(), sort_order=(max(current_orders) + 1 if current_orders else 0))
+    payload_dict = payload.model_dump()
+    payload_dict["required_semester"] = required_semester
+    payload_dict["required_semester_min"] = required_semester_min
+    payload_dict["required_semester_max"] = required_semester_max
+    obj = RequirementFulfillment(**payload_dict, sort_order=(max(current_orders) + 1 if current_orders else 0))
     db.add(obj)
     db.commit()
     db.refresh(obj)
@@ -1688,6 +1869,93 @@ def list_version_fulfillment(version_id: str, db: Session = Depends(get_db), _: 
         row["requirement_name"] = req.name if req else None
         out.append(row)
     return out
+
+
+@app.post("/requirements/substitutions")
+def create_requirement_substitution(payload: RequirementSubstitutionIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    if payload.primary_course_id == payload.substitute_course_id:
+        raise HTTPException(status_code=400, detail="primary_course_id and substitute_course_id must differ")
+    existing = db.scalar(
+        select(RequirementSubstitution).where(
+            RequirementSubstitution.requirement_id == payload.requirement_id,
+            RequirementSubstitution.primary_course_id == payload.primary_course_id,
+            RequirementSubstitution.substitute_course_id == payload.substitute_course_id,
+        )
+    )
+    if existing:
+        return serialize(existing)
+    obj = RequirementSubstitution(**payload.model_dump())
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return serialize(obj)
+
+
+@app.get("/requirements/substitutions/{requirement_id}")
+def list_requirement_substitutions(requirement_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    rows = db.scalars(
+        select(RequirementSubstitution).where(RequirementSubstitution.requirement_id == requirement_id)
+    ).all()
+    out = []
+    for row in rows:
+        item = serialize(row)
+        primary = db.get(Course, row.primary_course_id)
+        substitute = db.get(Course, row.substitute_course_id)
+        item["primary_course_number"] = primary.course_number if primary else None
+        item["primary_course_title"] = primary.title if primary else None
+        item["substitute_course_number"] = substitute.course_number if substitute else None
+        item["substitute_course_title"] = substitute.title if substitute else None
+        out.append(item)
+    return out
+
+
+@app.get("/requirements/substitutions/version/{version_id}")
+def list_requirement_substitutions_version(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    req_ids = db.scalars(select(Requirement.id).where(Requirement.version_id == version_id)).all()
+    if not req_ids:
+        return []
+    rows = db.scalars(
+        select(RequirementSubstitution).where(RequirementSubstitution.requirement_id.in_(req_ids))
+    ).all()
+    out = []
+    for row in rows:
+        item = serialize(row)
+        primary = db.get(Course, row.primary_course_id)
+        substitute = db.get(Course, row.substitute_course_id)
+        item["primary_course_number"] = primary.course_number if primary else None
+        item["primary_course_title"] = primary.title if primary else None
+        item["substitute_course_number"] = substitute.course_number if substitute else None
+        item["substitute_course_title"] = substitute.title if substitute else None
+        out.append(item)
+    return out
+
+
+@app.put("/requirements/substitutions/{substitution_id}")
+def update_requirement_substitution(
+    substitution_id: str, payload: RequirementSubstitutionIn, db: Session = Depends(get_db), _: User = Depends(require_design)
+):
+    row = db.get(RequirementSubstitution, substitution_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Requirement substitution not found")
+    if payload.primary_course_id == payload.substitute_course_id:
+        raise HTTPException(status_code=400, detail="primary_course_id and substitute_course_id must differ")
+    row.requirement_id = payload.requirement_id
+    row.primary_course_id = payload.primary_course_id
+    row.substitute_course_id = payload.substitute_course_id
+    row.is_bidirectional = payload.is_bidirectional
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.delete("/requirements/substitutions/{substitution_id}")
+def delete_requirement_substitution(substitution_id: str, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    row = db.get(RequirementSubstitution, substitution_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Requirement substitution not found")
+    db.delete(row)
+    db.commit()
+    return {"status": "deleted"}
 
 
 @app.get("/design/course-detail/{course_id}")
@@ -2060,18 +2328,15 @@ def design_checklist(
 
     canvas_items = db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all()
     planned_course_ids = {x.course_id for x in canvas_items}
-
-    # Count substitutions as satisfying original requirements.
-    satisfied_course_ids = set(planned_course_ids)
-    subs = db.scalars(select(CourseSubstitution)).all()
-    for s in subs:
-        if s.substitute_course_id in planned_course_ids:
-            satisfied_course_ids.add(s.original_course_id)
-        if s.is_bidirectional and s.original_course_id in planned_course_ids:
-            satisfied_course_ids.add(s.substitute_course_id)
+    planned_course_semesters: dict[str, set[int]] = {}
+    for x in canvas_items:
+        planned_course_semesters.setdefault(x.course_id, set()).add(x.semester_index)
 
     reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc())).all()
     req_by_id = {r.id: r for r in reqs}
+    courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
+    course_num_by_id = {c.id: c.course_number for c in courses}
+    course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
     child_map: dict[Optional[str], list[Requirement]] = {}
     for r in reqs:
         child_map.setdefault(r.parent_requirement_id, []).append(r)
@@ -2089,6 +2354,43 @@ def design_checklist(
     links_by_req: dict[str, list[RequirementFulfillment]] = {}
     for link in direct_links:
         links_by_req.setdefault(link.requirement_id, []).append(link)
+    req_sub_rows = (
+        db.scalars(select(RequirementSubstitution).where(RequirementSubstitution.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
+    )
+    req_sub_map: dict[str, dict[str, set[str]]] = {}
+    for row in req_sub_rows:
+        m = req_sub_map.setdefault(row.requirement_id, {})
+        m.setdefault(row.primary_course_id, set()).add(row.substitute_course_id)
+        if row.is_bidirectional:
+            m.setdefault(row.substitute_course_id, set()).add(row.primary_course_id)
+    req_by_name: dict[str, list[Requirement]] = {}
+    req_children: dict[Optional[str], list[Requirement]] = {}
+    for r in reqs:
+        req_by_name.setdefault((r.name or "").strip().lower(), []).append(r)
+        req_children.setdefault(r.parent_requirement_id, []).append(r)
+    direct_links_by_req: dict[str, list[RequirementFulfillment]] = {}
+    for link in direct_links:
+        direct_links_by_req.setdefault(link.requirement_id, []).append(link)
+    collect_cache: dict[str, set[str]] = {}
+
+    def collect_requirement_course_ids(req_id: str) -> set[str]:
+        if req_id in collect_cache:
+            return set(collect_cache[req_id])
+        found: set[str] = set()
+        stack = [req_id]
+        seen = set()
+        while stack:
+            cur = stack.pop()
+            if cur in seen:
+                continue
+            seen.add(cur)
+            for link in direct_links_by_req.get(cur, []):
+                if link.course_id:
+                    found.add(link.course_id)
+            for child in req_children.get(cur, []):
+                stack.append(child.id)
+        collect_cache[req_id] = set(found)
+        return found
 
     def evaluate(req_id: str) -> dict:
         req = req_by_id[req_id]
@@ -2096,7 +2398,49 @@ def design_checklist(
         child_results = [evaluate(c.id) for c in children]
         links = links_by_req.get(req_id, [])
         link_course_ids = [l.course_id for l in links]
-        matched_course_ids = [cid for cid in link_course_ids if cid in satisfied_course_ids]
+        req_subs = req_sub_map.get(req_id, {})
+        matched_course_ids = []
+        fixed_semester_violations = []
+        for link in links:
+            cid = link.course_id
+            required_semester = link.required_semester
+            required_semester_min = link.required_semester_min
+            required_semester_max = link.required_semester_max
+            substitutes = req_subs.get(cid, set())
+            primary_planned = cid in planned_course_ids
+            planned_substitutes = [s for s in substitutes if s in planned_course_ids]
+            has_constraints = required_semester is not None or required_semester_min is not None or required_semester_max is not None
+            if not has_constraints:
+                if primary_planned or planned_substitutes:
+                    matched_course_ids.append(cid)
+                continue
+            def semester_ok(sem: int) -> bool:
+                if required_semester is not None and sem != required_semester:
+                    return False
+                if required_semester_min is not None and sem < required_semester_min:
+                    return False
+                if required_semester_max is not None and sem > required_semester_max:
+                    return False
+                return True
+            primary_ok = primary_planned and any(semester_ok(s) for s in planned_course_semesters.get(cid, set()))
+            substitute_ok = any(any(semester_ok(s) for s in planned_course_semesters.get(sub_id, set())) for sub_id in planned_substitutes)
+            if primary_ok or substitute_ok:
+                matched_course_ids.append(cid)
+                continue
+            if primary_planned or planned_substitutes:
+                option_ids = [cid, *planned_substitutes]
+                option_nums = [course_num_by_id.get(x, x) for x in option_ids]
+                parts = []
+                if required_semester is not None:
+                    parts.append(f"Semester {required_semester}")
+                if required_semester_min is not None:
+                    parts.append(f"Semester {required_semester_min}+")
+                if required_semester_max is not None:
+                    parts.append(f"Semester <= {required_semester_max}")
+                window_text = ", ".join(parts) if parts else "required semester window"
+                fixed_semester_violations.append(
+                    f"{' / '.join(option_nums)} must satisfy: {window_text}"
+                )
         matched_count = len(matched_course_ids)
         child_pass_count = sum(1 for c in child_results if c["is_satisfied"])
         unit_required = len(link_course_ids) + len(child_results)
@@ -2126,12 +2470,139 @@ def design_checklist(
             "direct_course_count": len(link_course_ids),
             "satisfied_units": unit_satisfied,
             "required_units": required_units,
+            "fixed_semester_violations": fixed_semester_violations,
             "children": child_results,
         }
 
     results = [evaluate(r.id) for r in target_reqs]
-    total = len(results)
-    satisfied = sum(1 for r in results if r["is_satisfied"])
+
+    # Include active major/minor Core Rules in checklist output for selected programs.
+    selected_program_set = set(selected_program_ids)
+    selected_programs = (
+        db.scalars(select(AcademicProgram).where(AcademicProgram.id.in_(selected_program_ids))).all()
+        if selected_program_ids
+        else []
+    )
+    selected_program_by_name = {(p.name or "").strip().lower(): p for p in selected_programs}
+    rule_nodes = []
+    for rule in db.scalars(select(ValidationRule).where(ValidationRule.active.is_(True))).all():
+        try:
+            cfg = json.loads(rule.config_json or "{}")
+        except Exception:
+            cfg = {}
+        rule_type = str(cfg.get("type") or "").upper()
+        if rule_type not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
+            continue
+        target_program = None
+        pid = cfg.get("program_id")
+        pname = str(cfg.get("program_name") or "").strip().lower()
+        if pid and pid in selected_program_set:
+            target_program = next((p for p in selected_programs if p.id == pid), None)
+        elif pname and pname in selected_program_by_name:
+            target_program = selected_program_by_name[pname]
+        if not target_program:
+            continue
+        groups = cfg.get("required_core_groups") or []
+        children = []
+        for idx, g in enumerate(groups):
+            g = g or {}
+            group_name = str(g.get("name") or f"Core Rule {idx + 1}").strip()
+            min_count = max(1, int(g.get("min_count") or 1))
+            required_semester = g.get("required_semester")
+            required_semester_min = g.get("required_semester_min")
+            required_semester_max = g.get("required_semester_max")
+            try:
+                required_semester = int(required_semester) if required_semester is not None else None
+            except Exception:
+                required_semester = None
+            try:
+                required_semester_min = int(required_semester_min) if required_semester_min is not None else None
+            except Exception:
+                required_semester_min = None
+            try:
+                required_semester_max = int(required_semester_max) if required_semester_max is not None else None
+            except Exception:
+                required_semester_max = None
+            violations: list[str] = []
+            if required_semester is not None and (required_semester_min is not None or required_semester_max is not None):
+                violations.append("Fixed semester cannot be combined with no-earlier/no-later.")
+            if required_semester_min is not None and required_semester_max is not None and required_semester_min > required_semester_max:
+                violations.append("No-earlier semester cannot be later than no-later semester.")
+            group_course_ids: set[str] = set()
+            for num in g.get("course_numbers") or []:
+                cid = course_id_by_number.get(normalize_course_number(str(num)))
+                if cid:
+                    group_course_ids.add(cid)
+            for req_id in g.get("requirement_ids") or []:
+                if req_id in req_by_id:
+                    group_course_ids |= collect_requirement_course_ids(req_id)
+            for req_name in g.get("requirement_names") or []:
+                for req in req_by_name.get(str(req_name).strip().lower(), []):
+                    group_course_ids |= collect_requirement_course_ids(req.id)
+            matched_ids = sorted([cid for cid in group_course_ids if cid in planned_course_ids])
+            matched_ids_without_timing = list(matched_ids)
+            if required_semester is not None or required_semester_min is not None or required_semester_max is not None:
+                def semester_ok(sem: int) -> bool:
+                    if required_semester is not None and sem != required_semester:
+                        return False
+                    if required_semester_min is not None and sem < required_semester_min:
+                        return False
+                    if required_semester_max is not None and sem > required_semester_max:
+                        return False
+                    return True
+                matched_ids = sorted([cid for cid in matched_ids if any(semester_ok(s) for s in planned_course_semesters.get(cid, set()))])
+            if not group_course_ids:
+                violations.append("No resolvable courses for this rule.")
+            if len(matched_ids) < min_count:
+                sem_bits = []
+                if required_semester is not None:
+                    sem_bits.append(f"S{required_semester}")
+                if required_semester_min is not None:
+                    sem_bits.append(f">=S{required_semester_min}")
+                if required_semester_max is not None:
+                    sem_bits.append(f"<=S{required_semester_max}")
+                sem_suffix = f" [{', '.join(sem_bits)}]" if sem_bits else ""
+                if matched_ids_without_timing and not matched_ids:
+                    violations.append(f"Choice is present but violates timing rule{sem_suffix}.")
+            child_satisfied = len(matched_ids) >= min_count and not violations
+            children.append(
+                {
+                    "requirement_id": f"core-rule-group:{rule.id}:{idx}",
+                    "name": group_name,
+                    "program_id": target_program.id,
+                    "logic_type": "PICK_N",
+                    "pick_n": min_count,
+                    "is_satisfied": child_satisfied,
+                    "matched_direct_course_count": len(matched_ids),
+                    "direct_course_count": len(group_course_ids),
+                    "satisfied_units": len(matched_ids),
+                    "required_units": min_count,
+                    "fixed_semester_violations": violations,
+                    "children": [],
+                }
+            )
+        top_satisfied = all(c["is_satisfied"] for c in children) if children else True
+        program_prefix = "Minor" if (target_program.program_type or "").upper() == "MINOR" else "Major"
+        rule_nodes.append(
+            {
+                "requirement_id": f"core-rule:{rule.id}",
+                "name": "Core Rules",
+                "program_id": target_program.id,
+                "logic_type": "ALL_REQUIRED",
+                "pick_n": None,
+                "is_satisfied": top_satisfied,
+                "matched_direct_course_count": 0,
+                "direct_course_count": 0,
+                "satisfied_units": sum(1 for c in children if c["is_satisfied"]),
+                "required_units": len(children),
+                "fixed_semester_violations": [],
+                "children": children,
+            }
+        )
+
+    all_results = [*results, *rule_nodes]
+    total = len(all_results)
+    satisfied = sum(1 for r in all_results if r["is_satisfied"])
     return {
         "version_id": version_id,
         "selected_program_ids": selected_program_ids,
@@ -2142,7 +2613,403 @@ def design_checklist(
             "top_level_remaining": max(0, total - satisfied),
             "completion_percent": (round((satisfied / total) * 100, 1) if total else 100.0),
         },
-        "requirements": results,
+        "requirements": all_results,
+        "core_rules": rule_nodes,
+    }
+
+
+@app.get("/design/feasibility/{version_id}")
+def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    programs = db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id).order_by(AcademicProgram.name.asc())).all()
+    majors = [p for p in programs if (p.program_type or "").upper() == "MAJOR"]
+    minors = [p for p in programs if (p.program_type or "").upper() == "MINOR"]
+    reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc())).all()
+    req_by_id = {r.id: r for r in reqs}
+    child_map: dict[Optional[str], list[Requirement]] = {}
+    for r in reqs:
+        child_map.setdefault(r.parent_requirement_id, []).append(r)
+    fulfillments = db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
+    links_by_req: dict[str, list[RequirementFulfillment]] = {}
+    for f in fulfillments:
+        links_by_req.setdefault(f.requirement_id, []).append(f)
+    courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
+    course_by_id = {c.id: c for c in courses}
+    course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
+    prereqs = db.scalars(select(CoursePrerequisite).where(CoursePrerequisite.course_id.in_([c.id for c in courses]))).all() if courses else []
+    req_sub_rows = (
+        db.scalars(select(RequirementSubstitution).where(RequirementSubstitution.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
+    )
+    sub_map: dict[str, dict[str, set[str]]] = {}
+    for s in req_sub_rows:
+        m = sub_map.setdefault(s.requirement_id, {})
+        m.setdefault(s.primary_course_id, set()).add(s.substitute_course_id)
+        if s.is_bidirectional:
+            m.setdefault(s.substitute_course_id, set()).add(s.primary_course_id)
+    rules = db.scalars(select(ValidationRule).where(ValidationRule.active.is_(True))).all()
+    max_credits_per_semester = 21.0
+    for rule in rules:
+        try:
+            cfg = json.loads(rule.config_json or "{}")
+        except Exception:
+            cfg = {}
+        t = str(cfg.get("type") or "").upper()
+        if t not in {"MAX_CREDITS_PER_SEMESTER", "SEMESTER_CREDIT_CAP"}:
+            continue
+        for key in ["max_credits_per_semester", "max_credits", "cap", "value"]:
+            raw = cfg.get(key)
+            if raw is None:
+                continue
+            try:
+                cap = float(raw)
+            except Exception:
+                continue
+            if cap > 0:
+                max_credits_per_semester = min(max_credits_per_semester, cap)
+
+    req_name_map: dict[str, list[Requirement]] = {}
+    for r in reqs:
+        req_name_map.setdefault((r.name or "").strip().lower(), []).append(r)
+
+    # Find active Core Rules keyed by target program.
+    core_rules_by_program_id: dict[str, list[dict]] = {}
+    core_rules_by_program_name: dict[str, list[dict]] = {}
+    for rule in rules:
+        try:
+            cfg = json.loads(rule.config_json or "{}")
+        except Exception:
+            cfg = {}
+        if str(cfg.get("type") or "").upper() not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
+            continue
+        groups = cfg.get("required_core_groups") or []
+        if cfg.get("program_id"):
+            core_rules_by_program_id.setdefault(cfg["program_id"], []).extend(groups)
+        if str(cfg.get("program_name") or "").strip():
+            core_rules_by_program_name.setdefault(str(cfg["program_name"]).strip().lower(), []).extend(groups)
+
+    def evaluate_requirement(req_id: str) -> dict:
+        req = req_by_id[req_id]
+        children = child_map.get(req_id, [])
+        child_results = [evaluate_requirement(c.id) for c in children]
+        links = links_by_req.get(req_id, [])
+        issues = []
+        constraints = []
+        mandatory_courses = set()
+        min_credit_lb = 0.0
+        units = []
+        for link in links:
+            c = course_by_id.get(link.course_id)
+            credit = float(c.credit_hours if c else 0.0)
+            units.append(
+                {
+                    "label": c.course_number if c else link.course_id,
+                    "type": "course",
+                    "course_ids": [link.course_id],
+                    "mandatory_courses": {link.course_id},
+                    "min_credit_lb": credit,
+                }
+            )
+        for child_req, child_eval in zip(children, child_results):
+            units.append(
+                {
+                    "label": child_req.name,
+                    "type": "requirement",
+                    "course_ids": list(child_eval["all_courses"]),
+                    "mandatory_courses": set(child_eval["mandatory_courses"]),
+                    "min_credit_lb": float(child_eval["min_credit_lb"]),
+                }
+            )
+            issues.extend(child_eval["issues"])
+            constraints.extend(child_eval["constraints"])
+            mandatory_courses |= set(child_eval["always_mandatory_courses"])
+        logic = (req.logic_type or "ALL_REQUIRED").upper()
+        available = len(units)
+        if logic in {"PICK_N", "ANY_N"}:
+            needed = max(1, int(req.pick_n or 1))
+            if available < needed:
+                issues.append(f"{req.name}: requires {needed} options but only {available} defined.")
+            else:
+                choice_units = sorted(units, key=lambda u: float(u["min_credit_lb"]))[:needed]
+                min_credit_lb += sum(float(u["min_credit_lb"]) for u in choice_units)
+            constraints.append(f"{req.name}: choose {needed} of {available}.")
+        elif logic in {"ANY_ONE", "ONE_OF"}:
+            if available < 1:
+                issues.append(f"{req.name}: requires one option but none defined.")
+            else:
+                min_credit_lb += min(float(u["min_credit_lb"]) for u in units)
+            constraints.append(f"{req.name}: choose 1 of {available}.")
+        else:
+            if not units:
+                issues.append(f"{req.name}: no linked courses/subrequirements defined.")
+            for u in units:
+                mandatory_courses |= set(u["mandatory_courses"])
+                min_credit_lb += float(u["min_credit_lb"])
+                if u["type"] == "requirement":
+                    mandatory_courses |= set(u["mandatory_courses"])
+        all_courses = set()
+        for u in units:
+            all_courses |= set(u["course_ids"])
+        # always_mandatory_courses excludes optional parent-choice units
+        always_mandatory_courses = set(mandatory_courses if logic == "ALL_REQUIRED" else set())
+        return {
+            "issues": issues,
+            "constraints": constraints,
+            "mandatory_courses": mandatory_courses,
+            "always_mandatory_courses": always_mandatory_courses,
+            "all_courses": all_courses,
+            "min_credit_lb": min_credit_lb,
+        }
+
+    def evaluate_combo(combo_programs: list[AcademicProgram], kind: str, label: str) -> dict:
+        issues: list[str] = []
+        constraints: list[str] = []
+        selected_ids = {p.id for p in combo_programs}
+        top_reqs = []
+        for r in reqs:
+            if r.parent_requirement_id is not None:
+                continue
+            if r.program_id is None and (r.category or "").upper() == "CORE":
+                top_reqs.append(r)
+            elif r.program_id in selected_ids:
+                top_reqs.append(r)
+        mandatory = set()
+        all_courses = set()
+        min_credit_lb = 0.0
+        for tr in top_reqs:
+            e = evaluate_requirement(tr.id)
+            issues.extend(e["issues"])
+            constraints.extend(e["constraints"])
+            mandatory |= set(e["always_mandatory_courses"])
+            all_courses |= set(e["all_courses"])
+            min_credit_lb += float(e["min_credit_lb"])
+
+        # Requirement timing windows and clashes.
+        timing_by_course: dict[str, list[tuple[Optional[int], Optional[int], Optional[int], str]]] = {}
+        scoped_req_ids = {r.id for r in reqs if (r.program_id is None and (r.category or "").upper() == "CORE") or r.program_id in selected_ids}
+        for rf in fulfillments:
+            if rf.requirement_id not in scoped_req_ids:
+                continue
+            if rf.required_semester is None and rf.required_semester_min is None and rf.required_semester_max is None:
+                continue
+            req = req_by_id.get(rf.requirement_id)
+            src = req.name if req else "Requirement"
+            timing_by_course.setdefault(rf.course_id, []).append((rf.required_semester, rf.required_semester_min, rf.required_semester_max, src))
+        for cid, windows in timing_by_course.items():
+            for i in range(len(windows)):
+                for j in range(i + 1, len(windows)):
+                    a = windows[i]
+                    b = windows[j]
+                    if not timing_constraints_overlap(a[0], a[1], a[2], b[0], b[1], b[2]):
+                        cnum = course_by_id.get(cid).course_number if course_by_id.get(cid) else cid
+                        issues.append(f"{cnum}: timing clash between '{a[3]}' and '{b[3]}'.")
+
+        # Core Rules compatibility (with core timing) and constraints.
+        core_req_ids = {r.id for r in reqs if (r.program_id is None and (r.category or "").upper() == "CORE")}
+        core_timing_by_course: dict[str, list[tuple[Optional[int], Optional[int], Optional[int]]]] = {}
+        for rf in fulfillments:
+            if rf.requirement_id not in core_req_ids:
+                continue
+            if rf.required_semester is None and rf.required_semester_min is None and rf.required_semester_max is None:
+                continue
+            core_timing_by_course.setdefault(rf.course_id, []).append((rf.required_semester, rf.required_semester_min, rf.required_semester_max))
+        for p in combo_programs:
+            groups = []
+            groups.extend(core_rules_by_program_id.get(p.id, []))
+            groups.extend(core_rules_by_program_name.get((p.name or "").strip().lower(), []))
+            for idx, g in enumerate(groups):
+                g = g or {}
+                group_name = str(g.get("name") or f"Core Rule {idx + 1}").strip()
+                min_count = max(1, int(g.get("min_count") or 1))
+                rs = g.get("required_semester")
+                rs_min = g.get("required_semester_min")
+                rs_max = g.get("required_semester_max")
+                try:
+                    rs = int(rs) if rs is not None else None
+                except Exception:
+                    rs = None
+                try:
+                    rs_min = int(rs_min) if rs_min is not None else None
+                except Exception:
+                    rs_min = None
+                try:
+                    rs_max = int(rs_max) if rs_max is not None else None
+                except Exception:
+                    rs_max = None
+                nums = [normalize_course_number(str(x)) for x in (g.get("course_numbers") or []) if str(x).strip()]
+                cids = [course_id_by_number[n] for n in nums if n in course_id_by_number]
+                if not cids:
+                    issues.append(f"{p.name} - {group_name}: no resolvable courses.")
+                    continue
+                viable = 0
+                for cid in cids:
+                    core_windows = core_timing_by_course.get(cid, [])
+                    if rs is None and rs_min is None and rs_max is None:
+                        viable += 1
+                        continue
+                    if not core_windows:
+                        viable += 1
+                        continue
+                    if any(timing_constraints_overlap(rs, rs_min, rs_max, cw[0], cw[1], cw[2]) for cw in core_windows):
+                        viable += 1
+                if viable < min_count:
+                    issues.append(f"{p.name} - {group_name}: timing leaves only {viable} viable choices, needs {min_count}.")
+                sem_parts = []
+                if rs is not None:
+                    sem_parts.append(f"S{rs}")
+                if rs_min is not None:
+                    sem_parts.append(f">=S{rs_min}")
+                if rs_max is not None:
+                    sem_parts.append(f"<=S{rs_max}")
+                if sem_parts:
+                    constraints.append(f"{p.name} - {group_name}: must satisfy {' ,'.join(sem_parts)}.")
+
+        # Cross-program Core Rules timing clashes (major-major / major-minor / minor-minor).
+        core_rule_windows_by_course: dict[str, list[tuple[Optional[int], Optional[int], Optional[int], str]]] = {}
+        for p in combo_programs:
+            groups = []
+            groups.extend(core_rules_by_program_id.get(p.id, []))
+            groups.extend(core_rules_by_program_name.get((p.name or "").strip().lower(), []))
+            for idx, g in enumerate(groups):
+                g = g or {}
+                rs = g.get("required_semester")
+                rs_min = g.get("required_semester_min")
+                rs_max = g.get("required_semester_max")
+                try:
+                    rs = int(rs) if rs is not None else None
+                except Exception:
+                    rs = None
+                try:
+                    rs_min = int(rs_min) if rs_min is not None else None
+                except Exception:
+                    rs_min = None
+                try:
+                    rs_max = int(rs_max) if rs_max is not None else None
+                except Exception:
+                    rs_max = None
+                if rs is None and rs_min is None and rs_max is None:
+                    continue
+                group_name = str(g.get("name") or f"Core Rule {idx + 1}").strip()
+                source = f"{p.name} - {group_name}"
+                nums = [normalize_course_number(str(x)) for x in (g.get("course_numbers") or []) if str(x).strip()]
+                for num in nums:
+                    cid = course_id_by_number.get(num)
+                    if not cid:
+                        continue
+                    core_rule_windows_by_course.setdefault(cid, []).append((rs, rs_min, rs_max, source))
+        for cid, windows in core_rule_windows_by_course.items():
+            for i in range(len(windows)):
+                for j in range(i + 1, len(windows)):
+                    a = windows[i]
+                    b = windows[j]
+                    if not timing_constraints_overlap(a[0], a[1], a[2], b[0], b[1], b[2]):
+                        cnum = course_by_id.get(cid).course_number if course_by_id.get(cid) else cid
+                        issues.append(f"{cnum}: Core Rules timing clash between '{a[3]}' and '{b[3]}'.")
+
+        # Dependency feasibility for mandatory courses.
+        windows: dict[str, tuple[int, int]] = {}
+        for cid in mandatory:
+            lo, hi = 1, 8
+            for rs, rs_min, rs_max, _ in timing_by_course.get(cid, []):
+                if rs is not None:
+                    lo = max(lo, rs)
+                    hi = min(hi, rs)
+                if rs_min is not None:
+                    lo = max(lo, rs_min)
+                if rs_max is not None:
+                    hi = min(hi, rs_max)
+            if lo > hi:
+                cnum = course_by_id.get(cid).course_number if course_by_id.get(cid) else cid
+                issues.append(f"{cnum}: no feasible semester window ({lo}>{hi}).")
+            windows[cid] = (lo, hi)
+        for p in prereqs:
+            if p.course_id not in mandatory or p.required_course_id not in mandatory:
+                continue
+            a_lo, a_hi = windows.get(p.required_course_id, (1, 8))
+            b_lo, b_hi = windows.get(p.course_id, (1, 8))
+            rel = (p.relationship_type or "PREREQUISITE").upper()
+            feasible = False
+            for sa in range(a_lo, a_hi + 1):
+                for sb in range(b_lo, b_hi + 1):
+                    if rel == "COREQUISITE":
+                        if sa <= sb:
+                            feasible = True
+                            break
+                    else:
+                        if sa < sb:
+                            feasible = True
+                            break
+                if feasible:
+                    break
+            if not feasible:
+                req_num = course_by_id.get(p.required_course_id).course_number if course_by_id.get(p.required_course_id) else p.required_course_id
+                course_num = course_by_id.get(p.course_id).course_number if course_by_id.get(p.course_id) else p.course_id
+                issues.append(f"{course_num}: dependency on {req_num} infeasible within timing windows.")
+
+        # Credit cap checks.
+        if min_credit_lb > max_credits_per_semester * 8.0:
+            issues.append(
+                f"Minimum required credits {min_credit_lb:.1f} exceeds {max_credits_per_semester:.1f} x 8 semester capacity."
+            )
+        avg = min_credit_lb / 8.0 if min_credit_lb > 0 else 0.0
+        if avg > max_credits_per_semester * 0.9:
+            constraints.append(
+                f"Average load {avg:.1f}/semester is near max cap {max_credits_per_semester:.1f}; limited schedule flexibility."
+            )
+
+        # De-duplicate message lists while preserving order.
+        seen = set()
+        issues_dedup = []
+        for i in issues:
+            if i in seen:
+                continue
+            seen.add(i)
+            issues_dedup.append(i)
+        seen = set()
+        constraints_dedup = []
+        for c in constraints:
+            if c in seen:
+                continue
+            seen.add(c)
+            constraints_dedup.append(c)
+        status = "PASS"
+        if issues_dedup:
+            status = "FAIL"
+        elif constraints_dedup:
+            status = "WARNING"
+        return {
+            "kind": kind,
+            "label": label,
+            "program_ids": [p.id for p in combo_programs],
+            "program_names": [p.name for p in combo_programs],
+            "status": status,
+            "issue_count": len(issues_dedup),
+            "constraint_count": len(constraints_dedup),
+            "issues": issues_dedup,
+            "constraints": constraints_dedup,
+            "mandatory_course_count": len(mandatory),
+            "min_required_credits": round(min_credit_lb, 1),
+            "max_credits_per_semester": max_credits_per_semester,
+        }
+
+    rows = []
+    for m in majors:
+        rows.append(evaluate_combo([m], "MAJOR", f"Major - {m.name}"))
+    for n in minors:
+        rows.append(evaluate_combo([n], "MINOR", f"Minor - {n.name}"))
+    for a, b in itertools.combinations(majors, 2):
+        rows.append(evaluate_combo([a, b], "DOUBLE_MAJOR", f"Double Major - {a.name} + {b.name}"))
+    for m in majors:
+        for n in minors:
+            rows.append(evaluate_combo([m, n], "MAJOR_MINOR", f"Major/Minor - {m.name} + {n.name}"))
+
+    return {
+        "version_id": version_id,
+        "row_count": len(rows),
+        "summary": {
+            "pass": sum(1 for r in rows if r["status"] == "PASS"),
+            "warning": sum(1 for r in rows if r["status"] == "WARNING"),
+            "fail": sum(1 for r in rows if r["status"] == "FAIL"),
+        },
+        "rows": rows,
     }
 
 
@@ -2208,6 +3075,39 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
     rules = db.scalars(select(ValidationRule).where(ValidationRule.active == True)).all()  # noqa: E712
 
     rule_lookup = {r.name: r for r in rules}
+    plan_items = db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all()
+    planned_course_ids = {item.course_id for item in plan_items}
+    planned_course_semesters: dict[str, set[int]] = {}
+    for item in plan_items:
+        planned_course_semesters.setdefault(item.course_id, set()).add(item.semester_index)
+    course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
+    course_number_by_id = {c.id: c.course_number for c in courses}
+    reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id)).all()
+    req_by_id = {r.id: r for r in reqs}
+    req_by_name: dict[str, list[Requirement]] = {}
+    req_children: dict[Optional[str], list[Requirement]] = {}
+    for r in reqs:
+        req_children.setdefault(r.parent_requirement_id, []).append(r)
+        req_by_name.setdefault(str(r.name or "").strip().lower(), []).append(r)
+    req_links = db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_([r.id for r in reqs]))).all() if reqs else []
+    links_by_req: dict[str, list[RequirementFulfillment]] = {}
+    for link in req_links:
+        links_by_req.setdefault(link.requirement_id, []).append(link)
+
+    def collect_requirement_course_ids(requirement_id: str) -> set[str]:
+        out: set[str] = set()
+        stack = [requirement_id]
+        seen: set[str] = set()
+        while stack:
+            rid = stack.pop()
+            if rid in seen:
+                continue
+            seen.add(rid)
+            for link in links_by_req.get(rid, []):
+                out.add(link.course_id)
+            for child in req_children.get(rid, []):
+                stack.append(child.id)
+        return out
 
     # COI policy minimum section size baseline
     min_rule = rule_lookup.get("Minimum section size >= 6")
@@ -2237,7 +3137,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
         except Exception:
             max_credits = 24
     hours = {i: 0.0 for i in range(1, 9)}
-    for item in db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all():
+    for item in plan_items:
         c = db.get(Course, item.course_id)
         if c:
             hours[item.semester_index] += c.credit_hours
@@ -2361,6 +3261,158 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 }
             )
 
+    # Program/Major pathway rules (within existing engine, config-driven)
+    # Example config:
+    # {
+    #   "type": "MAJOR_PATHWAY_CORE",
+    #   "program_name": "Aeronautical Engineering",
+    #   "required_core_groups": [
+    #     {"name": "Advanced STEM", "min_count": 1, "course_numbers": ["MATH 300", "PHYS 300"]},
+    #     {"name": "Advanced Humanities", "min_count": 1, "requirement_names": ["Track - Advanced Liberal Arts: Any One"]}
+    #   ]
+    # }
+    for rule in rules:
+        cfg = {}
+        try:
+            cfg = json.loads(rule.config_json or "{}")
+        except Exception:
+            cfg = {}
+        rule_type = str(cfg.get("type") or "").upper()
+        if rule_type not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
+            continue
+
+        program_id = cfg.get("program_id")
+        program_name = str(cfg.get("program_name") or "").strip()
+        target_program = None
+        if program_id:
+            target_program = db.get(AcademicProgram, program_id)
+        elif program_name:
+            target_program = db.scalar(
+                select(AcademicProgram).where(
+                    AcademicProgram.version_id == version_id,
+                    AcademicProgram.name == program_name,
+                )
+            )
+        if not target_program:
+            findings.append(
+                {
+                    "severity": rule.severity,
+                    "tier": rule.tier,
+                    "rule": "major_pathway_rule_scope",
+                    "message": f"Pathway rule '{rule.name}' target program not found.",
+                }
+            )
+            continue
+
+        groups = cfg.get("required_core_groups") or []
+        if not isinstance(groups, list) or not groups:
+            findings.append(
+                {
+                    "severity": rule.severity,
+                    "tier": rule.tier,
+                    "rule": "major_pathway_rule_config",
+                    "message": f"Pathway rule '{rule.name}' has no required_core_groups.",
+                }
+            )
+            continue
+
+        for idx, g in enumerate(groups):
+            g = g or {}
+            group_name = str(g.get("name") or f"Group {idx + 1}").strip()
+            min_count = int(g.get("min_count") or 1)
+            min_count = max(1, min_count)
+            required_semester = g.get("required_semester")
+            required_semester_min = g.get("required_semester_min")
+            required_semester_max = g.get("required_semester_max")
+            try:
+                required_semester = int(required_semester) if required_semester is not None else None
+            except Exception:
+                required_semester = None
+            try:
+                required_semester_min = int(required_semester_min) if required_semester_min is not None else None
+            except Exception:
+                required_semester_min = None
+            try:
+                required_semester_max = int(required_semester_max) if required_semester_max is not None else None
+            except Exception:
+                required_semester_max = None
+            if required_semester_min is not None and required_semester_max is not None and required_semester_min > required_semester_max:
+                findings.append(
+                    {
+                        "severity": rule.severity,
+                        "tier": rule.tier,
+                        "rule": "major_pathway_group_config",
+                        "message": f"{target_program.name}: '{group_name}' has invalid semester range.",
+                    }
+                )
+                continue
+            if required_semester is not None and (required_semester_min is not None or required_semester_max is not None):
+                findings.append(
+                    {
+                        "severity": rule.severity,
+                        "tier": rule.tier,
+                        "rule": "major_pathway_group_config",
+                        "message": f"{target_program.name}: '{group_name}' mixes fixed semester with range constraints.",
+                    }
+                )
+                continue
+            group_course_ids: set[str] = set()
+
+            for num in g.get("course_numbers") or []:
+                cid = course_id_by_number.get(normalize_course_number(str(num)))
+                if cid:
+                    group_course_ids.add(cid)
+            for req_id in g.get("requirement_ids") or []:
+                if req_id in req_by_id:
+                    group_course_ids |= collect_requirement_course_ids(req_id)
+            for req_name in g.get("requirement_names") or []:
+                for req in req_by_name.get(str(req_name).strip().lower(), []):
+                    group_course_ids |= collect_requirement_course_ids(req.id)
+
+            if not group_course_ids:
+                findings.append(
+                    {
+                        "severity": rule.severity,
+                        "tier": rule.tier,
+                        "rule": "major_pathway_group_config",
+                        "message": f"{target_program.name}: '{group_name}' has no resolvable courses.",
+                    }
+                )
+                continue
+
+            matched_ids = sorted([cid for cid in group_course_ids if cid in planned_course_ids])
+            if required_semester is not None or required_semester_min is not None or required_semester_max is not None:
+                def semester_ok(sem: int) -> bool:
+                    if required_semester is not None and sem != required_semester:
+                        return False
+                    if required_semester_min is not None and sem < required_semester_min:
+                        return False
+                    if required_semester_max is not None and sem > required_semester_max:
+                        return False
+                    return True
+                matched_ids = sorted([cid for cid in matched_ids if any(semester_ok(s) for s in planned_course_semesters.get(cid, set()))])
+            if len(matched_ids) < min_count:
+                matched_nums = [course_number_by_id.get(cid) for cid in matched_ids if course_number_by_id.get(cid)]
+                sem_parts = []
+                if required_semester is not None:
+                    sem_parts.append(f"Semester {required_semester}")
+                if required_semester_min is not None:
+                    sem_parts.append(f"Semester {required_semester_min}+")
+                if required_semester_max is not None:
+                    sem_parts.append(f"Semester <= {required_semester_max}")
+                findings.append(
+                    {
+                        "severity": rule.severity,
+                        "tier": rule.tier,
+                        "rule": "major_pathway_core",
+                        "message": (
+                            f"{target_program.name}: '{group_name}' needs {min_count}, has {len(matched_ids)}"
+                            + (f" [{', '.join(sem_parts)}]" if sem_parts else "")
+                            + (f" ({', '.join(matched_nums)})" if matched_nums else "")
+                        ),
+                    }
+                )
+
     status = "PASS"
     if any(f["severity"] == "FAIL" for f in findings):
         status = "FAIL"
@@ -2421,6 +3473,7 @@ def list_validation_rules(db: Session = Depends(get_db), _: User = Depends(curre
 
 @app.post("/design/validation-rules")
 def create_validation_rule(payload: ValidationRuleIn, db: Session = Depends(get_db), user: User = Depends(require_design)):
+    validate_core_pathway_rule_config(payload.config or {}, db)
     rule = ValidationRule(
         name=payload.name,
         tier=payload.tier,
@@ -2450,6 +3503,7 @@ def update_validation_rule(rule_id: str, payload: ValidationRuleUpdateIn, db: Se
     if "active" in data:
         rule.active = data["active"]
     if "config" in data:
+        validate_core_pathway_rule_config(data["config"] or {}, db)
         rule.config_json = json.dumps(data["config"] or {})
     db.commit()
     db.refresh(rule)

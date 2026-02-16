@@ -2,8 +2,8 @@
   "version_id": "26645fdc-5a9f-4752-93bb-323b1434ec32",
   "version_name": "COI 2025-2026",
   "total_courses": 974,
-  "total_prerequisites": 2,
-  "courses_with_prereqs": 2,
+  "total_prerequisites": 13,
+  "courses_with_prereqs": 12,
   "prefix_counts": {
     "Aero": 30,
     "AF": 1,
@@ -70,11 +70,11 @@
     "Spanish": 2,
     "Sys": 17
   },
-  "anomaly_count": 107,
+  "anomaly_count": 97,
   "anomaly_counts": {
     "title_contains_metadata_not_short_title": 60,
-    "prereq_or_coreq_text_in_title_but_no_structured_rows": 12,
     "title_too_long_for_short_title": 13,
+    "prereq_or_coreq_text_in_title_but_no_structured_rows": 2,
     "placeholder_course": 22
   },
   "anomalies_sample": [
@@ -91,19 +91,7 @@
       "title": "Coreq: Physics 110"
     },
     {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
-      "course_id": "15fded97-e523-470f-8694-ca0f988ac280",
-      "course_number": "Aero Engr 315",
-      "title": "Coreq: Physics 110"
-    },
-    {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "503ef1c2-bf40-441e-8548-7f736360a576",
-      "course_number": "Aero Engr 341",
-      "title": "Coreq: Engr 346 or equivalent"
-    },
-    {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
       "course_id": "503ef1c2-bf40-441e-8548-7f736360a576",
       "course_number": "Aero Engr 341",
       "title": "Coreq: Engr 346 or equivalent"
@@ -205,12 +193,6 @@
       "title": "Coreq: Chem 335 and Chem 344"
     },
     {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
-      "course_id": "284e9341-0205-4c19-8780-08ec47b8a07a",
-      "course_number": "Chem 243",
-      "title": "Coreq: Chem 335 and Chem 344"
-    },
-    {
       "type": "title_contains_metadata_not_short_title",
       "course_id": "726aeff7-26e2-4d65-88a2-6ea56b03054b",
       "course_number": "Chem 336",
@@ -218,12 +200,6 @@
     },
     {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "9dfcbc1f-d93c-4bb9-a7d9-c4884df80c69",
-      "course_number": "Chem 444",
-      "title": "Coreq: Chem 431 or DFCH approval"
-    },
-    {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
       "course_id": "9dfcbc1f-d93c-4bb9-a7d9-c4884df80c69",
       "course_number": "Chem 444",
       "title": "Coreq: Chem 431 or DFCH approval"
@@ -242,12 +218,6 @@
     },
     {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "760e34c9-45aa-4de2-83eb-d43c0f10dba6",
-      "course_number": "Civ Engr 361",
-      "title": "Coreq: Civ Engr 362 and Civ Engr 390"
-    },
-    {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
       "course_id": "760e34c9-45aa-4de2-83eb-d43c0f10dba6",
       "course_number": "Civ Engr 361",
       "title": "Coreq: Civ Engr 362 and Civ Engr 390"
@@ -553,31 +523,13 @@
       "title": "Coreq: Mech Engr 341 and Math 342, Math 346, or Engr 346"
     },
     {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
-      "course_id": "4c2f8985-9b39-4794-8d29-388c32def7b0",
-      "course_number": "Mech Engr 312",
-      "title": "Coreq: Mech Engr 341 and Math 342, Math 346, or Engr 346"
-    },
-    {
       "type": "title_contains_metadata_not_short_title",
       "course_id": "b2e6822d-0770-42a5-a725-f1fe1ad48aed",
       "course_number": "Mech Engr 330",
       "title": "Coreq: Aero Engr 315 and Mech Engr 320"
     },
     {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
-      "course_id": "b2e6822d-0770-42a5-a725-f1fe1ad48aed",
-      "course_number": "Mech Engr 330",
-      "title": "Coreq: Aero Engr 315 and Mech Engr 320"
-    },
-    {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "ab4e9c1d-fa06-496a-aca1-0ae587eef68c",
-      "course_number": "Mech Engr 341",
-      "title": "Coreq (required for Mech Engr majors): Mech Engr 460"
-    },
-    {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
       "course_id": "ab4e9c1d-fa06-496a-aca1-0ae587eef68c",
       "course_number": "Mech Engr 341",
       "title": "Coreq (required for Mech Engr majors): Mech Engr 460"
@@ -631,19 +583,7 @@
       "title": "Coreq: Math 346 or department approval"
     },
     {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
-      "course_id": "4bb8ed01-3438-4265-b907-0ff95e6b5b1d",
-      "course_number": "Physics 215",
-      "title": "Coreq: Math 346 or department approval"
-    },
-    {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "c33a8d5e-c32a-4e86-97e4-9f9ffc7003cf",
-      "course_number": "Physics 264",
-      "title": "Coreq: Physics 264 or department approval"
-    },
-    {
-      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
       "course_id": "c33a8d5e-c32a-4e86-97e4-9f9ffc7003cf",
       "course_number": "Physics 264",
       "title": "Coreq: Physics 264 or department approval"

@@ -203,11 +203,12 @@ export function DesignStudioPage() {
   const [reqScopeLocked, setReqScopeLocked] = useState(false);
   const [reqLockedCategory, setReqLockedCategory] = useState();
   const [reqCourseModalOpen, setReqCourseModalOpen] = useState(false);
+  const [reqLinkKind, setReqLinkKind] = useState("COURSE");
+  const [reqLinkKindLocked, setReqLinkKindLocked] = useState(false);
   const [reqCourseRequirementId, setReqCourseRequirementId] = useState();
   const [reqCourseId, setReqCourseId] = useState();
   const [reqCourseTimingRules, setReqCourseTimingRules] = useState([]);
   const [reqSubDraftRows, setReqSubDraftRows] = useState([]);
-  const [basketModalOpen, setBasketModalOpen] = useState(false);
   const [basketRequirementId, setBasketRequirementId] = useState();
   const [basketLinkId, setBasketLinkId] = useState();
   const [basketSelectedId, setBasketSelectedId] = useState();
@@ -806,12 +807,23 @@ export function DesignStudioPage() {
   }
 
   function openRequirementCourseModal(requirementId, opts = {}) {
+    setReqLinkKind("COURSE");
+    setReqLinkKindLocked(!!opts.primaryCourseId);
     setReqCourseRequirementId(requirementId);
+    setBasketRequirementId(requirementId);
     setReqCourseId(opts.primaryCourseId || undefined);
     setReqCourseTimingRules(
       timingRulesFromFields(opts.requiredSemester || null, opts.requiredSemesterMin || null, opts.requiredSemesterMax || null)
     );
     setReqSubDraftRows([]);
+    if (!opts.primaryCourseId) {
+      setBasketLinkId(undefined);
+      setBasketSelectedId(undefined);
+      setBasketName("");
+      setBasketDescription("");
+      setBasketMinCount("1");
+      setBasketCourseIds([]);
+    }
     setReqCourseModalOpen(true);
   }
 
@@ -826,8 +838,14 @@ export function DesignStudioPage() {
   }
 
   function openRequirementBasketModal(requirementId, basketLink) {
+    setReqLinkKind("BASKET");
+    setReqLinkKindLocked(!!basketLink);
     resetBasketModal();
     setBasketRequirementId(requirementId);
+    setReqCourseRequirementId(requirementId);
+    setReqCourseId(undefined);
+    setReqCourseTimingRules([]);
+    setReqSubDraftRows([]);
     if (basketLink) {
       setBasketLinkId(basketLink.id);
       setBasketSelectedId(basketLink.basket_id || undefined);
@@ -837,7 +855,7 @@ export function DesignStudioPage() {
       const b = (basketsQ.data || []).find((x) => x.id === basketLink.basket_id);
       setBasketDescription(b?.description || "");
     }
-    setBasketModalOpen(true);
+    setReqCourseModalOpen(true);
   }
 
   async function saveRequirementBasketModal() {
@@ -918,7 +936,8 @@ export function DesignStudioPage() {
       });
     }
 
-    setBasketModalOpen(false);
+    setReqCourseModalOpen(false);
+    setReqLinkKindLocked(false);
     resetBasketModal();
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["baskets", selectedVersion.id] }),
@@ -1005,6 +1024,7 @@ export function DesignStudioPage() {
     setReqSubDraftRows([]);
     setReqCourseTimingRules([]);
     setReqCourseModalOpen(false);
+    setReqLinkKindLocked(false);
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["requirement-fulfillment-version", selectedVersion?.id] }),
       qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion?.id] }),
@@ -2701,17 +2721,7 @@ export function DesignStudioPage() {
                   openRequirementCourseModal(n.id);
                 }}
               >
-                Add Course
-              </Button>
-              <Button
-                size="small"
-                type="primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openRequirementBasketModal(n.id);
-                }}
-              >
-                Add Basket
+                Add Course/Basket
               </Button>
               {isProgramNode && !n.parent_requirement_id ? (
                 <Button
@@ -3975,217 +3985,223 @@ export function DesignStudioPage() {
         </Space>
       </Modal>
       <Modal
-        title="Add Course To Requirement"
+        title={reqLinkKind === "BASKET" ? (basketLinkId ? "Edit Requirement Basket" : "Add Course/Basket To Requirement") : "Add Course/Basket To Requirement"}
         open={reqCourseModalOpen}
         onCancel={() => {
           setReqCourseModalOpen(false);
+          setReqLinkKindLocked(false);
           setReqSubDraftRows([]);
           setReqCourseTimingRules([]);
+          resetBasketModal();
         }}
-        onOk={saveRequirementCourseModal}
-        okText="Save Course"
-        okButtonProps={{ disabled: !reqCourseId }}
+        onOk={reqLinkKind === "BASKET" ? saveRequirementBasketModal : saveRequirementCourseModal}
+        okText={reqLinkKind === "BASKET" ? (basketLinkId ? "Save Basket" : "Add Basket") : "Save Course"}
+        okButtonProps={reqLinkKind === "BASKET" ? {} : { disabled: !reqCourseId }}
       >
         <Space direction="vertical" style={{ width: "100%" }}>
           <Typography.Text type="secondary">
             {requirementFullPathMap[reqCourseRequirementId || ""] || requirementNodeMap[reqCourseRequirementId || ""]?.name || "None"}
           </Typography.Text>
           <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            style={{ width: "calc(100% - 84px)" }}
-            placeholder="Select course"
-            value={reqCourseId}
-            onChange={(v) => {
-              setReqCourseId(v);
-              const existing = (requirementLinkedCoursesForModal || []).find((x) => x.course_id === v);
-              setReqCourseTimingRules(
-                timingRulesFromFields(
-                  existing?.required_semester || null,
-                  existing?.required_semester_min || null,
-                  existing?.required_semester_max || null
-                )
-              );
-            }}
-            options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
+            style={{ width: "100%" }}
+            value={reqLinkKind}
+            onChange={(v) => setReqLinkKind(v)}
+            disabled={reqLinkKindLocked}
+            options={[
+              { value: "COURSE", label: "Add Course" },
+              { value: "BASKET", label: "Add Basket" },
+            ]}
           />
-          <Typography.Text strong>Timing Rules</Typography.Text>
-          {reqCourseTimingRules.map((rule, idx) => {
-            const usedOther = new Set(reqCourseTimingRules.filter((_, i) => i !== idx).map((r) => r.type));
-            const typeOptions = timingTypeOptions.filter((o) => !usedOther.has(o.value) || o.value === rule.type);
-            return (
-              <div key={`timing-rule-${idx}`} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
-                <Select
-                  style={{ width: 210 }}
-                  value={rule.type}
-                  onChange={(v) =>
-                    setReqCourseTimingRules((prev) => {
-                      const next = prev.map((r, i) => (i === idx ? { ...r, type: v } : r));
-                      if (v === "FIXED") return [{ type: "FIXED", semester: next[idx]?.semester }];
-                      return next.filter((r) => r.type !== "FIXED");
-                    })
-                  }
-                  options={typeOptions}
-                />
-                <Select
-                  allowClear
-                  style={{ width: "calc(100% - 294px)" }}
-                  placeholder="Semester"
-                  value={rule.semester}
-                  onChange={(v) =>
-                    setReqCourseTimingRules((prev) =>
-                      prev.map((r, i) => (i === idx ? { ...r, semester: v } : r))
-                    )
-                  }
-                  options={semesterOptions}
-                />
-                <Button
-                  danger
-                  style={{ width: 76 }}
-                  onClick={() =>
-                    setReqCourseTimingRules((prev) => prev.filter((_, i) => i !== idx))
-                  }
-                >
-                  Delete
-                </Button>
-              </div>
-            );
-          })}
-          <Button
-            onClick={() =>
-              setReqCourseTimingRules((prev) => {
-                if (prev.some((r) => r.type === "FIXED")) return prev;
-                if (prev.length === 0) return [{ type: "FIXED", semester: undefined }];
-                if (!prev.some((r) => r.type === "MIN")) return [...prev, { type: "MIN", semester: undefined }];
-                if (!prev.some((r) => r.type === "MAX")) return [...prev, { type: "MAX", semester: undefined }];
-                return prev;
-              })
-            }
-            disabled={reqCourseTimingRules.some((r) => r.type === "FIXED") || reqCourseTimingRules.length >= 2}
-          >
-            Add Timing Rule
-          </Button>
-          <Typography.Text strong>Substitutions</Typography.Text>
-          {reqSubDraftRows.map((row, idx) => (
-            <div key={`new-sub-${idx}`} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
+
+          {reqLinkKind === "COURSE" ? (
+            <>
               <Select
                 allowClear
                 showSearch
                 optionFilterProp="label"
                 style={{ width: "calc(100% - 84px)" }}
-                placeholder="Substitute course"
-                value={row.course_id}
-                onChange={(v) =>
-                  setReqSubDraftRows((prev) =>
-                    prev.map((r, i) => (i === idx ? { ...r, course_id: v === reqCourseId ? undefined : v } : r))
-                  )
-                }
-                options={(coursesQ.data || [])
-                  .filter((c) => c.id !== reqCourseId)
-                  .map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
+                placeholder="Select course"
+                value={reqCourseId}
+                onChange={(v) => {
+                  setReqCourseId(v);
+                  const existing = (requirementLinkedCoursesForModal || []).find((x) => x.course_id === v);
+                  setReqCourseTimingRules(
+                    timingRulesFromFields(
+                      existing?.required_semester || null,
+                      existing?.required_semester_min || null,
+                      existing?.required_semester_max || null
+                    )
+                  );
+                }}
+                options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
               />
+              <Typography.Text strong>Timing Rules</Typography.Text>
+              {reqCourseTimingRules.map((rule, idx) => {
+                const usedOther = new Set(reqCourseTimingRules.filter((_, i) => i !== idx).map((r) => r.type));
+                const typeOptions = timingTypeOptions.filter((o) => !usedOther.has(o.value) || o.value === rule.type);
+                return (
+                  <div key={`timing-rule-${idx}`} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
+                    <Select
+                      style={{ width: 210 }}
+                      value={rule.type}
+                      onChange={(v) =>
+                        setReqCourseTimingRules((prev) => {
+                          const next = prev.map((r, i) => (i === idx ? { ...r, type: v } : r));
+                          if (v === "FIXED") return [{ type: "FIXED", semester: next[idx]?.semester }];
+                          return next.filter((r) => r.type !== "FIXED");
+                        })
+                      }
+                      options={typeOptions}
+                    />
+                    <Select
+                      allowClear
+                      style={{ width: "calc(100% - 294px)" }}
+                      placeholder="Semester"
+                      value={rule.semester}
+                      onChange={(v) =>
+                        setReqCourseTimingRules((prev) =>
+                          prev.map((r, i) => (i === idx ? { ...r, semester: v } : r))
+                        )
+                      }
+                      options={semesterOptions}
+                    />
+                    <Button
+                      danger
+                      style={{ width: 76 }}
+                      onClick={() =>
+                        setReqCourseTimingRules((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                );
+              })}
               <Button
-                danger
-                style={{ width: 76 }}
-                onClick={() => setReqSubDraftRows((prev) => prev.filter((_, i) => i !== idx))}
+                onClick={() =>
+                  setReqCourseTimingRules((prev) => {
+                    if (prev.some((r) => r.type === "FIXED")) return prev;
+                    if (prev.length === 0) return [{ type: "FIXED", semester: undefined }];
+                    if (!prev.some((r) => r.type === "MIN")) return [...prev, { type: "MIN", semester: undefined }];
+                    if (!prev.some((r) => r.type === "MAX")) return [...prev, { type: "MAX", semester: undefined }];
+                    return prev;
+                  })
+                }
+                disabled={reqCourseTimingRules.some((r) => r.type === "FIXED") || reqCourseTimingRules.length >= 2}
               >
-                Delete
+                Add Timing Rule
               </Button>
-            </div>
-          ))}
-          <Button
-            onClick={() => setReqSubDraftRows((prev) => [...prev, { course_id: undefined }])}
-            disabled={!reqCourseId}
-          >
-            Add Substitution
-          </Button>
-          <List
-            size="small"
-            dataSource={substitutionsForSelectedPrimary}
-            renderItem={(s) => (
-              <List.Item
-                actions={[
-                  <Button key="delete" size="small" danger onClick={() => deleteRequirementSubstitution(s.id)}>
+              <Typography.Text strong>Substitutions</Typography.Text>
+              {reqSubDraftRows.map((row, idx) => (
+                <div key={`new-sub-${idx}`} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Select
+                    allowClear
+                    showSearch
+                    optionFilterProp="label"
+                    style={{ width: "calc(100% - 84px)" }}
+                    placeholder="Substitute course"
+                    value={row.course_id}
+                    onChange={(v) =>
+                      setReqSubDraftRows((prev) =>
+                        prev.map((r, i) => (i === idx ? { ...r, course_id: v === reqCourseId ? undefined : v } : r))
+                      )
+                    }
+                    options={(coursesQ.data || [])
+                      .filter((c) => c.id !== reqCourseId)
+                      .map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
+                  />
+                  <Button
+                    danger
+                    style={{ width: 76 }}
+                    onClick={() => setReqSubDraftRows((prev) => prev.filter((_, i) => i !== idx))}
+                  >
                     Delete
-                  </Button>,
-                ]}
+                  </Button>
+                </div>
+              ))}
+              <Button
+                onClick={() => setReqSubDraftRows((prev) => [...prev, { course_id: undefined }])}
+                disabled={!reqCourseId}
               >
-                <Select
-                  allowClear
-                  showSearch
-                  optionFilterProp="label"
-                  style={{ width: "calc(100% - 84px)" }}
-                  value={s.substitute_course_id}
-                  onChange={(v) => updateRequirementSubstitutionCourse(s.id, v)}
-                  options={(coursesQ.data || [])
-                    .filter((c) => c.id !== s.primary_course_id)
-                    .map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
-                />
-              </List.Item>
-            )}
-          />
-        </Space>
-      </Modal>
-      <Modal
-        title={basketLinkId ? "Edit Requirement Basket" : "Add Requirement Basket"}
-        open={basketModalOpen}
-        onCancel={() => {
-          setBasketModalOpen(false);
-          resetBasketModal();
-        }}
-        onOk={saveRequirementBasketModal}
-        okText={basketLinkId ? "Save Basket" : "Add Basket"}
-      >
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <Typography.Text type="secondary">
-            {requirementFullPathMap[basketRequirementId || ""] || requirementNodeMap[basketRequirementId || ""]?.name || "None"}
-          </Typography.Text>
-          <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Use existing basket (optional)"
-            value={basketSelectedId}
-            onChange={(v) => {
-              setBasketSelectedId(v);
-              if (!v) return;
-              const b = (basketsQ.data || []).find((x) => x.id === v);
-              if (!b) return;
-              setBasketName(b.name || "");
-              setBasketDescription(b.description || "");
-              setBasketCourseIds((b.items || []).map((x) => x.course_id).filter(Boolean));
-            }}
-            options={(basketsQ.data || []).map((b) => ({
-              value: b.id,
-              label: `${b.name} (${(b.items || []).length})`,
-            }))}
-          />
-          <Input
-            placeholder="Basket name"
-            value={basketName}
-            onChange={(e) => setBasketName(e.target.value)}
-          />
-          <Input
-            placeholder="Basket description (optional)"
-            value={basketDescription}
-            onChange={(e) => setBasketDescription(e.target.value)}
-          />
-          <Input
-            placeholder="Min count"
-            value={basketMinCount}
-            onChange={(e) => setBasketMinCount(e.target.value)}
-          />
-          <Select
-            mode="multiple"
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Basket courses"
-            value={basketCourseIds}
-            onChange={(v) => setBasketCourseIds(v || [])}
-            options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
-          />
+                Add Substitution
+              </Button>
+              <List
+                size="small"
+                dataSource={substitutionsForSelectedPrimary}
+                renderItem={(s) => (
+                  <List.Item
+                    actions={[
+                      <Button key="delete" size="small" danger onClick={() => deleteRequirementSubstitution(s.id)}>
+                        Delete
+                      </Button>,
+                    ]}
+                  >
+                    <Select
+                      allowClear
+                      showSearch
+                      optionFilterProp="label"
+                      style={{ width: "calc(100% - 84px)" }}
+                      value={s.substitute_course_id}
+                      onChange={(v) => updateRequirementSubstitutionCourse(s.id, v)}
+                      options={(coursesQ.data || [])
+                        .filter((c) => c.id !== s.primary_course_id)
+                        .map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
+                    />
+                  </List.Item>
+                )}
+              />
+            </>
+          ) : (
+            <>
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Use existing basket (optional)"
+                value={basketSelectedId}
+                style={{ width: "100%" }}
+                onChange={(v) => {
+                  setBasketSelectedId(v);
+                  if (!v) return;
+                  const b = (basketsQ.data || []).find((x) => x.id === v);
+                  if (!b) return;
+                  setBasketName(b.name || "");
+                  setBasketDescription(b.description || "");
+                  setBasketCourseIds((b.items || []).map((x) => x.course_id).filter(Boolean));
+                }}
+                options={(basketsQ.data || []).map((b) => ({
+                  value: b.id,
+                  label: `${b.name} (${(b.items || []).length})`,
+                }))}
+              />
+              <Input
+                placeholder="Basket name"
+                value={basketName}
+                onChange={(e) => setBasketName(e.target.value)}
+              />
+              <Input
+                placeholder="Basket description (optional)"
+                value={basketDescription}
+                onChange={(e) => setBasketDescription(e.target.value)}
+              />
+              <Input
+                placeholder="Min count"
+                value={basketMinCount}
+                onChange={(e) => setBasketMinCount(e.target.value)}
+              />
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Basket courses"
+                value={basketCourseIds}
+                style={{ width: "100%" }}
+                onChange={(v) => setBasketCourseIds(v || [])}
+                options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
+              />
+            </>
+          )}
         </Space>
       </Modal>
       <Modal

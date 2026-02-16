@@ -1,8 +1,145 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AutoComplete, Button, Card, Col, Input, List, Modal, Row, Select, Space, Switch, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
+import { AutoComplete, Button, Card, Input, List, Modal, Select, Space, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
 
 const API = "http://127.0.0.1:8000";
+const DEFAULT_PERIOD_ROWS = [
+  { index: 16, short_label: "S7", label: "Semester 7", kind: "ACADEMIC", layout_row: 0, layout_col: 0 },
+  { index: 17, short_label: "S8", label: "Semester 8", kind: "ACADEMIC", layout_row: 0, layout_col: 1 },
+  { index: 18, short_label: "SU4P1", label: "Summer 4 Period 1", kind: "SUMMER", layout_row: 0, layout_col: 2 },
+  { index: 19, short_label: "SU4P2", label: "Summer 4 Period 2", kind: "SUMMER", layout_row: 0, layout_col: 3 },
+  { index: 20, short_label: "SU4P3", label: "Summer 4 Period 3", kind: "SUMMER", layout_row: 0, layout_col: 4 },
+  { index: 11, short_label: "S5", label: "Semester 5", kind: "ACADEMIC", layout_row: 1, layout_col: 0 },
+  { index: 12, short_label: "S6", label: "Semester 6", kind: "ACADEMIC", layout_row: 1, layout_col: 1 },
+  { index: 13, short_label: "SU3P1", label: "Summer 3 Period 1", kind: "SUMMER", layout_row: 1, layout_col: 2 },
+  { index: 14, short_label: "SU3P2", label: "Summer 3 Period 2", kind: "SUMMER", layout_row: 1, layout_col: 3 },
+  { index: 15, short_label: "SU3P3", label: "Summer 3 Period 3", kind: "SUMMER", layout_row: 1, layout_col: 4 },
+  { index: 6, short_label: "S3", label: "Semester 3", kind: "ACADEMIC", layout_row: 2, layout_col: 0 },
+  { index: 7, short_label: "S4", label: "Semester 4", kind: "ACADEMIC", layout_row: 2, layout_col: 1 },
+  { index: 8, short_label: "SU2P1", label: "Summer 2 Period 1", kind: "SUMMER", layout_row: 2, layout_col: 2 },
+  { index: 9, short_label: "SU2P2", label: "Summer 2 Period 2", kind: "SUMMER", layout_row: 2, layout_col: 3 },
+  { index: 10, short_label: "SU2P3", label: "Summer 2 Period 3", kind: "SUMMER", layout_row: 2, layout_col: 4 },
+  { index: 1, short_label: "S1", label: "Semester 1", kind: "ACADEMIC", layout_row: 3, layout_col: 0 },
+  { index: 2, short_label: "S2", label: "Semester 2", kind: "ACADEMIC", layout_row: 3, layout_col: 1 },
+  { index: 3, short_label: "SU1P1", label: "Summer 1 Period 1", kind: "SUMMER", layout_row: 3, layout_col: 2 },
+  { index: 4, short_label: "SU1P2", label: "Summer 1 Period 2", kind: "SUMMER", layout_row: 3, layout_col: 3 },
+  { index: 5, short_label: "SU1P3", label: "Summer 1 Period 3", kind: "SUMMER", layout_row: 3, layout_col: 4 },
+  { index: 0, short_label: "SU0", label: "Summer 0", kind: "SUMMER", layout_row: 4, layout_col: 4 },
+];
+const CANVAS_GRID = [
+  [16, 17, 18, 19, 20],
+  [11, 12, 13, 14, 15],
+  [6, 7, 8, 9, 10],
+  [1, 2, 3, 4, 5],
+  [null, null, null, null, 0],
+];
+const VALIDATION_RULE_JSON_GUIDE = [
+  {
+    title: "Category only",
+    description: "Assign the rule to a category group in the Validation Rules tree.",
+    json: '{"domain":"General"}',
+  },
+  {
+    title: "Cadet Performance category",
+    description: "Advisor-mode category for cadet-specific policy rules (not applied in Design Studio feasibility/checklist).",
+    json: '{"domain":"Cadet Performance"}',
+  },
+  {
+    title: "Program feasibility gate",
+    description: "Flags infeasible selected major/minor combinations from Program Feasibility analysis.",
+    json: '{"domain":"Program/Major Pathway","type":"PROGRAM_FEASIBILITY_GATE"}',
+  },
+  {
+    title: "Residency minimum in-residence hours",
+    description: "Minimum total in-residence credit hours required in the canvas plan.",
+    json: '{"domain":"Residency and Graduation","type":"RESIDENCY_MIN_HOURS","min_hours":125}',
+  },
+  {
+    title: "Residency minimum academic semesters",
+    description: "Minimum number of loaded academic semesters required in the plan.",
+    json: '{"domain":"Residency and Graduation","type":"RESIDENCY_MIN_ACADEMIC_SEMESTERS","min_semesters":8}',
+  },
+  {
+    title: "Semester credit upper bound",
+    description: "Caps academic semester load. Optional summer cap can also be set here.",
+    json: '{"domain":"Curriculum Integrity","max_credits":24,"max_credits_per_summer_period":9}',
+  },
+  {
+    title: "Minimum section size",
+    description: "Checks that sections meet minimum enrollment threshold.",
+    json: '{"domain":"Resources","minimum":6}',
+  },
+  {
+    title: "Prerequisite ordering",
+    description: "Uses prerequisite graph to check ordering violations in the canvas.",
+    json: '{"domain":"Curriculum Integrity"}',
+  },
+  {
+    title: "Instructor load limits",
+    description: "Checks instructor-assigned sections against load constraints.",
+    json: '{"domain":"Resources"}',
+  },
+  {
+    title: "Classroom capacity constraints",
+    description: "Checks section enrollment and assignment against room capacity.",
+    json: '{"domain":"Resources"}',
+  },
+  {
+    title: "Instructor qualification constraints",
+    description: "Checks assigned instructors against qualification links for each course.",
+    json: '{"domain":"Resources"}',
+  },
+  {
+    title: "ABET placeholder",
+    description: "Program-specific accreditation placeholder configuration.",
+    json: '{"domain":"Accreditation","type":"abet_placeholder","program":"Computer Science"}',
+  },
+  {
+    title: "ABET EAC Math/Basic Science minimum",
+    description: "Checks minimum ABET EAC math/basic-science credits from course bucket tags.",
+    json: '{"domain":"Accreditation","type":"ABET_EAC_MATH_BASIC_SCI_MIN","bucket_code":"ABET_MATH_BASIC_SCI","min_credits":30,"program_names":["Aeronautical Engineering"]}',
+  },
+  {
+    title: "ABET EAC Engineering Topics minimum",
+    description: "Checks minimum ABET EAC engineering-topics credits from course bucket tags.",
+    json: '{"domain":"Accreditation","type":"ABET_EAC_ENGINEERING_TOPICS_MIN","bucket_code":"ABET_ENGINEERING_TOPICS","min_credits":45,"program_names":["Aeronautical Engineering"]}',
+  },
+  {
+    title: "Program/Major Pathway: Minor minimum courses",
+    description: "Checks minimum number of courses in each selected minor.",
+    json: '{"domain":"Program/Major Pathway","type":"MINOR_MIN_COURSES","min_courses":5}',
+  },
+  {
+    title: "Program/Major Pathway: Minor minimum hours",
+    description: "Checks minimum credit hours in each selected minor.",
+    json: '{"domain":"Program/Major Pathway","type":"MINOR_MIN_HOURS","min_hours":15}',
+  },
+  {
+    title: "Program/Major Pathway: Minor upper-level minimum",
+    description: "Checks minimum count of upper-level courses in each selected minor.",
+    json: '{"domain":"Program/Major Pathway","type":"MINOR_MIN_UPPER_LEVEL_COURSES","min_count":3,"min_level":300}',
+  },
+  {
+    title: "Program/Major Pathway: Double major divisional separation",
+    description: "Checks selected double-major combinations that require separate divisions for divisional majors.",
+    json: '{"domain":"Program/Major Pathway","type":"DOUBLE_MAJOR_DIVISION_SEPARATION"}',
+  },
+  {
+    title: "Program/Major Pathway: Double major additional hours minimum",
+    description: "Checks required additional non-core hours beyond the larger major in double-major combinations.",
+    json: '{"domain":"Program/Major Pathway","type":"DOUBLE_MAJOR_ADDITIONAL_HOURS_MIN","min_additional_hours":12}',
+  },
+  {
+    title: "Program/Major Pathway Definition: Upper-level course threshold",
+    description: "Defines what course number qualifies as upper-level for pathway checks.",
+    json: '{"domain":"Definitional","type":"DEF_UPPER_LEVEL_COURSE_NUMBER","min_level":300}',
+  },
+  {
+    title: "Domain-local display order",
+    description: "Optional ordering key used when dragging rules within a category.",
+    json: '{"domain":"General","domain_order":1}',
+  },
+];
 
 async function authed(path, opts = {}) {
   const token = localStorage.getItem("session_token") || "";
@@ -12,12 +149,22 @@ async function authed(path, opts = {}) {
   return r.json();
 }
 
+function withDot(code) {
+  const t = String(code || "").trim();
+  if (!t) return "";
+  return t.endsWith(".") ? t : `${t}.`;
+}
+
 export function DesignStudioPage() {
   const qc = useQueryClient();
   const [commentText, setCommentText] = useState("");
   const [changeTitle, setChangeTitle] = useState("");
   const [selectedVersionId, setSelectedVersionId] = useState();
-  const [verboseCanvas, setVerboseCanvas] = useState(false);
+  const [datasetBundleName, setDatasetBundleName] = useState("");
+  const [datasetModules, setDatasetModules] = useState(["ALL"]);
+  const [selectedSavedDatasetId, setSelectedSavedDatasetId] = useState();
+  const datasetImportInputRef = useRef(null);
+  const [canvasViewMode, setCanvasViewMode] = useState("STANDARD");
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addSemester, setAddSemester] = useState();
   const [addCourseId, setAddCourseId] = useState();
@@ -68,6 +215,8 @@ export function DesignStudioPage() {
   const [compareTo, setCompareTo] = useState();
   const [selectedCadetId, setSelectedCadetId] = useState();
   const [selectedCourseId, setSelectedCourseId] = useState();
+  const [newCourseBucketCode, setNewCourseBucketCode] = useState("ABET_MATH_BASIC_SCI");
+  const [newCourseBucketHours, setNewCourseBucketHours] = useState("");
   const [newPrereqId, setNewPrereqId] = useState();
   const [newPrereqType, setNewPrereqType] = useState("PREREQUISITE");
   const [newPrereqEnforcement, setNewPrereqEnforcement] = useState("HARD");
@@ -91,9 +240,38 @@ export function DesignStudioPage() {
   const [editRuleActive, setEditRuleActive] = useState("YES");
   const [editRuleConfig, setEditRuleConfig] = useState("{}");
   const [validationDomainFilter, setValidationDomainFilter] = useState("ALL");
-  const semesterOptions = [1, 2, 3, 4, 5, 6, 7, 8].map((s) => ({ value: s, label: `Semester ${s}` }));
+  const [validationTreeExpandedKeys, setValidationTreeExpandedKeys] = useState([]);
+  const [ruleModalOpen, setRuleModalOpen] = useState(false);
+  const [ruleModalEditId, setRuleModalEditId] = useState();
+  const [ruleFormName, setRuleFormName] = useState("");
+  const [ruleFormTier, setRuleFormTier] = useState(1);
+  const [ruleFormSeverity, setRuleFormSeverity] = useState("WARNING");
+  const [ruleFormActive, setRuleFormActive] = useState("YES");
+  const [ruleFormConfig, setRuleFormConfig] = useState("{}");
+  const [ruleFormDomain, setRuleFormDomain] = useState("General");
+  const [ruleFormDomainSearch, setRuleFormDomainSearch] = useState("");
+  const [ruleCategoryGuideOpen, setRuleCategoryGuideOpen] = useState(false);
+  const periodsQ = useQuery({ queryKey: ["period-metadata"], queryFn: () => authed("/meta/periods") });
+  const periodRows = useMemo(() => {
+    const rows = periodsQ.data?.periods || [];
+    return rows.length ? rows : DEFAULT_PERIOD_ROWS;
+  }, [periodsQ.data]);
+  const planPeriods = useMemo(() => periodRows.map((p) => Number(p.index)), [periodRows]);
+  const periodLabelMap = useMemo(() => {
+    const out = {};
+    for (const p of periodRows) out[Number(p.index)] = p.label;
+    return out;
+  }, [periodRows]);
+  const periodShortLabelMap = useMemo(() => {
+    const out = {};
+    for (const p of periodRows) out[Number(p.index)] = p.short_label;
+    return out;
+  }, [periodRows]);
+  const periodLabel = (period) => periodLabelMap[Number(period)] || `Period ${period}`;
+  const periodShortLabel = (period) => periodShortLabelMap[Number(period)] || `P${period}`;
+  const semesterOptions = planPeriods.map((s) => ({ value: s, label: periodLabel(s) }));
   const timingTypeOptions = [
-    { value: "FIXED", label: "Fixed semester" },
+    { value: "FIXED", label: "Fixed period" },
     { value: "MIN", label: "No earlier than" },
     { value: "MAX", label: "No later than" },
   ];
@@ -149,10 +327,19 @@ export function DesignStudioPage() {
     }
   }, [versionsQ.data, selectedVersionId]);
 
+  useEffect(() => {
+    setSelectedSavedDatasetId(undefined);
+  }, [selectedVersion?.id]);
+
   const canvasQ = useQuery({
     queryKey: ["canvas", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/design/canvas/${selectedVersion.id}`)
+  });
+  const datasetSavedQ = useQuery({
+    queryKey: ["dataset-saved", selectedVersion?.id],
+    enabled: !!selectedVersion?.id,
+    queryFn: () => authed(`/design/datasets/${selectedVersion.id}/saved`)
   });
   const programsQ = useQuery({
     queryKey: ["programs", selectedVersion?.id],
@@ -216,6 +403,11 @@ export function DesignStudioPage() {
     queryKey: ["course-detail", selectedCourseId],
     enabled: !!selectedCourseId,
     queryFn: () => authed(`/design/course-detail/${selectedCourseId}`)
+  });
+  const courseBucketsQ = useQuery({
+    queryKey: ["course-buckets", selectedCourseId],
+    enabled: !!selectedCourseId,
+    queryFn: () => authed(`/courses/${selectedCourseId}/buckets`),
   });
   const courseFulfillmentQ = useQuery({
     queryKey: ["course-fulfillment", selectedCourseId],
@@ -339,6 +531,112 @@ export function DesignStudioPage() {
       await addToCanvas(editCourseId, editSemester, {});
     }
     setEditModalOpen(false);
+  }
+
+  function selectedDatasetModulesCsv() {
+    const mods = (datasetModules || []).map((m) => String(m || "").toUpperCase()).filter(Boolean);
+    if (!mods.length || mods.includes("ALL")) return "ALL";
+    return mods.join(",");
+  }
+
+  async function saveDatasetBundle() {
+    if (!selectedVersion?.id) return;
+    const name = (datasetBundleName || "").trim();
+    if (!name) return;
+    const modulesCsv = selectedDatasetModulesCsv();
+    await authed(
+      `/design/datasets/${selectedVersion.id}/save?name=${encodeURIComponent(name)}&modules=${encodeURIComponent(modulesCsv)}`,
+      { method: "POST" }
+    );
+    setDatasetBundleName("");
+    await qc.invalidateQueries({ queryKey: ["dataset-saved", selectedVersion.id] });
+  }
+
+  async function exportDatasetBundle() {
+    if (!selectedVersion?.id) return;
+    const modulesCsv = selectedDatasetModulesCsv();
+    const payload = await authed(`/design/datasets/${selectedVersion.id}/export?modules=${encodeURIComponent(modulesCsv)}`);
+    const fileNameSafeVersion = String(selectedVersion.name || "dataset-bundle").replace(/[^a-z0-9._-]+/gi, "_");
+    const fileName = `${fileNameSafeVersion}_dataset_bundle.json`;
+    const fileText = JSON.stringify(payload, null, 2);
+    if (window.showSaveFilePicker) {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: "JSON Files", accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(fileText);
+      await writable.close();
+      return;
+    }
+    const blob = new Blob([fileText], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function importDatasetBundleFromFile(file) {
+    if (!selectedVersion?.id || !file) return;
+    const raw = await file.text();
+    const parsed = JSON.parse(raw);
+    const modulesCsv = selectedDatasetModulesCsv();
+    const modulesQuery = modulesCsv === "ALL" ? "" : `&modules=${encodeURIComponent(modulesCsv)}`;
+    const result = await authed(`/design/datasets/${selectedVersion.id}/import?replace_existing=true${modulesQuery}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(parsed),
+    });
+    if (result?.mismatches?.length) {
+      window.alert(`Imported with mismatches:\n- ${result.mismatches.join("\n- ")}`);
+    }
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["courses", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["programs", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirements-list", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirement-fulfillment-version", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirement-substitutions-version", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-rules"] }),
+      qc.invalidateQueries({ queryKey: ["canvas", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["dataset-saved", selectedVersion.id] }),
+    ]);
+  }
+
+  async function loadSavedDatasetBundle() {
+    if (!selectedVersion?.id || !selectedSavedDatasetId) return;
+    const modulesCsv = selectedDatasetModulesCsv();
+    const modulesQuery = modulesCsv === "ALL" ? "" : `&modules=${encodeURIComponent(modulesCsv)}`;
+    const result = await authed(
+      `/design/datasets/${selectedVersion.id}/saved/${encodeURIComponent(selectedSavedDatasetId)}/load?replace_existing=true${modulesQuery}`,
+      { method: "POST" }
+    );
+    if (result?.mismatches?.length) {
+      window.alert(`Loaded with mismatches:\n- ${result.mismatches.join("\n- ")}`);
+    }
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["courses", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["programs", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirements-list", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirement-fulfillment-version", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirement-substitutions-version", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-rules"] }),
+      qc.invalidateQueries({ queryKey: ["canvas", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["dataset-saved", selectedVersion.id] }),
+    ]);
   }
 
   function openEditCourseModal(course, semester) {
@@ -1014,6 +1312,42 @@ export function DesignStudioPage() {
     await qc.invalidateQueries({ queryKey: ["substitutions", selectedCourseId] });
   }
 
+  async function addCourseBucket() {
+    if (!selectedCourseId || !newCourseBucketCode) return;
+    const payload = {
+      bucket_code: String(newCourseBucketCode || "").trim(),
+      credit_hours_override: newCourseBucketHours === "" ? null : Number(newCourseBucketHours),
+      sort_order: 0,
+    };
+    await authed(`/courses/${selectedCourseId}/buckets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    setNewCourseBucketHours("");
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["course-buckets", selectedCourseId] }),
+      qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion?.id] }),
+    ]);
+  }
+
+  async function deleteCourseBucket(bucketTagId) {
+    if (!bucketTagId) return;
+    await authed(`/courses/buckets/${bucketTagId}`, { method: "DELETE" });
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["course-buckets", selectedCourseId] }),
+      qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion?.id] }),
+    ]);
+  }
+
   async function linkRequirementToCourse() {
     if (!selectedCourseId || !linkRequirementId) return;
     await authed("/requirements/fulfillment", {
@@ -1121,6 +1455,174 @@ export function DesignStudioPage() {
   async function deleteValidationRule(ruleId) {
     await authed(`/design/validation-rules/${ruleId}`, { method: "DELETE" });
     if (editRuleId === ruleId) setEditRuleId(undefined);
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["validation-rules"] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+    ]);
+  }
+
+  function parseRuleConfig(rule) {
+    try {
+      return JSON.parse(rule?.config_json || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function inferValidationDomain(rule) {
+    const name = String(rule?.name || "").toLowerCase();
+    const cfg = parseRuleConfig(rule);
+    const explicit = String(cfg?.domain || "").trim();
+    if (explicit) return explicit;
+    if (
+      name.includes("abet") ||
+      name.includes("major") ||
+      cfg.program ||
+      cfg.program_id ||
+      cfg.major ||
+      cfg.pathway
+    ) {
+      return "Program/Major Pathway";
+    }
+    if (
+      name.includes("prerequisite") ||
+      name.includes("ordering") ||
+      name.includes("co-requisite") ||
+      name.includes("integrity")
+    ) {
+      return "Curriculum Integrity";
+    }
+    if (
+      name.includes("section") ||
+      name.includes("instructor") ||
+      name.includes("classroom") ||
+      name.includes("capacity") ||
+      name.includes("resource")
+    ) {
+      return "Resources";
+    }
+    return "General";
+  }
+
+  function compareRuleOrder(a, b) {
+    const aCfg = parseRuleConfig(a);
+    const bCfg = parseRuleConfig(b);
+    const aOrder = Number(aCfg?.domain_order);
+    const bOrder = Number(bCfg?.domain_order);
+    const aHasOrder = Number.isFinite(aOrder) && aOrder > 0;
+    const bHasOrder = Number.isFinite(bOrder) && bOrder > 0;
+    if (aHasOrder && bHasOrder && aOrder !== bOrder) return aOrder - bOrder;
+    if (aHasOrder !== bHasOrder) return aHasOrder ? -1 : 1;
+    const aNum = Number(String(a?.rule_code || "").replace(/^R/i, ""));
+    const bNum = Number(String(b?.rule_code || "").replace(/^R/i, ""));
+    const aHas = Number.isFinite(aNum) && aNum > 0;
+    const bHas = Number.isFinite(bNum) && bNum > 0;
+    if (aHas && bHas && aNum !== bNum) return aNum - bNum;
+    if (aHas !== bHas) return aHas ? -1 : 1;
+    return String(a?.name || "").localeCompare(String(b?.name || ""));
+  }
+
+  async function handleValidationTreeDrop(info) {
+    const dragKey = String(info.dragNode?.key || "");
+    const dropKey = String(info.node?.key || "");
+    if (!dragKey.startsWith("vrule:")) return;
+    if (!dropKey.startsWith("vrule:")) return;
+    const dragId = dragKey.replace("vrule:", "");
+    const dropId = dropKey.replace("vrule:", "");
+    if (!dragId || !dropId || dragId === dropId) return;
+    const all = validationRulesWithDomain || [];
+    const dragRule = all.find((r) => r.id === dragId);
+    const dropRule = all.find((r) => r.id === dropId);
+    if (!dragRule || !dropRule || dragRule.domain !== dropRule.domain) return;
+    const ordered = [...all].filter((r) => r.domain === dragRule.domain).sort(compareRuleOrder);
+    const from = ordered.findIndex((r) => r.id === dragId);
+    const target = ordered.findIndex((r) => r.id === dropId);
+    if (from < 0 || target < 0) return;
+    const next = [...ordered];
+    const [moved] = next.splice(from, 1);
+    let insertAt = target;
+    const dropPos = Number(info.dropPosition);
+    const nodePos = Number(String(info.node?.pos || "").split("-").pop());
+    const relative = Number.isFinite(dropPos) && Number.isFinite(nodePos) ? dropPos - nodePos : 0;
+    if (relative > 0) insertAt += 1;
+    if (from < target && relative <= 0) insertAt -= 1;
+    if (insertAt < 0) insertAt = 0;
+    if (insertAt > next.length) insertAt = next.length;
+    next.splice(insertAt, 0, moved);
+    for (let idx = 0; idx < next.length; idx += 1) {
+      const r = next[idx];
+      const cfg = parseRuleConfig(r);
+      cfg.domain = dragRule.domain;
+      cfg.domain_order = idx + 1;
+      await authed(`/design/validation-rules/${r.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: cfg }),
+      });
+    }
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["validation-rules"] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+    ]);
+  }
+
+  function openCreateRuleModal() {
+    setRuleModalEditId(undefined);
+    setRuleFormName("");
+    setRuleFormTier(1);
+    setRuleFormSeverity("WARNING");
+    setRuleFormActive("YES");
+    setRuleFormConfig("{}");
+    setRuleFormDomain("General");
+    setRuleFormDomainSearch("");
+    setRuleModalOpen(true);
+  }
+
+  function openEditRuleModal(rule) {
+    setRuleModalEditId(rule.id);
+    setRuleFormName(rule.name || "");
+    setRuleFormTier(Number(rule.tier || 1));
+    setRuleFormSeverity(rule.severity || "WARNING");
+    setRuleFormActive(rule.active ? "YES" : "NO");
+    setRuleFormConfig(rule.config_json || "{}");
+    const cfg = parseRuleConfig(rule);
+    setRuleFormDomain(String(cfg.domain || inferValidationDomain(rule) || "General"));
+    setRuleFormDomainSearch("");
+    setRuleModalOpen(true);
+  }
+
+  async function saveRuleModal() {
+    if (!ruleFormName.trim()) return;
+    let cfg = {};
+    try {
+      cfg = JSON.parse(ruleFormConfig || "{}");
+    } catch {
+      return;
+    }
+    cfg.domain = String(ruleFormDomain || "General").trim() || "General";
+    const payload = {
+      name: ruleFormName.trim(),
+      tier: Number(ruleFormTier),
+      severity: ruleFormSeverity,
+      active: ruleFormActive === "YES",
+      config: cfg,
+    };
+    if (ruleModalEditId) {
+      await authed(`/design/validation-rules/${ruleModalEditId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      await authed("/design/validation-rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
+    setRuleModalOpen(false);
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["validation-rules"] }),
       qc.invalidateQueries({ queryKey: ["validation", selectedVersion?.id] }),
@@ -1379,6 +1881,19 @@ export function DesignStudioPage() {
     ]);
   }
 
+  async function deleteCoreRulesRule(programId, programName) {
+    const existingRule = findExistingCoreRulesRule(programId, programName);
+    if (!existingRule) return;
+    await authed(`/design/validation-rules/${existingRule.id}`, { method: "DELETE" });
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["validation-rules"] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion?.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion?.id] }),
+    ]);
+  }
+
   function flattenTreeForPersist(nodes, parentId = null, out = []) {
     nodes.forEach((n, idx) => {
       out.push({ requirement_id: n.key, parent_requirement_id: parentId, sort_order: idx });
@@ -1508,7 +2023,7 @@ export function DesignStudioPage() {
     const treeData = (requirementsTreeQ.data?.tree || []).map(function mapNode(n) {
       return {
         key: n.id,
-        title: `${n.name} (${n.logic_type})`,
+        title: `${n.node_code ? `${withDot(n.node_code)} ` : ""}${n.name} (${n.logic_type})`,
         children: (n.children || []).map(mapNode)
       };
     });
@@ -1607,17 +2122,17 @@ export function DesignStudioPage() {
     const exact = row.required_semester;
     const min = row.required_semester_min;
     const max = row.required_semester_max;
-    if (exact != null) return `S${exact} fixed`;
+    if (exact != null) return `${periodShortLabel(exact)} fixed`;
     const parts = [];
-    if (min) parts.push(`>= S${min}`);
-    if (max) parts.push(`<= S${max}`);
+    if (min) parts.push(`>= ${periodShortLabel(min)}`);
+    if (max) parts.push(`<= ${periodShortLabel(max)}`);
     return parts.join(", ");
   };
   const coreRuleTimingRules = (row) =>
     timingRulesFromFields(row?.required_semester || null, row?.required_semester_min || null, row?.required_semester_max || null);
   const allowedSemestersForTiming = (timing) => {
     const allowed = new Set();
-    for (let s = 1; s <= 8; s += 1) {
+    for (const s of planPeriods) {
       if (timing.required_semester != null && Number(s) !== Number(timing.required_semester)) continue;
       if (timing.required_semester_min != null && Number(s) < Number(timing.required_semester_min)) continue;
       if (timing.required_semester_max != null && Number(s) > Number(timing.required_semester_max)) continue;
@@ -1831,8 +2346,8 @@ export function DesignStudioPage() {
         key: n.id,
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
-            <span>{n.name}</span>
-            <Space size={4} style={{ marginLeft: "auto", justifyContent: "flex-end" }}>
+            <span>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${n.name}`}</span>
+            <Space size={4} className="tree-node-actions">
               {canAddSubNode ? (
                 <Button
                   size="small"
@@ -1924,7 +2439,7 @@ export function DesignStudioPage() {
               })()}
             </span>
             {formatSemesterConstraint(c) ? <Tag>{formatSemesterConstraint(c)}</Tag> : null}
-            <Space style={{ marginLeft: "auto" }}>
+            <Space className="tree-node-actions">
               <Button
                 size="small"
                 onClick={(e) => {
@@ -1972,7 +2487,7 @@ export function DesignStudioPage() {
           title: (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
               <Space>
-                <span>{`${g.name || `Core Rule ${idx + 1}`}: ${(g.course_numbers || []).join(" / ")}`}</span>
+                <span>{`${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${g.name || `Core Rule ${idx + 1}`}: ${(g.course_numbers || []).join(" / ")}`}</span>
                 {formatSemesterConstraint(g) ? <Tag>{formatSemesterConstraint(g)}</Tag> : null}
               </Space>
               <Button
@@ -1996,16 +2511,28 @@ export function DesignStudioPage() {
           key: `core-rules:${n.id}`,
           title: (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
-              <span>Core Rules</span>
-              <Button
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openCoreRulesBuilder(n.program_id, n.program_name);
-                }}
-              >
-                Edit
-              </Button>
+              <span>{`${withDot(`${n.node_code || "R1"}.C1`)} Core Rules`}</span>
+              <Space className="tree-node-actions">
+                <Button
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openCoreRulesBuilder(n.program_id, n.program_name);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="small"
+                  danger
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteCoreRulesRule(n.program_id, n.program_name);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Space>
             </div>
           ),
           children: groupLeaves,
@@ -2203,44 +2730,13 @@ export function DesignStudioPage() {
     return out;
   }, [coreRulesRows]);
   const validationRulesWithDomain = useMemo(() => {
-    function inferDomain(rule) {
-      const name = String(rule?.name || "").toLowerCase();
-      let cfg = {};
-      try {
-        cfg = JSON.parse(rule?.config_json || "{}");
-      } catch {
-        cfg = {};
-      }
-      if (
-        name.includes("abet") ||
-        name.includes("major") ||
-        cfg.program ||
-        cfg.program_id ||
-        cfg.major ||
-        cfg.pathway
-      ) {
-        return "PROGRAM_PATHWAY";
-      }
-      if (
-        name.includes("prerequisite") ||
-        name.includes("ordering") ||
-        name.includes("co-requisite") ||
-        name.includes("integrity")
-      ) {
-        return "CURRICULUM_INTEGRITY";
-      }
-      if (
-        name.includes("section") ||
-        name.includes("instructor") ||
-        name.includes("classroom") ||
-        name.includes("capacity") ||
-        name.includes("resource")
-      ) {
-        return "RESOURCES";
-      }
-      return "GENERAL";
-    }
-    return (validationRulesQ.data || []).map((r) => ({ ...r, domain: inferDomain(r) }));
+    return (validationRulesQ.data || [])
+      .filter((r) => {
+        const cfg = parseRuleConfig(r);
+        const t = String(cfg.type || "").toUpperCase();
+        return !["MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"].includes(t);
+      })
+      .map((r) => ({ ...r, domain: inferValidationDomain(r) }));
   }, [validationRulesQ.data]);
   const filteredValidationRules = useMemo(
     () =>
@@ -2249,6 +2745,73 @@ export function DesignStudioPage() {
         : validationRulesWithDomain.filter((r) => r.domain === validationDomainFilter),
     [validationDomainFilter, validationRulesWithDomain]
   );
+  const validationCategoryOptions = useMemo(() => {
+    const defaults = ["Curriculum Integrity", "Definitional", "General", "Program/Major Pathway", "Resources"];
+    const seen = new Set(defaults);
+    for (const r of validationRulesWithDomain) {
+      const d = String(r.domain || "").trim();
+      if (d) seen.add(d);
+    }
+    return Array.from(seen)
+      .sort((a, b) => a.localeCompare(b))
+      .map((d) => ({ value: d }));
+  }, [validationRulesWithDomain]);
+  const validationDomainFilterOptions = useMemo(
+    () => [{ value: "ALL", label: "All Rules" }, ...validationCategoryOptions.map((o) => ({ value: o.value, label: o.value }))],
+    [validationCategoryOptions]
+  );
+  const orderedValidationRules = useMemo(
+    () => [...filteredValidationRules].sort(compareRuleOrder),
+    [filteredValidationRules]
+  );
+  const validationTopKeys = useMemo(() => {
+    const domains = new Set(orderedValidationRules.map((r) => r.domain || "General"));
+    return Array.from(domains).sort().map((d) => `vdom:${d}`);
+  }, [orderedValidationRules]);
+  const validationAllKeys = useMemo(() => {
+    const out = [...validationTopKeys];
+    for (const r of orderedValidationRules) out.push(`vrule:${r.id}`);
+    return out;
+  }, [orderedValidationRules, validationTopKeys]);
+  const validationTreeData = useMemo(() => {
+    const grouped = {};
+    for (const r of orderedValidationRules) {
+      const d = r.domain || "General";
+      grouped[d] = grouped[d] || [];
+      grouped[d].push(r);
+    }
+    return Object.entries(grouped)
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+      .map(([domain, rules]) => ({
+        key: `vdom:${domain}`,
+        title: `${domain} (${rules.length})`,
+        selectable: false,
+        children: rules.map((r) => ({
+          key: `vrule:${r.id}`,
+          isLeaf: true,
+          selectable: false,
+          draggable: true,
+          title: (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
+              <Space>
+                <Typography.Text>{`${r.rule_code ? `${r.rule_code}. ` : ""}${r.name}`}</Typography.Text>
+              </Space>
+              <Space className="tree-node-actions">
+                <Button size="small" onClick={() => toggleValidationRule(r.id, r.active)}>
+                  {r.active ? "Disable" : "Enable"}
+                </Button>
+                <Button size="small" onClick={() => openEditRuleModal(r)}>
+                  Edit
+                </Button>
+                <Button size="small" danger onClick={() => deleteValidationRule(r.id)}>
+                  Delete
+                </Button>
+              </Space>
+            </div>
+          ),
+        })),
+      }));
+  }, [orderedValidationRules]);
   const canvasFilteredCourseIds = useMemo(() => {
     const selectedFilter = canvasFilter || "ALL";
     if (selectedFilter === "ALL") return null;
@@ -2389,35 +2952,90 @@ export function DesignStudioPage() {
     if (!selectedVersion?.id) return;
     qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] });
   }, [requirementsTreeQ.dataUpdatedAt, validationRulesQ.dataUpdatedAt, selectedVersion?.id]);
+  useEffect(() => {
+    setValidationTreeExpandedKeys(validationTopKeys);
+  }, [validationTopKeys]);
 
   const isReqEditMode = !!selectedRuleNodeId;
   const isSubNodeCreate = !isReqEditMode && reqScopeLocked && !!editReqParentId;
   const isEditingSubNode = isReqEditMode && !!editReqParentId;
+  function hasTimingIssue(node) {
+    if ((node?.fixed_semester_violations || []).length) return true;
+    for (const child of node?.children || []) {
+      if (hasTimingIssue(child)) return true;
+    }
+    return false;
+  }
 
   function renderChecklist(nodes, level = 0) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
         {(nodes || []).map((r) => (
-          <div key={`${r.requirement_id}-${level}`} style={{ marginLeft: level * 14 }}>
-            <Space>
-              <Tag color={r.is_satisfied ? "green" : "red"}>{r.is_satisfied ? "Met" : "Open"}</Tag>
+          <div key={`${r.requirement_id}-${level}`} style={{ marginLeft: level * 14, padding: "2px 0" }}>
+            <Space style={{ whiteSpace: "nowrap" }}>
+              <span style={{ display: "inline-block", width: 64 }}>
+                <Tag color={r.is_satisfied && !hasTimingIssue(r) ? "green" : "red"}>
+                  {r.is_satisfied && !hasTimingIssue(r) ? "Met" : "Open"}
+                </Tag>
+              </span>
               {String(r.requirement_id || "").startsWith("core-rule:")
-                ? <Typography.Text>{`${r.name} ${r.satisfied_units}/${r.required_units}`}</Typography.Text>
+                ? <Typography.Text>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${r.name} ${r.satisfied_units}/${r.required_units}`}</Typography.Text>
                 : (
                   <>
-                    <Typography.Text strong={level === 0}>{r.name}</Typography.Text>
+                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${r.name}`}</Typography.Text>
                     <Typography.Text type="secondary">
                       {r.satisfied_units}/{r.required_units}
                     </Typography.Text>
                   </>
                 )}
+              {(r.fixed_semester_violations || []).length ? (
+                <Typography.Text type="danger">{(r.fixed_semester_violations || []).join(" | ")}</Typography.Text>
+              ) : null}
             </Space>
-            {(r.fixed_semester_violations || []).map((v) => (
-              <div key={`${r.requirement_id}-${v}`}>
-                <Typography.Text type="danger">{v}</Typography.Text>
-              </div>
-            ))}
-            {r.children?.length ? <div style={{ marginTop: 6 }}>{renderChecklist(r.children, level + 1)}</div> : null}
+            {r.children?.length ? <div>{renderChecklist(r.children, level + 1)}</div> : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  function validationColor(status) {
+    if (status === "FAIL") return "red";
+    return "green";
+  }
+  function renderValidationLineItems(items, emptyText = "None") {
+    const rows = items || [];
+    if (!rows.length) return <Typography.Text type="secondary">{emptyText}</Typography.Text>;
+    return (
+      <List
+        size="small"
+        dataSource={rows}
+        renderItem={(it) => (
+          <List.Item>
+            <Space style={{ whiteSpace: "nowrap" }}>
+              <Tag color={validationColor(it.status || "PASS")}>{it.status || "PASS"}</Tag>
+              <Typography.Text>{`${it.rule_code ? `${it.rule_code}. ` : ""}${it.rule_name || "Validation Rule"}`}</Typography.Text>
+              {it.message ? <Typography.Text type={String(it.status || "PASS").toUpperCase() === "FAIL" ? "danger" : "secondary"}>{it.message}</Typography.Text> : null}
+            </Space>
+          </List.Item>
+        )}
+      />
+    );
+  }
+  function renderConsistencyTree(nodes, level = 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {(nodes || []).map((n, idx) => (
+          <div key={`${n.requirement_id || n.node_code || idx}-${level}`} style={{ marginLeft: level * 14, padding: "2px 0" }}>
+            <Space style={{ whiteSpace: "nowrap" }}>
+              <span style={{ display: "inline-block", width: 108 }}>
+                <Tag color={n.status === "INCONSISTENT" ? "red" : "green"}>
+                  {n.status === "INCONSISTENT" ? "Inconsistent" : "Consistent"}
+                </Tag>
+              </span>
+              <Typography.Text>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${n.name || ""}`}</Typography.Text>
+              {n.message ? <Typography.Text type="danger">{n.message}</Typography.Text> : null}
+            </Space>
+            {n.children?.length ? <div>{renderConsistencyTree(n.children, level + 1)}</div> : null}
           </div>
         ))}
       </div>
@@ -2428,45 +3046,74 @@ export function DesignStudioPage() {
       title: "Type",
       dataIndex: "kind",
       key: "kind",
-      width: 130,
-      render: (v) => String(v || "").replaceAll("_", " "),
+      width: 108,
+      render: (v) => {
+        const raw = String(v || "").toUpperCase();
+        if (raw === "MAJOR") return "Major";
+        if (raw === "MINOR") return "Minor";
+        if (raw === "DOUBLE_MAJOR") return "Double Major";
+        if (raw === "DOUBLE_MINOR") return "Double Minor";
+        if (raw === "MAJOR_MINOR") return "Major/Minor";
+        return String(v || "")
+          .toLowerCase()
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, (m) => m.toUpperCase());
+      },
     },
     {
       title: "Combination",
       dataIndex: "label",
       key: "label",
-      width: 340,
+      width: 250,
+      render: (v) =>
+        String(v || "")
+          .replaceAll("Double Major - ", "")
+          .replaceAll("Double Minor - ", "")
+          .replaceAll("Major/Minor - ", "")
+          .replaceAll("Major - ", "")
+          .replaceAll("Minor - ", ""),
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: 110,
-      render: (v) => <Tag color={v === "FAIL" ? "red" : v === "WARNING" ? "orange" : "green"}>{v}</Tag>,
+      title: "Overall Status",
+      dataIndex: "overall_status",
+      key: "overall_status",
+      width: 170,
+      render: (_, row) => (
+        <Space>
+          <Tag color={row.status === "FAIL" ? "red" : "green"}>{row.status || "PASS"}</Tag>
+          <Tag color={row.consistency_status === "INCONSISTENT" ? "red" : "green"}>{row.consistency_status || "CONSISTENT"}</Tag>
+        </Space>
+      ),
     },
     {
-      title: "Issues",
-      dataIndex: "issue_count",
-      key: "issue_count",
-      width: 90,
+      title: (
+        <span style={{ whiteSpace: "normal", lineHeight: 1.15 }}>
+          Validation Rules
+          <br />
+          (Pass/Fail)
+        </span>
+      ),
+      key: "validation_pf",
+      width: 128,
+      render: (_, row) => `${row.validation_pass_count ?? 0}/${row.validation_fail_count ?? 0}`,
     },
     {
-      title: "Constraints",
-      dataIndex: "constraint_count",
-      key: "constraint_count",
-      width: 110,
+      title: "Program Design Rules (Consistent/Inconsistent)",
+      key: "consistency_ci",
+      width: 200,
+      render: (_, row) => `${row.consistency_pass_count ?? 0}/${row.consistency_fail_count ?? 0}`,
     },
     {
-      title: "Min Credits",
+      title: <span style={{ whiteSpace: "normal", lineHeight: 1.15 }}>Min Credits</span>,
       dataIndex: "min_required_credits",
       key: "min_required_credits",
-      width: 110,
+      width: 90,
     },
     {
       title: "Mandatory Courses",
       dataIndex: "mandatory_course_count",
       key: "mandatory_course_count",
-      width: 140,
+      width: 118,
     },
   ];
   const selectedChecklistFeasibility = useMemo(() => {
@@ -2480,14 +3127,23 @@ export function DesignStudioPage() {
       for (const id of selectedSet) if (!s.has(id)) return false;
       return true;
     };
-    if (selected.length === 1) {
-      return rows.find((r) => sameIds(r.program_ids)) || null;
-    }
-    if (selected.length === 2) {
-      return rows.find((r) => sameIds(r.program_ids)) || null;
-    }
-    return null;
+    const matches = rows.filter((r) => sameIds(r.program_ids));
+    if (!matches.length) return null;
+    return matches[0];
   }, [checklistProgramIds, feasibilityQ.data]);
+  const checklistValidationItems = useMemo(() => {
+    return checklistQ.data?.validation_items || [];
+  }, [checklistQ.data]);
+  const isSimplifiedCanvas = canvasViewMode === "SIMPLIFIED";
+  const isVerboseCanvas = canvasViewMode === "VERBOSE";
+  const sectionTitleStyle = { fontSize: 14, margin: 0 };
+  const categorySelectOptions = useMemo(() => {
+    const typed = String(ruleFormDomainSearch || "").trim();
+    const base = validationCategoryOptions.map((o) => ({ value: o.value, label: o.value }));
+    if (!typed) return base;
+    if (base.some((o) => String(o.value).toLowerCase() === typed.toLowerCase())) return base;
+    return [{ value: typed, label: typed }, ...base];
+  }, [validationCategoryOptions, ruleFormDomainSearch]);
 
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
@@ -2512,8 +3168,16 @@ export function DesignStudioPage() {
               onChange={setCanvasFilter}
               options={rulesetFilterOptions}
             />
-            <Typography.Text type="secondary">Verbose</Typography.Text>
-            <Switch checked={verboseCanvas} onChange={setVerboseCanvas} />
+            <Select
+              style={{ width: 210 }}
+              value={canvasViewMode}
+              onChange={setCanvasViewMode}
+              options={[
+                { value: "SIMPLIFIED", label: "Simplified" },
+                { value: "STANDARD", label: "Standard" },
+                { value: "VERBOSE", label: "Verbose" },
+              ]}
+            />
           </Space>
           <Space>
             <Typography.Text type="secondary">Version Lifecycle</Typography.Text>
@@ -2523,89 +3187,165 @@ export function DesignStudioPage() {
             <Button size="small" onClick={() => setVersionStatus("ACTIVE")}>ACTIVE</Button>
             <Button size="small" onClick={() => setVersionStatus("ARCHIVED")}>ARCHIVED</Button>
           </Space>
+          <Space wrap>
+            <Select
+              mode="multiple"
+              size="small"
+              style={{ width: 280 }}
+              value={datasetModules}
+              onChange={(vals) => setDatasetModules(vals?.length ? vals : ["ALL"])}
+              options={[
+                { value: "ALL", label: "ALL" },
+                { value: "COURSES", label: "COURSES" },
+                { value: "RULES", label: "RULES" },
+                { value: "CANVAS", label: "CANVAS" },
+                { value: "REPORTS", label: "REPORTS" },
+              ]}
+            />
+            <Input
+              size="small"
+              style={{ width: 260 }}
+              placeholder="Saved dataset bundle name"
+              value={datasetBundleName}
+              onChange={(e) => setDatasetBundleName(e.target.value)}
+            />
+            <Button size="small" type="primary" onClick={saveDatasetBundle} disabled={!selectedVersion?.id || !datasetBundleName.trim()}>
+              Save Dataset
+            </Button>
+            <Button size="small" onClick={exportDatasetBundle} disabled={!selectedVersion?.id}>
+              Export Dataset
+            </Button>
+            <Button size="small" onClick={() => datasetImportInputRef.current?.click()} disabled={!selectedVersion?.id}>
+              Import Dataset
+            </Button>
+            <input
+              ref={datasetImportInputRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: "none" }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                await importDatasetBundleFromFile(file);
+              }}
+            />
+            <Select
+              allowClear
+              size="small"
+              style={{ width: 340 }}
+              placeholder="Saved dataset bundle"
+              value={selectedSavedDatasetId}
+              onChange={setSelectedSavedDatasetId}
+              options={(datasetSavedQ.data || []).map((s) => ({
+                value: s.id,
+                label: `${s.name} [${s.modules_csv}] (${new Date(s.created_at).toLocaleString()})`,
+              }))}
+            />
+            <Button size="small" onClick={loadSavedDatasetBundle} disabled={!selectedVersion?.id || !selectedSavedDatasetId}>
+              Load Dataset
+            </Button>
+          </Space>
         </Space>
       </Card>
-      <Row gutter={12}>
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((semester) => (
-          <Col key={semester} xs={24} sm={12} md={8} lg={6} xl={6}>
-            <Card
-              size="small"
-              title={
-                <Space>
-                  <span>{`Semester ${semester}`}</span>
-                  <Tag>
-                    {(canvasQ.data?.[String(semester)] || [])
-                      .filter((course) => !canvasFilteredCourseIds || canvasFilteredCourseIds.has(course.course_id))
-                      .reduce((sum, c) => sum + Number(c.credits || 0), 0)} cr
-                  </Tag>
-                </Space>
-              }
-              extra={
-                <Button size="small" type="primary" onClick={() => openAddCourseModal(semester)}>
-                  Add Course
-                </Button>
-              }
-              className="semester-card"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => dropToSemester(semester, e)}
-            >
-              {(canvasQ.data?.[String(semester)] || [])
-                .filter((course) => !canvasFilteredCourseIds || canvasFilteredCourseIds.has(course.course_id))
-                .map((course) => (
-                <Tooltip
-                  key={course.plan_item_id}
-                  title={`${course.course_number} | ${course.title} | ${aspectLabel(course)}${course.major_program_name ? ` | ${course.major_program_name}` : ""}`}
-                >
-                  <Card
-                    size="small"
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", course.plan_item_id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => dropToCourse(semester, course.plan_item_id, e)}
-                    style={{ marginBottom: 8, cursor: "grab" }}
+      <div className="timeline-grid">
+        {CANVAS_GRID.flatMap((row, rowIdx) =>
+          row.map((periodIdx, colIdx) => {
+            if (periodIdx == null) {
+              return <div key={`blank-${rowIdx}-${colIdx}`} className="timeline-blank-cell" />;
+            }
+            const periodCourses = (canvasQ.data?.[String(periodIdx)] || [])
+              .filter((course) => !canvasFilteredCourseIds || canvasFilteredCourseIds.has(course.course_id));
+            return (
+              <Card
+                key={`period-${periodIdx}`}
+                size="small"
+                title={
+                  <Space>
+                    <span>{periodLabel(periodIdx)}</span>
+                    <Tag>{periodCourses.reduce((sum, c) => sum + Number(c.credits || 0), 0)} cr</Tag>
+                  </Space>
+                }
+                extra={
+                  <Button size="small" type="primary" onClick={() => openAddCourseModal(periodIdx)}>
+                    +
+                  </Button>
+                }
+                className="semester-card timeline-cell"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => dropToSemester(periodIdx, e)}
+              >
+                {periodCourses.map((course) => (
+                  <Tooltip
+                    key={course.plan_item_id}
+                    title={`${course.course_number} | ${course.title} | ${aspectLabel(course)}${course.major_program_name ? ` | ${course.major_program_name}` : ""}`}
                   >
-	                    <Space direction="vertical" style={{ width: "100%" }}>
-	                      <Typography.Text strong>{course.course_number}</Typography.Text>
-	                      <Space style={{ width: "100%", justifyContent: "flex-end" }} wrap>
-	                        {canvasTimingByCourse[course.course_id] ? (
-	                          (() => {
-	                            const constraints = canvasTimingByCourse[course.course_id] || [];
-	                            const inRequired = constraints.some((c) => semesterMatchesConstraint(semester, c));
-	                            const labels = constraints.map((c) => formatSemesterConstraint(c)).filter(Boolean);
-	                            const single = labels.length === 1 ? labels[0] : `${labels.length} constraints`;
-	                            return (
-	                              <Tooltip title={labels.join(" | ")}>
-	                                <Tag color={inRequired ? "green" : "orange"}>{single}</Tag>
-	                              </Tooltip>
-	                            );
-	                          })()
-	                        ) : null}
-	                        <Space>
-	                          <Tag>{course.credits} cr</Tag>
-	                          <Button size="small" onClick={() => openEditCourseModal(course, semester)}>
-	                            Edit
-	                          </Button>
-	                          <Button size="small" danger onClick={() => removeFromCanvas(course.plan_item_id)}>
-	                            Delete
-	                          </Button>
-	                        </Space>
-	                      </Space>
-                      {verboseCanvas && (
-                        <Space>
-                          <Typography.Text type="secondary">{course.title}</Typography.Text>
-                          <Tag color="blue">{aspectLabel(course)}</Tag>
-                          {course.major_program_name && <Tag color="geekblue">{course.major_program_name}</Tag>}
+                    {isSimplifiedCanvas ? (
+                      <div
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", course.plan_item_id)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => dropToCourse(periodIdx, course.plan_item_id, e)}
+                        style={{ marginBottom: 6, cursor: "grab" }}
+                      >
+                        <Space style={{ width: "100%", justifyContent: "space-between" }}>
+                          <Typography.Text strong>{course.course_number}</Typography.Text>
+                          <Tag>{course.credits} cr</Tag>
                         </Space>
-                      )}
-                    </Space>
-                  </Card>
-                </Tooltip>
-              ))}
-            </Card>
-          </Col>
-        ))}
-      </Row>
-      <Card title="Dynamic Checklist (Core + Selected Programs)">
+                      </div>
+                    ) : (
+                      <Card
+                        size="small"
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", course.plan_item_id)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => dropToCourse(periodIdx, course.plan_item_id, e)}
+                        style={{ marginBottom: 8, cursor: "grab" }}
+                      >
+		                    <Space direction="vertical" style={{ width: "100%" }}>
+		                      <Typography.Text strong>{course.course_number}</Typography.Text>
+		                      <Space style={{ width: "100%", justifyContent: "flex-end" }} wrap>
+		                        {canvasTimingByCourse[course.course_id] ? (
+		                          (() => {
+		                            const constraints = canvasTimingByCourse[course.course_id] || [];
+		                            const inRequired = constraints.some((c) => periodIdx != null && semesterMatchesConstraint(periodIdx, c));
+		                            const labels = constraints.map((c) => formatSemesterConstraint(c)).filter(Boolean);
+		                            const single = labels.length === 1 ? labels[0] : `${labels.length} constraints`;
+		                            return (
+		                              <Tooltip title={labels.join(" | ")}>
+		                                <Tag color={inRequired ? "green" : "orange"}>{single}</Tag>
+		                              </Tooltip>
+		                            );
+		                          })()
+		                        ) : null}
+		                        <Space>
+		                          <Tag>{course.credits} cr</Tag>
+		                          <Button size="small" onClick={() => openEditCourseModal(course, periodIdx)}>
+		                            Edit
+		                          </Button>
+		                          <Button size="small" danger onClick={() => removeFromCanvas(course.plan_item_id)}>
+		                            Delete
+		                          </Button>
+		                        </Space>
+		                      </Space>
+                        {isVerboseCanvas && (
+                          <Space>
+                            <Typography.Text type="secondary">{course.title}</Typography.Text>
+                            <Tag color="blue">{aspectLabel(course)}</Tag>
+                            {course.major_program_name && <Tag color="geekblue">{course.major_program_name}</Tag>}
+                          </Space>
+                        )}
+                      </Space>
+                    </Card>
+                    )}
+                  </Tooltip>
+                ))}
+              </Card>
+            );
+          })
+        )}
+      </div>
+      <Card title="Course of Study Feasibility (Core + Selected Majors And Minors)">
         <Space direction="vertical" style={{ width: "100%" }}>
           <Select
             mode="multiple"
@@ -2620,11 +3360,11 @@ export function DesignStudioPage() {
             }))}
           />
           <Typography.Text type="secondary">
-            Requirement and Core Rules checks green up as the canvas satisfies them (including substitution credit).
+            Program Designer rules are checked first. Validation rule line items are listed separately below.
           </Typography.Text>
           {selectedChecklistFeasibility?.status === "FAIL" ? (
             <Space>
-              <Tag color="orange">Warning</Tag>
+              <Tag color="red">Fail</Tag>
               <Typography.Text type="danger">
                 Selected checklist programs are not a valid combination due to feasibility check failures.
               </Typography.Text>
@@ -2636,14 +3376,18 @@ export function DesignStudioPage() {
               {checklistQ.data?.summary?.top_level_satisfied ?? 0}/{checklistQ.data?.summary?.top_level_total ?? 0} top-level requirements met
             </Typography.Text>
           </Space>
-          <div>{renderChecklist(checklistRequirementsTree || [])}</div>
+          <Typography.Title level={5} style={sectionTitleStyle}>Program Design Rules</Typography.Title>
+          <div style={{ overflowX: "auto" }}>{renderChecklist(checklistRequirementsTree || [])}</div>
+          <Typography.Title level={5} style={sectionTitleStyle}>Validation Rules</Typography.Title>
+          <div style={{ overflowX: "auto" }}>
+            {renderValidationLineItems(checklistValidationItems, "No validation findings for current course of study.")}
+          </div>
         </Space>
       </Card>
-      <Card title="Feasibility Analysis">
+      <Card title="Program Feasibility">
         <Space direction="vertical" style={{ width: "100%" }}>
           <Space>
             <Tag color="green">{`Pass ${feasibilityQ.data?.summary?.pass ?? 0}`}</Tag>
-            <Tag color="orange">{`Warning ${feasibilityQ.data?.summary?.warning ?? 0}`}</Tag>
             <Tag color="red">{`Fail ${feasibilityQ.data?.summary?.fail ?? 0}`}</Tag>
             <Typography.Text type="secondary">
               {`${feasibilityQ.data?.row_count ?? 0} combinations evaluated`}
@@ -2660,34 +3404,16 @@ export function DesignStudioPage() {
             expandable={{
               expandedRowRender: (row) => (
                 <Space direction="vertical" style={{ width: "100%" }}>
-                  <Typography.Text strong>Issues</Typography.Text>
-                  {row.issues?.length ? (
-                    <List
-                      size="small"
-                      dataSource={row.issues}
-                      renderItem={(it) => (
-                        <List.Item>
-                          <Typography.Text type="danger">{it}</Typography.Text>
-                        </List.Item>
-                      )}
-                    />
-                  ) : (
-                    <Typography.Text type="secondary">None</Typography.Text>
-                  )}
-                  <Typography.Text strong>Constraints</Typography.Text>
-                  {row.constraints?.length ? (
-                    <List
-                      size="small"
-                      dataSource={row.constraints}
-                      renderItem={(it) => (
-                        <List.Item>
-                          <Typography.Text>{it}</Typography.Text>
-                        </List.Item>
-                      )}
-                    />
-                  ) : (
-                    <Typography.Text type="secondary">None</Typography.Text>
-                  )}
+                  <Typography.Title level={5} style={sectionTitleStyle}>Program Design Rules</Typography.Title>
+                  <div style={{ overflowX: "auto" }}>
+                    {row.program_design_consistency_tree?.length
+                      ? renderConsistencyTree(row.program_design_consistency_tree)
+                      : <Typography.Text type="secondary">None</Typography.Text>}
+                  </div>
+                  <Typography.Title level={5} style={sectionTitleStyle}>Validation Rules</Typography.Title>
+                  <div style={{ overflowX: "auto" }}>
+                    {renderValidationLineItems(row.validation_items || [], "No validation line items.")}
+                  </div>
                 </Space>
               ),
             }}
@@ -3222,7 +3948,7 @@ export function DesignStudioPage() {
           ))}
         </Space>
       </Modal>
-      <Card title="Requirements Designer (Integrated Tree)">
+      <Card title="Program Design Rules (Core, Majors, and Minors)">
         <Space direction="vertical" style={{ width: "100%" }}>
           <Typography.Text type="secondary">
             Define reusable core/major/minor requirement nodes and map courses directly to each node.
@@ -3263,142 +3989,153 @@ export function DesignStudioPage() {
           />
         </Space>
       </Card>
-      <Card title="Validation Rules + Results">
+      <Card title="Validation Rules">
         <Space direction="vertical" style={{ width: "100%" }}>
-          <Typography.Text strong>Validation Dashboard (All Rules)</Typography.Text>
-          <pre>{JSON.stringify(validationDashboardQ.data, null, 2)}</pre>
-          <Space>
-            <Typography.Text type="secondary">Rule Category</Typography.Text>
-            <Select
-              style={{ width: 260 }}
-              value={validationDomainFilter}
-              onChange={setValidationDomainFilter}
-              options={[
-                { value: "ALL", label: "All Rules" },
-                { value: "PROGRAM_PATHWAY", label: "Program/Major Pathway" },
-                { value: "CURRICULUM_INTEGRITY", label: "Curriculum Integrity" },
-                { value: "RESOURCES", label: "Resources" },
-                { value: "GENERAL", label: "General" },
-              ]}
-            />
-          </Space>
-          <Typography.Text strong>Create Rule</Typography.Text>
-          <Space wrap>
-            <Input style={{ width: 240 }} placeholder="Rule name" value={newRuleName} onChange={(e) => setNewRuleName(e.target.value)} />
-            <Select
-              style={{ width: 120 }}
-              value={newRuleTier}
-              onChange={setNewRuleTier}
-              options={[
-                { value: 1, label: "Tier 1" },
-                { value: 2, label: "Tier 2" },
-                { value: 3, label: "Tier 3" }
-              ]}
-            />
-            <Select
-              style={{ width: 140 }}
-              value={newRuleSeverity}
-              onChange={setNewRuleSeverity}
-              options={[
-                { value: "WARNING", label: "WARNING" },
-                { value: "FAIL", label: "FAIL" }
-              ]}
-            />
-            <Select
-              style={{ width: 120 }}
-              value={newRuleActive}
-              onChange={setNewRuleActive}
-              options={[
-                { value: "YES", label: "Active" },
-                { value: "NO", label: "Inactive" }
-              ]}
-            />
-            <Input.TextArea
-              style={{ width: 380 }}
-              rows={4}
-              placeholder='{"key":"value"}'
-              value={newRuleConfig}
-              onChange={(e) => setNewRuleConfig(e.target.value)}
-            />
-            <Button onClick={createValidationRule}>Create</Button>
-          </Space>
-          <Typography.Text strong>Edit Selected Rule</Typography.Text>
-          <Space wrap>
-            <Select
-              style={{ width: 320 }}
-              placeholder="Select rule"
-              value={editRuleId}
-              onChange={loadRuleForEdit}
-              options={(validationRulesQ.data || []).map((r) => ({ value: r.id, label: `${r.name} (T${r.tier})` }))}
-            />
-            <Select
-              style={{ width: 120 }}
-              value={editRuleTier}
-              onChange={setEditRuleTier}
-              options={[
-                { value: 1, label: "Tier 1" },
-                { value: 2, label: "Tier 2" },
-                { value: 3, label: "Tier 3" }
-              ]}
-            />
-            <Select
-              style={{ width: 140 }}
-              value={editRuleSeverity}
-              onChange={setEditRuleSeverity}
-              options={[
-                { value: "WARNING", label: "WARNING" },
-                { value: "FAIL", label: "FAIL" }
-              ]}
-            />
-            <Select
-              style={{ width: 120 }}
-              value={editRuleActive}
-              onChange={setEditRuleActive}
-              options={[
-                { value: "YES", label: "Active" },
-                { value: "NO", label: "Inactive" }
-              ]}
-            />
-            <Input.TextArea style={{ width: 380 }} rows={4} value={editRuleConfig} onChange={(e) => setEditRuleConfig(e.target.value)} />
-            <Button onClick={updateValidationRule}>Update</Button>
-          </Space>
-          <Table
-            size="small"
-            rowKey="id"
-            dataSource={filteredValidationRules}
-            pagination={{ pageSize: 6 }}
-            columns={[
-              { title: "Name", dataIndex: "name" },
-              {
-                title: "Category",
-                dataIndex: "domain",
-                render: (v) => {
-                  if (v === "PROGRAM_PATHWAY") return "Program/Major Pathway";
-                  if (v === "CURRICULUM_INTEGRITY") return "Curriculum Integrity";
-                  if (v === "RESOURCES") return "Resources";
-                  return "General";
-                },
-              },
-              { title: "Tier", dataIndex: "tier" },
-              { title: "Severity", dataIndex: "severity" },
-              { title: "Active", dataIndex: "active", render: (v) => (v ? "Yes" : "No") },
-              {
-                title: "Actions",
-                render: (_, r) => (
-                  <Space>
-                    <Button size="small" onClick={() => toggleValidationRule(r.id, r.active)}>
-                      {r.active ? "Disable" : "Enable"}
-                    </Button>
-                    <Button size="small" danger onClick={() => deleteValidationRule(r.id)}>
-                      Delete
-                    </Button>
-                  </Space>
-                )
-              }
-            ]}
+          <Typography.Text type="secondary">
+            Define validation rules and categories used by Program Feasibility and Course of Study Feasibility.
+          </Typography.Text>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <Space>
+              <Select
+                style={{ width: 280 }}
+                value={validationDomainFilter}
+                onChange={setValidationDomainFilter}
+                options={validationDomainFilterOptions}
+              />
+              <Button size="small" onClick={() => setValidationTreeExpandedKeys(validationTopKeys)}>
+                Expand Top
+              </Button>
+              <Button size="small" onClick={() => setValidationTreeExpandedKeys(validationAllKeys)}>
+                Expand All
+              </Button>
+              <Button size="small" onClick={() => setValidationTreeExpandedKeys([])}>
+                Collapse All
+              </Button>
+            </Space>
+            <Button type="primary" size="small" onClick={openCreateRuleModal}>
+              Add Rule
+            </Button>
+          </div>
+          <Tree
+            treeData={validationTreeData}
+            blockNode
+            draggable
+            onDrop={handleValidationTreeDrop}
+            expandedKeys={validationTreeExpandedKeys}
+            onExpand={setValidationTreeExpandedKeys}
           />
         </Space>
       </Card>
+      <Modal
+        title={ruleModalEditId ? "Edit Validation Rule" : "Add Validation Rule"}
+        open={ruleModalOpen}
+        onCancel={() => setRuleModalOpen(false)}
+        onOk={saveRuleModal}
+        okText={ruleModalEditId ? "Save Rule" : "Add Rule"}
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <Button type="link" style={{ paddingInline: 0 }} onClick={() => setRuleCategoryGuideOpen(true)}>
+              Category Guide
+            </Button>
+          </div>
+          <Typography.Text type="secondary">Rule Name</Typography.Text>
+          <Input value={ruleFormName} onChange={(e) => setRuleFormName(e.target.value)} placeholder="Rule name" />
+          <Typography.Text type="secondary">Tier</Typography.Text>
+          <Select
+            value={ruleFormTier}
+            onChange={setRuleFormTier}
+            options={[
+              { value: 1, label: "Tier 1" },
+              { value: 2, label: "Tier 2" },
+              { value: 3, label: "Tier 3" },
+            ]}
+          />
+          <Typography.Text type="secondary">Category</Typography.Text>
+          <Select
+            showSearch
+            style={{ width: "100%" }}
+            value={ruleFormDomain}
+            options={categorySelectOptions}
+            onChange={setRuleFormDomain}
+            onSearch={setRuleFormDomainSearch}
+            placeholder="Category (choose existing or type new)"
+            filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(String(input).toLowerCase())}
+            onBlur={() => {
+              const typed = String(ruleFormDomainSearch || "").trim();
+              if (typed) setRuleFormDomain(typed);
+            }}
+          />
+          <Typography.Text type="secondary">Severity</Typography.Text>
+          <Select
+            value={ruleFormSeverity}
+            onChange={setRuleFormSeverity}
+            options={[
+              { value: "WARNING", label: "WARNING" },
+              { value: "FAIL", label: "FAIL" },
+            ]}
+          />
+          <Typography.Text type="secondary">Active</Typography.Text>
+          <Select
+            value={ruleFormActive}
+            onChange={setRuleFormActive}
+            options={[
+              { value: "YES", label: "Enabled" },
+              { value: "NO", label: "Disabled" },
+            ]}
+          />
+          <Typography.Text type="secondary">Config (JSON)</Typography.Text>
+          <Input.TextArea
+            rows={6}
+            value={ruleFormConfig}
+            onChange={(e) => setRuleFormConfig(e.target.value)}
+            placeholder='{"key":"value"}'
+          />
+        </Space>
+      </Modal>
+      <Modal
+        title="Validation Rule Category Guide"
+        open={ruleCategoryGuideOpen}
+        onCancel={() => setRuleCategoryGuideOpen(false)}
+        footer={null}
+        width={860}
+      >
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Typography.Text type="secondary">
+            JSON settings guide for validation rules. Categories are set via <code>domain</code>; additional fields are rule-specific. Update this list as rule options evolve.
+          </Typography.Text>
+          <Table
+            size="small"
+            pagination={false}
+            rowKey="title"
+            dataSource={VALIDATION_RULE_JSON_GUIDE}
+            tableLayout="fixed"
+            scroll={{ x: 980 }}
+            columns={[
+              { title: "Setting", dataIndex: "title", key: "title", width: 240 },
+              { title: "Description", dataIndex: "description", key: "description" },
+              {
+                title: "JSON",
+                dataIndex: "json",
+                key: "json",
+                width: 360,
+                render: (v) => (
+                  <code
+                    style={{
+                      display: "block",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {v}
+                  </code>
+                ),
+              },
+            ]}
+          />
+        </Space>
+      </Modal>
       <Card title="Prerequisite Graph">
         <Table
           size="small"
@@ -3454,6 +4191,54 @@ export function DesignStudioPage() {
                 key: "scheduling",
                 label: "Scheduling",
                 children: <pre>{JSON.stringify(courseDetailQ.data?.scheduling, null, 2)}</pre>
+              },
+              {
+                key: "buckets",
+                label: "Buckets",
+                children: (
+                  <Space direction="vertical" style={{ width: "100%" }}>
+                    <Space wrap>
+                      <Select
+                        style={{ width: 280 }}
+                        value={newCourseBucketCode}
+                        onChange={setNewCourseBucketCode}
+                        options={[
+                          { value: "ABET_MATH_BASIC_SCI", label: "ABET Math/Basic Science" },
+                          { value: "ABET_ENGINEERING_TOPICS", label: "ABET Engineering Topics" },
+                        ]}
+                      />
+                      <Input
+                        style={{ width: 220 }}
+                        value={newCourseBucketHours}
+                        onChange={(e) => setNewCourseBucketHours(e.target.value)}
+                        placeholder="Credit override (optional)"
+                      />
+                      <Button onClick={addCourseBucket}>Add/Update Bucket</Button>
+                    </Space>
+                    <Table
+                      size="small"
+                      pagination={false}
+                      rowKey="id"
+                      dataSource={courseBucketsQ.data || []}
+                      columns={[
+                        { title: "Bucket", dataIndex: "bucket_code" },
+                        {
+                          title: "Credits",
+                          dataIndex: "credit_hours_override",
+                          render: (v) => (v == null ? "Use course credit hours" : String(v)),
+                        },
+                        {
+                          title: "Action",
+                          render: (_, row) => (
+                            <Button danger size="small" onClick={() => deleteCourseBucket(row.id)}>
+                              Delete
+                            </Button>
+                          ),
+                        },
+                      ]}
+                    />
+                  </Space>
+                ),
               },
               {
                 key: "prereq",

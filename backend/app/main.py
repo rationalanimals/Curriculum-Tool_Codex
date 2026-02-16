@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import itertools
 import json
@@ -21,6 +22,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sess
 DATABASE_URL = "sqlite:///./cmt.db"
 SESSION_SECRET = "change-me"
 serializer = URLSafeSerializer(SESSION_SECRET, salt="cmt")
+DEFAULT_RESIDENCY_MIN_HOURS = 125.0
+DEFAULT_RESIDENCY_MIN_ACADEMIC_SEMESTERS = 8
+ALL_PLAN_PERIODS = tuple(range(0, 21))
+ACADEMIC_PERIODS = (1, 2, 6, 7, 11, 12, 16, 17)
+SUMMER_PERIODS = tuple(p for p in ALL_PLAN_PERIODS if p not in ACADEMIC_PERIODS)
+MAX_PLAN_PERIOD = max(ALL_PLAN_PERIODS)
 
 
 class Base(DeclarativeBase):
@@ -67,6 +74,7 @@ class Course(Base):
     title: Mapped[str] = mapped_column(String)
     credit_hours: Mapped[float] = mapped_column(Float, default=3.0)
     designated_semester: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    offered_periods_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     min_section_size: Mapped[int] = mapped_column(Integer, default=6)
 
 
@@ -104,6 +112,17 @@ class PlanItem(Base):
     aspect: Mapped[str] = mapped_column(String, default="CORE")
     major_program_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("academic_programs.id"), nullable=True)
     track_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class DataBundleSnapshot(Base):
+    __tablename__ = "data_bundle_snapshots"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    version_id: Mapped[str] = mapped_column(String, ForeignKey("curriculum_versions.id"), index=True)
+    name: Mapped[str] = mapped_column(String)
+    modules_csv: Mapped[str] = mapped_column(String, default="ALL")
+    bundle_json: Mapped[str] = mapped_column(Text)
+    created_by: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class Instructor(Base):
@@ -216,10 +235,20 @@ class RequirementSubstitution(Base):
     is_bidirectional: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class CourseBucketTag(Base):
+    __tablename__ = "course_bucket_tags"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
+    bucket_code: Mapped[str] = mapped_column(String, index=True)
+    credit_hours_override: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class ValidationRule(Base):
     __tablename__ = "validation_rules"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name: Mapped[str] = mapped_column(String, unique=True)
+    rule_code: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     tier: Mapped[int] = mapped_column(Integer, default=1)
     severity: Mapped[str] = mapped_column(String, default="WARNING")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -307,6 +336,7 @@ class CourseIn(BaseModel):
     title: str
     credit_hours: float = 3.0
     designated_semester: Optional[int] = None
+    offered_periods_json: Optional[str] = None
     min_section_size: int = 6
 
 
@@ -371,9 +401,9 @@ class RequirementFulfillmentIn(BaseModel):
     requirement_id: str
     course_id: str
     is_primary: bool = False
-    required_semester: Optional[int] = Field(default=None, ge=1, le=8)
-    required_semester_min: Optional[int] = Field(default=None, ge=1, le=8)
-    required_semester_max: Optional[int] = Field(default=None, ge=1, le=8)
+    required_semester: Optional[int] = Field(default=None, ge=0, le=MAX_PLAN_PERIOD)
+    required_semester_min: Optional[int] = Field(default=None, ge=0, le=MAX_PLAN_PERIOD)
+    required_semester_max: Optional[int] = Field(default=None, ge=0, le=MAX_PLAN_PERIOD)
 
 
 class RequirementSubstitutionIn(BaseModel):
@@ -385,17 +415,40 @@ class RequirementSubstitutionIn(BaseModel):
 
 class MoveIn(BaseModel):
     plan_item_id: str
-    target_semester: int = Field(ge=1, le=8)
+    target_semester: int = Field(ge=0, le=MAX_PLAN_PERIOD)
     target_position: int = Field(ge=0)
 
 
 class CanvasItemUpdateIn(BaseModel):
-    semester_index: Optional[int] = Field(default=None, ge=1, le=8)
+    semester_index: Optional[int] = Field(default=None, ge=0, le=MAX_PLAN_PERIOD)
     category: Optional[str] = None
     major_mode: Optional[str] = None
     major_program_id: Optional[str] = None
     track_name: Optional[str] = None
     aspect: Optional[str] = None
+
+
+class CanvasSequenceItemIn(BaseModel):
+    semester_index: int = Field(ge=0, le=MAX_PLAN_PERIOD)
+    course_id: Optional[str] = None
+    course_number: Optional[str] = None
+    position: Optional[int] = None
+    aspect: Optional[str] = None
+    major_program_id: Optional[str] = None
+    major_program_name: Optional[str] = None
+    track_name: Optional[str] = None
+
+
+class CanvasSequenceImportIn(BaseModel):
+    name: Optional[str] = None
+    replace_existing: bool = True
+    items: list[CanvasSequenceItemIn] = Field(default_factory=list)
+
+
+class DataBundleImportIn(BaseModel):
+    bundle: dict = Field(default_factory=dict)
+    modules: Optional[list[str]] = None
+    replace_existing: bool = True
 
 
 class PrerequisiteIn(BaseModel):
@@ -413,7 +466,14 @@ class SubstitutionIn(BaseModel):
     conditions: Optional[dict] = None
 
 
+class CourseBucketTagIn(BaseModel):
+    bucket_code: str
+    credit_hours_override: Optional[float] = Field(default=None, ge=0.0)
+    sort_order: int = Field(default=0, ge=0)
+
+
 class ValidationRuleIn(BaseModel):
+    rule_code: Optional[str] = None
     name: str
     tier: int = Field(ge=1, le=3)
     severity: str = "WARNING"
@@ -422,6 +482,7 @@ class ValidationRuleIn(BaseModel):
 
 
 class ValidationRuleUpdateIn(BaseModel):
+    rule_code: Optional[str] = None
     name: Optional[str] = None
     tier: Optional[int] = Field(default=None, ge=1, le=3)
     severity: Optional[str] = None
@@ -524,6 +585,110 @@ def normalize_course_number(raw: str) -> str:
     return f"{m.group(1)} {m.group(2)}"
 
 
+def period_label(period_index: int) -> str:
+    if period_index == 0:
+        return "Summer 0"
+    semester_map = {
+        1: "Semester 1",
+        2: "Semester 2",
+        6: "Semester 3",
+        7: "Semester 4",
+        11: "Semester 5",
+        12: "Semester 6",
+        16: "Semester 7",
+        17: "Semester 8",
+    }
+    if period_index in semester_map:
+        return semester_map[period_index]
+    summer_period_map = {
+        3: "Summer 1 Period 1",
+        4: "Summer 1 Period 2",
+        5: "Summer 1 Period 3",
+        8: "Summer 2 Period 1",
+        9: "Summer 2 Period 2",
+        10: "Summer 2 Period 3",
+        13: "Summer 3 Period 1",
+        14: "Summer 3 Period 2",
+        15: "Summer 3 Period 3",
+        18: "Summer 4 Period 1",
+        19: "Summer 4 Period 2",
+        20: "Summer 4 Period 3",
+    }
+    if period_index in summer_period_map:
+        return summer_period_map[period_index]
+    return f"Period {period_index}"
+
+
+def period_short_label(period_index: int) -> str:
+    short_map = {
+        0: "SU0",
+        1: "S1",
+        2: "S2",
+        3: "SU1P1",
+        4: "SU1P2",
+        5: "SU1P3",
+        6: "S3",
+        7: "S4",
+        8: "SU2P1",
+        9: "SU2P2",
+        10: "SU2P3",
+        11: "S5",
+        12: "S6",
+        13: "SU3P1",
+        14: "SU3P2",
+        15: "SU3P3",
+        16: "S7",
+        17: "S8",
+        18: "SU4P1",
+        19: "SU4P2",
+        20: "SU4P3",
+    }
+    if period_index in short_map:
+        return short_map[period_index]
+    return f"P{period_index}"
+
+
+def period_kind(period_index: int) -> str:
+    return "SUMMER" if period_index in SUMMER_PERIODS else "ACADEMIC"
+
+
+def list_period_metadata() -> list[dict]:
+    layout_position = {
+        16: {"row": 0, "col": 0},
+        17: {"row": 0, "col": 1},
+        18: {"row": 0, "col": 2},
+        19: {"row": 0, "col": 3},
+        20: {"row": 0, "col": 4},
+        11: {"row": 1, "col": 0},
+        12: {"row": 1, "col": 1},
+        13: {"row": 1, "col": 2},
+        14: {"row": 1, "col": 3},
+        15: {"row": 1, "col": 4},
+        6: {"row": 2, "col": 0},
+        7: {"row": 2, "col": 1},
+        8: {"row": 2, "col": 2},
+        9: {"row": 2, "col": 3},
+        10: {"row": 2, "col": 4},
+        1: {"row": 3, "col": 0},
+        2: {"row": 3, "col": 1},
+        3: {"row": 3, "col": 2},
+        4: {"row": 3, "col": 3},
+        5: {"row": 3, "col": 4},
+        0: {"row": 4, "col": 4},
+    }
+    return [
+        {
+            "index": i,
+            "short_label": period_short_label(i),
+            "label": period_label(i),
+            "kind": period_kind(i),
+            "layout_row": layout_position.get(i, {}).get("row"),
+            "layout_col": layout_position.get(i, {}).get("col"),
+        }
+        for i in ALL_PLAN_PERIODS
+    ]
+
+
 def semester_constraint_allows(sem: int, required_semester: Optional[int], required_semester_min: Optional[int], required_semester_max: Optional[int]) -> bool:
     if required_semester is not None and sem != required_semester:
         return False
@@ -542,10 +707,15 @@ def timing_constraints_overlap(
     b_min: Optional[int],
     b_max: Optional[int],
 ) -> bool:
-    for s in range(1, 9):
+    for s in ALL_PLAN_PERIODS:
         if semester_constraint_allows(s, a_required, a_min, a_max) and semester_constraint_allows(s, b_required, b_min, b_max):
             return True
     return False
+
+
+@app.get("/meta/periods")
+def period_metadata(_: User = Depends(current_user)):
+    return {"periods": list_period_metadata()}
 
 
 def validate_core_pathway_rule_config(cfg: dict, db: Session) -> None:
@@ -756,8 +926,37 @@ def parse_coi_courses(text: str, min_occurrences: int = 1) -> dict[str, dict]:
     return out
 
 
+def map_legacy_period_index(value: Optional[int]) -> Optional[int]:
+    if value is None:
+        return None
+    mapping = {
+        1: 1,
+        2: 2,
+        3: 6,
+        4: 7,
+        5: 11,
+        6: 12,
+        7: 16,
+        8: 17,
+        9: 3,
+        10: 8,
+        11: 13,
+    }
+    return mapping.get(value, value)
+
+
 def ensure_runtime_migrations() -> None:
     with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS runtime_flags (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """
+            )
+        )
         cols = conn.execute(text("PRAGMA table_info(requirements)")).fetchall()
         col_names = {c[1] for c in cols}
         if "sort_order" not in col_names:
@@ -776,6 +975,10 @@ def ensure_runtime_migrations() -> None:
             conn.execute(text("ALTER TABLE plan_items ADD COLUMN major_program_id TEXT"))
         if "track_name" not in plan_col_names:
             conn.execute(text("ALTER TABLE plan_items ADD COLUMN track_name TEXT"))
+        course_cols = conn.execute(text("PRAGMA table_info(courses)")).fetchall()
+        course_col_names = {c[1] for c in course_cols}
+        if "offered_periods_json" not in course_col_names:
+            conn.execute(text("ALTER TABLE courses ADD COLUMN offered_periods_json TEXT"))
         rf_cols = conn.execute(text("PRAGMA table_info(requirement_fulfillment)")).fetchall()
         rf_col_names = {c[1] for c in rf_cols}
         if "sort_order" not in rf_col_names:
@@ -799,10 +1002,558 @@ def ensure_runtime_migrations() -> None:
                 """
             )
         )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS course_bucket_tags (
+                    id TEXT PRIMARY KEY,
+                    course_id TEXT NOT NULL,
+                    bucket_code TEXT NOT NULL,
+                    credit_hours_override REAL,
+                    sort_order INTEGER DEFAULT 0
+                )
+                """
+            )
+        )
         prog_cols = conn.execute(text("PRAGMA table_info(academic_programs)")).fetchall()
         prog_col_names = {c[1] for c in prog_cols}
         if "division" not in prog_col_names:
             conn.execute(text("ALTER TABLE academic_programs ADD COLUMN division TEXT"))
+        vr_cols = conn.execute(text("PRAGMA table_info(validation_rules)")).fetchall()
+        vr_col_names = {c[1] for c in vr_cols}
+        if "rule_code" not in vr_col_names:
+            conn.execute(text("ALTER TABLE validation_rules ADD COLUMN rule_code TEXT"))
+
+        migrated = conn.execute(
+            text("SELECT value FROM runtime_flags WHERE key = 'period_model_v2_migrated'")
+        ).fetchone()
+        if not migrated:
+            conn.execute(
+                text(
+                    """
+                    UPDATE plan_items
+                    SET semester_index = CASE semester_index
+                        WHEN 1 THEN 1
+                        WHEN 2 THEN 2
+                        WHEN 3 THEN 6
+                        WHEN 4 THEN 7
+                        WHEN 5 THEN 11
+                        WHEN 6 THEN 12
+                        WHEN 7 THEN 16
+                        WHEN 8 THEN 17
+                        WHEN 9 THEN 3
+                        WHEN 10 THEN 8
+                        WHEN 11 THEN 13
+                        ELSE semester_index
+                    END
+                    WHERE semester_index BETWEEN 1 AND 11
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    UPDATE courses
+                    SET designated_semester = CASE designated_semester
+                        WHEN 1 THEN 1
+                        WHEN 2 THEN 2
+                        WHEN 3 THEN 6
+                        WHEN 4 THEN 7
+                        WHEN 5 THEN 11
+                        WHEN 6 THEN 12
+                        WHEN 7 THEN 16
+                        WHEN 8 THEN 17
+                        WHEN 9 THEN 3
+                        WHEN 10 THEN 8
+                        WHEN 11 THEN 13
+                        ELSE designated_semester
+                    END
+                    WHERE designated_semester BETWEEN 1 AND 11
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    UPDATE requirement_fulfillment
+                    SET required_semester = CASE required_semester
+                        WHEN 1 THEN 1
+                        WHEN 2 THEN 2
+                        WHEN 3 THEN 6
+                        WHEN 4 THEN 7
+                        WHEN 5 THEN 11
+                        WHEN 6 THEN 12
+                        WHEN 7 THEN 16
+                        WHEN 8 THEN 17
+                        WHEN 9 THEN 3
+                        WHEN 10 THEN 8
+                        WHEN 11 THEN 13
+                        ELSE required_semester
+                    END
+                    WHERE required_semester BETWEEN 1 AND 11
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    UPDATE requirement_fulfillment
+                    SET required_semester_min = CASE required_semester_min
+                        WHEN 1 THEN 1
+                        WHEN 2 THEN 2
+                        WHEN 3 THEN 6
+                        WHEN 4 THEN 7
+                        WHEN 5 THEN 11
+                        WHEN 6 THEN 12
+                        WHEN 7 THEN 16
+                        WHEN 8 THEN 17
+                        WHEN 9 THEN 3
+                        WHEN 10 THEN 8
+                        WHEN 11 THEN 13
+                        ELSE required_semester_min
+                    END
+                    WHERE required_semester_min BETWEEN 1 AND 11
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    """
+                    UPDATE requirement_fulfillment
+                    SET required_semester_max = CASE required_semester_max
+                        WHEN 1 THEN 1
+                        WHEN 2 THEN 2
+                        WHEN 3 THEN 6
+                        WHEN 4 THEN 7
+                        WHEN 5 THEN 11
+                        WHEN 6 THEN 12
+                        WHEN 7 THEN 16
+                        WHEN 8 THEN 17
+                        WHEN 9 THEN 3
+                        WHEN 10 THEN 8
+                        WHEN 11 THEN 13
+                        ELSE required_semester_max
+                    END
+                    WHERE required_semester_max BETWEEN 1 AND 11
+                    """
+                )
+            )
+            conn.execute(text("INSERT INTO runtime_flags(key, value) VALUES ('period_model_v2_migrated', '1')"))
+
+
+def ensure_period_config_migration(db: Session) -> None:
+    done = db.execute(text("SELECT value FROM runtime_flags WHERE key = 'period_rule_config_v2_migrated'")).first()
+    if done:
+        return
+    rules = db.scalars(select(ValidationRule)).all()
+    for rule in rules:
+        try:
+            cfg = json.loads(rule.config_json or "{}")
+        except Exception:
+            continue
+        changed = False
+        groups = cfg.get("required_core_groups")
+        if isinstance(groups, list):
+            for g in groups:
+                if not isinstance(g, dict):
+                    continue
+                for key in ("required_semester", "required_semester_min", "required_semester_max"):
+                    raw = g.get(key)
+                    if raw is None:
+                        continue
+                    try:
+                        original = int(raw)
+                    except Exception:
+                        continue
+                    mapped = map_legacy_period_index(original)
+                    if mapped != original:
+                        g[key] = mapped
+                        changed = True
+        if changed:
+            rule.config_json = json.dumps(cfg)
+    db.execute(text("INSERT INTO runtime_flags(key, value) VALUES ('period_rule_config_v2_migrated', '1')"))
+    db.commit()
+
+
+def next_validation_rule_code(db: Session) -> str:
+    max_n = 0
+    for r in db.scalars(select(ValidationRule)).all():
+        m = re.match(r"^R(\d+)$", str(r.rule_code or "").strip().upper())
+        if m:
+            max_n = max(max_n, int(m.group(1)))
+    return f"R{max_n + 1}"
+
+
+def ensure_validation_rule_codes(db: Session) -> None:
+    changed = False
+    for r in db.scalars(select(ValidationRule).order_by(ValidationRule.name.asc())).all():
+        if str(r.rule_code or "").strip():
+            continue
+        r.rule_code = next_validation_rule_code(db)
+        changed = True
+    if changed:
+        db.commit()
+
+
+def active_rules_with_config(db: Session) -> list[tuple[ValidationRule, dict]]:
+    rows: list[tuple[ValidationRule, dict]] = []
+    for r in db.scalars(select(ValidationRule).where(ValidationRule.active.is_(True))).all():
+        try:
+            cfg = json.loads(r.config_json or "{}")
+        except Exception:
+            cfg = {}
+        rows.append((r, cfg if isinstance(cfg, dict) else {}))
+    return rows
+
+
+def rule_domain(cfg: dict) -> str:
+    return str((cfg or {}).get("domain") or "").strip()
+
+
+def is_cadet_performance_rule(cfg: dict) -> bool:
+    return rule_domain(cfg).lower() == "cadet performance"
+
+
+def is_definitional_rule(cfg: dict) -> bool:
+    return rule_domain(cfg).lower() == "definitional"
+
+
+def active_design_rules_with_config(db: Session) -> list[tuple[ValidationRule, dict]]:
+    return [
+        (rule, cfg)
+        for rule, cfg in active_rules_with_config(db)
+        if not is_cadet_performance_rule(cfg) and not is_definitional_rule(cfg)
+    ]
+
+
+def rule_targets_programs(cfg: dict, programs: list[AcademicProgram]) -> bool:
+    if not programs:
+        return False
+    target_ids = set()
+    target_names = set()
+    if cfg.get("program_id"):
+        target_ids.add(str(cfg.get("program_id")))
+    for x in (cfg.get("program_ids") or []):
+        target_ids.add(str(x))
+    if cfg.get("program_name"):
+        target_names.add(str(cfg.get("program_name")).strip().lower())
+    for x in (cfg.get("program_names") or []):
+        target_names.add(str(x).strip().lower())
+    if not target_ids and not target_names:
+        return True
+    for p in programs:
+        if p.id in target_ids:
+            return True
+        if str(p.name or "").strip().lower() in target_names:
+            return True
+    return False
+
+
+def bucket_credits_for_course_ids(
+    course_ids: set[str],
+    bucket_rows: list[CourseBucketTag],
+    course_by_id: dict[str, Course],
+    bucket_code: str,
+) -> float:
+    code = str(bucket_code or "").strip().upper()
+    if not code or not course_ids:
+        return 0.0
+    total = 0.0
+    for row in bucket_rows:
+        if row.course_id not in course_ids:
+            continue
+        if str(row.bucket_code or "").strip().upper() != code:
+            continue
+        if row.credit_hours_override is not None:
+            total += float(row.credit_hours_override)
+        else:
+            c = course_by_id.get(row.course_id)
+            total += float(c.credit_hours if c else 0.0)
+    return total
+
+
+def abet_validation_items_for_courses(
+    rule_rows: list[tuple[ValidationRule, dict]],
+    *,
+    programs: list[AcademicProgram],
+    course_ids: set[str],
+    bucket_rows: list[CourseBucketTag],
+    course_by_id: dict[str, Course],
+) -> list[dict]:
+    out: list[dict] = []
+    if not programs or not course_ids:
+        return out
+    for rule, cfg in rule_rows:
+        rtype = str(cfg.get("type") or "").upper().strip()
+        if rtype not in {"ABET_EAC_MATH_BASIC_SCI_MIN", "ABET_EAC_ENGINEERING_TOPICS_MIN"}:
+            continue
+        if not rule_targets_programs(cfg, programs):
+            continue
+        default_bucket = "ABET_MATH_BASIC_SCI" if rtype == "ABET_EAC_MATH_BASIC_SCI_MIN" else "ABET_ENGINEERING_TOPICS"
+        bucket_code = str(cfg.get("bucket_code") or default_bucket).strip().upper()
+        try:
+            min_credits = float(cfg.get("min_credits", 30.0 if rtype == "ABET_EAC_MATH_BASIC_SCI_MIN" else 45.0))
+        except Exception:
+            min_credits = 30.0 if rtype == "ABET_EAC_MATH_BASIC_SCI_MIN" else 45.0
+        actual = bucket_credits_for_course_ids(course_ids, bucket_rows, course_by_id, bucket_code)
+        out.append(
+            {
+                "rule_code": str(rule.rule_code or "").strip(),
+                "rule_name": rule.name,
+                "status": ("PASS" if actual >= min_credits else "FAIL"),
+                "message": f"{bucket_code} credits {actual:.1f}; minimum {min_credits:.1f}.",
+            }
+        )
+    return out
+
+
+def get_pathway_definitions(rule_rows: list[tuple[ValidationRule, dict]]) -> dict:
+    upper_level_min = 300
+
+    _def_upper_rule, def_upper_cfg = find_active_rule(
+        rule_rows,
+        rule_type="DEF_UPPER_LEVEL_COURSE_NUMBER",
+        names=["Program/Major Pathway Definition: Upper-level course number minimum"],
+    )
+
+    try:
+        upper_level_min = int(def_upper_cfg.get("min_level", upper_level_min))
+    except Exception:
+        upper_level_min = 300
+
+    return {
+        "upper_level_min": upper_level_min,
+        "double_major_additional_hours_basis": "UNION_MINUS_LARGER_MAJOR",
+    }
+
+
+def build_pathway_validation_items(
+    *,
+    rule_rows: list[tuple[ValidationRule, dict]],
+    programs: list[AcademicProgram],
+    program_course_sets: dict[str, set[str]],
+    program_credit_sums: dict[str, float],
+    course_by_id: dict[str, Course],
+    definitions: dict,
+) -> list[dict]:
+    out: list[dict] = []
+    selected_majors = [p for p in programs if (p.program_type or "").upper() == "MAJOR"]
+    selected_minors = [p for p in programs if (p.program_type or "").upper() == "MINOR"]
+    upper_min = int(definitions.get("upper_level_min", 300))
+
+    minor_courses_rule, minor_courses_cfg = find_active_rule(
+        rule_rows,
+        rule_type="MINOR_MIN_COURSES",
+        names=["Program/Major Pathway: Minor minimum courses"],
+    )
+    minor_hours_rule, minor_hours_cfg = find_active_rule(
+        rule_rows,
+        rule_type="MINOR_MIN_HOURS",
+        names=["Program/Major Pathway: Minor minimum hours"],
+    )
+    minor_upper_rule, minor_upper_cfg = find_active_rule(
+        rule_rows,
+        rule_type="MINOR_MIN_UPPER_LEVEL_COURSES",
+        names=["Program/Major Pathway: Minor upper-level courses minimum"],
+    )
+    dm_div_rule, _dm_div_cfg = find_active_rule(
+        rule_rows,
+        rule_type="DOUBLE_MAJOR_DIVISION_SEPARATION",
+        names=["Program/Major Pathway: Double major divisional separation"],
+    )
+    dm_add_rule, dm_add_cfg = find_active_rule(
+        rule_rows,
+        rule_type="DOUBLE_MAJOR_ADDITIONAL_HOURS_MIN",
+        names=["Program/Major Pathway: Double major additional hours minimum"],
+    )
+
+    try:
+        minor_min_courses = int(minor_courses_cfg.get("min_courses", 5))
+    except Exception:
+        minor_min_courses = 5
+    try:
+        minor_min_hours = float(minor_hours_cfg.get("min_hours", 15))
+    except Exception:
+        minor_min_hours = 15.0
+    try:
+        minor_min_upper = int(minor_upper_cfg.get("min_count", 3))
+    except Exception:
+        minor_min_upper = 3
+    try:
+        minor_upper_level = int(minor_upper_cfg.get("min_level", upper_min))
+    except Exception:
+        minor_upper_level = upper_min
+    try:
+        double_major_min_additional = float(dm_add_cfg.get("min_additional_hours", 12))
+    except Exception:
+        double_major_min_additional = 12.0
+
+    course_level = {}
+    for cid, c in course_by_id.items():
+        m = re.search(r"(\d{3})", str(c.course_number or ""))
+        course_level[cid] = int(m.group(1)) if m else None
+
+    for mn in selected_minors:
+        minor_courses = set(program_course_sets.get(mn.id, set()))
+        minor_credits = float(program_credit_sums.get(mn.id, 0.0))
+        upper_count = sum(1 for cid in minor_courses if (course_level.get(cid) or 0) >= minor_upper_level)
+        if minor_courses_rule:
+            out.append(
+                {
+                    "rule_code": str(minor_courses_rule.rule_code or "").strip(),
+                    "rule_name": minor_courses_rule.name,
+                    "status": ("PASS" if len(minor_courses) >= minor_min_courses else "FAIL"),
+                    "message": f"Minor - {mn.name}: courses {len(minor_courses)}; minimum {minor_min_courses}.",
+                }
+            )
+        if minor_hours_rule:
+            out.append(
+                {
+                    "rule_code": str(minor_hours_rule.rule_code or "").strip(),
+                    "rule_name": minor_hours_rule.name,
+                    "status": ("PASS" if minor_credits >= minor_min_hours else "FAIL"),
+                    "message": f"Minor - {mn.name}: hours {minor_credits:.1f}; minimum {minor_min_hours:.1f}.",
+                }
+            )
+        if minor_upper_rule:
+            out.append(
+                {
+                    "rule_code": str(minor_upper_rule.rule_code or "").strip(),
+                    "rule_name": minor_upper_rule.name,
+                    "status": ("PASS" if upper_count >= minor_min_upper else "FAIL"),
+                    "message": f"Minor - {mn.name}: {minor_upper_level}+ level courses {upper_count}; minimum {minor_min_upper}.",
+                }
+            )
+
+    for a, b in itertools.combinations(selected_majors, 2):
+        oriented_pairs: list[tuple[AcademicProgram, AcademicProgram]] = [(a, b), (b, a)]
+        for primary, secondary in oriented_pairs:
+            same_division_conflict = bool(primary.division and secondary.division and primary.division == secondary.division)
+
+            p_courses = set(program_course_sets.get(primary.id, set()))
+            s_courses = set(program_course_sets.get(secondary.id, set()))
+            p_credits = float(program_credit_sums.get(primary.id, 0.0))
+            union_course_ids = p_courses | s_courses
+            union_credits = sum(float(course_by_id[cid].credit_hours or 0.0) for cid in union_course_ids if cid in course_by_id)
+            additional_vs_primary = union_credits - p_credits
+
+            if dm_div_rule:
+                out.append(
+                    {
+                        "rule_code": str(dm_div_rule.rule_code or "").strip(),
+                        "rule_name": dm_div_rule.name,
+                        "status": ("FAIL" if same_division_conflict else "PASS"),
+                        "message": (
+                            f"Double Major ({a.name} + {b.name}), perspective {primary.name}: "
+                            f"majors must be in separate divisions."
+                        ),
+                    }
+                )
+            if dm_add_rule:
+                out.append(
+                    {
+                        "rule_code": str(dm_add_rule.rule_code or "").strip(),
+                        "rule_name": dm_add_rule.name,
+                        "status": ("PASS" if additional_vs_primary >= double_major_min_additional else "FAIL"),
+                        "message": (
+                            f"Double Major ({a.name} + {b.name}), perspective {primary.name}: additional hours "
+                            f"{additional_vs_primary:.1f}; minimum {double_major_min_additional:.1f}."
+                        ),
+                    }
+                )
+    return out
+
+
+def find_active_rule(
+    rules_with_cfg: list[tuple[ValidationRule, dict]],
+    *,
+    rule_type: Optional[str] = None,
+    names: Optional[list[str]] = None,
+) -> tuple[Optional[ValidationRule], dict]:
+    names_lc = {str(n).strip().lower() for n in (names or [])}
+    target_type = str(rule_type or "").upper().strip()
+    for rule, cfg in rules_with_cfg:
+        if target_type and str(cfg.get("type") or "").upper().strip() == target_type:
+            return rule, cfg
+    if names_lc:
+        for rule, cfg in rules_with_cfg:
+            if str(rule.name or "").strip().lower() in names_lc:
+                return rule, cfg
+    return None, {}
+
+
+def build_program_designer_code_map(reqs: list[Requirement], program_by_id: dict[str, AcademicProgram]) -> dict[str, str]:
+    by_parent: dict[Optional[str], list[Requirement]] = {}
+    for r in reqs:
+        by_parent.setdefault(r.parent_requirement_id, []).append(r)
+    for k in by_parent:
+        by_parent[k] = sorted(by_parent[k], key=lambda x: (int(x.sort_order or 0), str(x.name or "").lower()))
+
+    roots = by_parent.get(None, [])
+    major_program_ids = sorted(
+        {r.program_id for r in roots if r.program_id and (str(r.category or "").upper() == "MAJOR")},
+        key=lambda pid: str((program_by_id.get(pid).name if program_by_id.get(pid) else pid) or "").lower(),
+    )
+    minor_program_ids = sorted(
+        {r.program_id for r in roots if r.program_id and (str(r.category or "").upper() == "MINOR")},
+        key=lambda pid: str((program_by_id.get(pid).name if program_by_id.get(pid) else pid) or "").lower(),
+    )
+    major_idx = {pid: i + 1 for i, pid in enumerate(major_program_ids)}
+    minor_idx = {pid: i + 1 for i, pid in enumerate(minor_program_ids)}
+
+    core_roots = [r for r in roots if (str(r.category or "").upper() == "CORE")]
+    core_root_seen = 0
+
+    code_map: dict[str, str] = {}
+
+    def child_suffix(req: Requirement, sibling_counts: dict[str, int]) -> str:
+        cat = str(req.category or "").upper()
+        mm = str(req.major_mode or "").upper()
+        has_track = bool(str(req.track_name or "").strip())
+        key = "R"
+        if cat == "CORE":
+            key = "T" if (mm == "TRACK" or has_track) else "R"
+        elif cat in {"MAJOR", "MINOR"}:
+            if mm == "REQUIREMENT":
+                key = "M"
+            elif mm == "TRACK" or has_track:
+                key = "T"
+            else:
+                key = "R"
+        sibling_counts[key] = sibling_counts.get(key, 0) + 1
+        n = sibling_counts[key]
+        if key == "M":
+            return f".M{n}"
+        if key == "T":
+            return f".T{n}"
+        return f".R{n}"
+
+    def walk(parent_id: Optional[str], parent_code: Optional[str]) -> None:
+        children = by_parent.get(parent_id, [])
+        sibling_counts: dict[str, int] = {}
+        nonlocal core_root_seen
+        for req in children:
+            code = ""
+            if parent_code is None:
+                cat = str(req.category or "").upper()
+                if cat == "CORE":
+                    core_root_seen += 1
+                    code = f"C{core_root_seen}"
+                elif cat == "MAJOR":
+                    code = f"M{major_idx.get(req.program_id, 1)}"
+                elif cat == "MINOR":
+                    code = f"N{minor_idx.get(req.program_id, 1)}"
+                elif cat == "PE":
+                    code = "PE1"
+                else:
+                    code = f"R{len(code_map) + 1}"
+            else:
+                code = f"{parent_code}{child_suffix(req, sibling_counts)}"
+            code_map[req.id] = code
+            walk(req.id, code)
+
+    walk(None, None)
+    return code_map
 
 
 def seed_demo_data(db: Session, actor_user_id: Optional[str] = None) -> dict:
@@ -1148,6 +1899,7 @@ def startup():
     Base.metadata.create_all(engine)
     ensure_runtime_migrations()
     with SessionLocal() as db:
+        ensure_period_config_migration(db)
         if not db.scalar(select(User).where(User.username == "design_admin")):
             db.add(User(username="design_admin", password="design_admin", role="DESIGN"))
             db.add(User(username="advisor_user", password="advisor_user", role="ADVISOR"))
@@ -1159,6 +1911,40 @@ def startup():
             db.add(ValidationRule(name="Semester credit upper bound", tier=1, severity="WARNING", active=True, config_json=json.dumps({"max_credits": 24})))
         if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Prerequisite ordering")):
             db.add(ValidationRule(name="Prerequisite ordering", tier=1, severity="FAIL", active=True, config_json=json.dumps({})))
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program feasibility gate")):
+            db.add(
+                ValidationRule(
+                    name="Program feasibility gate",
+                    tier=1,
+                    severity="FAIL",
+                    active=True,
+                    config_json=json.dumps({"type": "PROGRAM_FEASIBILITY_GATE"}),
+                )
+            )
+        # Replace legacy bundled residency rule with editable split rules.
+        legacy_residency = db.scalar(select(ValidationRule).where(ValidationRule.name == "COI residency requirements"))
+        if legacy_residency:
+            db.delete(legacy_residency)
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Residency minimum in-residence hours")):
+            db.add(
+                ValidationRule(
+                    name="Residency minimum in-residence hours",
+                    tier=1,
+                    severity="WARNING",
+                    active=True,
+                    config_json=json.dumps({"type": "RESIDENCY_MIN_HOURS", "min_hours": DEFAULT_RESIDENCY_MIN_HOURS}),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Residency minimum academic semesters")):
+            db.add(
+                ValidationRule(
+                    name="Residency minimum academic semesters",
+                    tier=1,
+                    severity="WARNING",
+                    active=True,
+                    config_json=json.dumps({"type": "RESIDENCY_MIN_ACADEMIC_SEMESTERS", "min_semesters": DEFAULT_RESIDENCY_MIN_ACADEMIC_SEMESTERS}),
+                )
+            )
         if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Instructor load limits")):
             db.add(ValidationRule(name="Instructor load limits", tier=3, severity="WARNING", active=True, config_json=json.dumps({})))
         if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Classroom capacity constraints")):
@@ -1195,8 +1981,147 @@ def startup():
                     config_json=json.dumps({"program": "Mechanical Engineering", "type": "abet_placeholder"}),
                 )
             )
-        design_user = db.scalar(select(User).where(User.username == "design_admin"))
-        seed_demo_data(db, actor_user_id=design_user.id if design_user else None)
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "ABET EAC: Math/Basic Science Credits Minimum")):
+            db.add(
+                ValidationRule(
+                    name="ABET EAC: Math/Basic Science Credits Minimum",
+                    tier=2,
+                    severity="FAIL",
+                    active=False,
+                    config_json=json.dumps(
+                        {
+                            "domain": "Accreditation",
+                            "type": "ABET_EAC_MATH_BASIC_SCI_MIN",
+                            "bucket_code": "ABET_MATH_BASIC_SCI",
+                            "min_credits": 30,
+                        }
+                    ),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "ABET EAC: Engineering Topics Credits Minimum")):
+            db.add(
+                ValidationRule(
+                    name="ABET EAC: Engineering Topics Credits Minimum",
+                    tier=2,
+                    severity="FAIL",
+                    active=False,
+                    config_json=json.dumps(
+                        {
+                            "domain": "Accreditation",
+                            "type": "ABET_EAC_ENGINEERING_TOPICS_MIN",
+                            "bucket_code": "ABET_ENGINEERING_TOPICS",
+                            "min_credits": 45,
+                        }
+                    ),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Cadet Performance: Minimum cumulative GPA")):
+            db.add(
+                ValidationRule(
+                    name="Cadet Performance: Minimum cumulative GPA",
+                    tier=1,
+                    severity="FAIL",
+                    active=False,
+                    config_json=json.dumps({"domain": "Cadet Performance", "type": "MIN_CUM_GPA", "min_gpa": 2.0}),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Cadet Performance: Minimum core GPA")):
+            db.add(
+                ValidationRule(
+                    name="Cadet Performance: Minimum core GPA",
+                    tier=1,
+                    severity="FAIL",
+                    active=False,
+                    config_json=json.dumps({"domain": "Cadet Performance", "type": "MIN_CORE_GPA", "min_gpa": 2.0}),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway: Minor minimum courses")):
+            db.add(
+                ValidationRule(
+                    name="Program/Major Pathway: Minor minimum courses",
+                    tier=2,
+                    severity="FAIL",
+                    active=True,
+                    config_json=json.dumps({"domain": "Program/Major Pathway", "type": "MINOR_MIN_COURSES", "min_courses": 5}),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway: Minor minimum hours")):
+            db.add(
+                ValidationRule(
+                    name="Program/Major Pathway: Minor minimum hours",
+                    tier=2,
+                    severity="FAIL",
+                    active=True,
+                    config_json=json.dumps({"domain": "Program/Major Pathway", "type": "MINOR_MIN_HOURS", "min_hours": 15}),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway: Minor upper-level courses minimum")):
+            db.add(
+                ValidationRule(
+                    name="Program/Major Pathway: Minor upper-level courses minimum",
+                    tier=2,
+                    severity="FAIL",
+                    active=True,
+                    config_json=json.dumps(
+                        {"domain": "Program/Major Pathway", "type": "MINOR_MIN_UPPER_LEVEL_COURSES", "min_count": 3, "min_level": 300}
+                    ),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway: Double major divisional separation")):
+            db.add(
+                ValidationRule(
+                    name="Program/Major Pathway: Double major divisional separation",
+                    tier=2,
+                    severity="FAIL",
+                    active=True,
+                    config_json=json.dumps({"domain": "Program/Major Pathway", "type": "DOUBLE_MAJOR_DIVISION_SEPARATION"}),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway: Double major additional hours minimum")):
+            db.add(
+                ValidationRule(
+                    name="Program/Major Pathway: Double major additional hours minimum",
+                    tier=2,
+                    severity="FAIL",
+                    active=True,
+                    config_json=json.dumps(
+                        {"domain": "Program/Major Pathway", "type": "DOUBLE_MAJOR_ADDITIONAL_HOURS_MIN", "min_additional_hours": 12}
+                    ),
+                )
+            )
+        if not db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway Definition: Upper-level course number minimum")):
+            db.add(
+                ValidationRule(
+                    name="Program/Major Pathway Definition: Upper-level course number minimum",
+                    tier=2,
+                    severity="WARNING",
+                    active=True,
+                    config_json=json.dumps(
+                        {"domain": "Definitional", "type": "DEF_UPPER_LEVEL_COURSE_NUMBER", "min_level": 300}
+                    ),
+                )
+            )
+        else:
+            def_upper = db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway Definition: Upper-level course number minimum"))
+            if def_upper:
+                try:
+                    cfg = json.loads(def_upper.config_json or "{}")
+                except Exception:
+                    cfg = {}
+                if not isinstance(cfg, dict):
+                    cfg = {}
+                cfg["domain"] = "Definitional"
+                cfg.setdefault("type", "DEF_UPPER_LEVEL_COURSE_NUMBER")
+                cfg.setdefault("min_level", 300)
+                def_upper.config_json = json.dumps(cfg)
+
+        old_def_div = db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway Definition: Divisional major names"))
+        if old_def_div:
+            db.delete(old_def_div)
+        old_def_basis = db.scalar(select(ValidationRule).where(ValidationRule.name == "Program/Major Pathway Definition: Double major additional-hours basis"))
+        if old_def_basis:
+            db.delete(old_def_basis)
+        ensure_validation_rule_codes(db)
         for prog in db.scalars(select(AcademicProgram)).all():
             if prog.program_type == "MAJOR" and not prog.division:
                 prog.division = infer_division_from_program_name(prog.name)
@@ -1378,6 +2303,82 @@ def get_course(course_id: str, db: Session = Depends(get_db), _: User = Depends(
         raise HTTPException(status_code=404, detail="Course not found")
     prereqs = db.scalars(select(CoursePrerequisite).where(CoursePrerequisite.course_id == course_id)).all()
     return {"course": serialize(course), "prerequisites": [serialize(p) for p in prereqs]}
+
+
+@app.get("/courses/{course_id}/buckets")
+def list_course_buckets(course_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    course = db.get(Course, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    rows = db.scalars(
+        select(CourseBucketTag)
+        .where(CourseBucketTag.course_id == course_id)
+        .order_by(CourseBucketTag.sort_order.asc(), CourseBucketTag.bucket_code.asc())
+    ).all()
+    return [serialize(r) for r in rows]
+
+
+@app.get("/courses/buckets/version/{version_id}")
+def list_version_course_buckets(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
+    course_by_id = {c.id: c for c in courses}
+    if not course_by_id:
+        return []
+    rows = db.scalars(select(CourseBucketTag).where(CourseBucketTag.course_id.in_(list(course_by_id.keys())))).all()
+    return [
+        {
+            **serialize(r),
+            "course_number": (course_by_id.get(r.course_id).course_number if course_by_id.get(r.course_id) else None),
+            "course_title": (course_by_id.get(r.course_id).title if course_by_id.get(r.course_id) else None),
+        }
+        for r in rows
+    ]
+
+
+@app.post("/courses/{course_id}/buckets")
+def upsert_course_bucket(
+    course_id: str, payload: CourseBucketTagIn, db: Session = Depends(get_db), user: User = Depends(require_design)
+):
+    course = db.get(Course, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    code = str(payload.bucket_code or "").strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="bucket_code is required")
+    existing = db.scalar(
+        select(CourseBucketTag).where(CourseBucketTag.course_id == course_id, CourseBucketTag.bucket_code == code)
+    )
+    if existing:
+        existing.credit_hours_override = payload.credit_hours_override
+        existing.sort_order = payload.sort_order
+        db.commit()
+        db.refresh(existing)
+        write_audit(
+            db, user, "UPDATE", "CourseBucketTag", existing.id, json.dumps({"course_id": course_id, "bucket_code": code})
+        )
+        return serialize(existing)
+    row = CourseBucketTag(
+        course_id=course_id,
+        bucket_code=code,
+        credit_hours_override=payload.credit_hours_override,
+        sort_order=payload.sort_order,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    write_audit(db, user, "CREATE", "CourseBucketTag", row.id, json.dumps(payload.model_dump()))
+    return serialize(row)
+
+
+@app.delete("/courses/buckets/{bucket_tag_id}")
+def delete_course_bucket(bucket_tag_id: str, db: Session = Depends(get_db), user: User = Depends(require_design)):
+    row = db.get(CourseBucketTag, bucket_tag_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Course bucket tag not found")
+    db.delete(row)
+    db.commit()
+    write_audit(db, user, "DELETE", "CourseBucketTag", bucket_tag_id)
+    return {"status": "deleted"}
 
 
 @app.post("/prerequisites")
@@ -1702,6 +2703,8 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
     by_parent: dict[Optional[str], list[Requirement]] = {}
     for req in all_reqs:
         by_parent.setdefault(req.parent_requirement_id, []).append(req)
+    program_by_id = {p.id: p for p in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id)).all()}
+    code_map = build_program_designer_code_map(all_reqs, program_by_id)
 
     def build(parent: Optional[str]):
         nodes = []
@@ -1710,6 +2713,7 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
             nodes.append(
                 {
                     "id": req.id,
+                    "node_code": code_map.get(req.id),
                     "version_id": req.version_id,
                     "name": req.name,
                     "logic_type": req.logic_type,
@@ -1976,15 +2980,22 @@ def design_course_detail(course_id: str, db: Session = Depends(get_db), _: User 
             }
         )
     sections = db.scalars(select(Section).where(Section.course_id == course_id)).all()
+    bucket_tags = db.scalars(
+        select(CourseBucketTag)
+        .where(CourseBucketTag.course_id == course_id)
+        .order_by(CourseBucketTag.sort_order.asc(), CourseBucketTag.bucket_code.asc())
+    ).all()
     return {
         "general": serialize(course),
         "scheduling": {
             "designated_semester": course.designated_semester,
+            "offered_periods_json": course.offered_periods_json,
             "credit_hours": course.credit_hours,
             "min_section_size": course.min_section_size,
         },
         "prerequisites": [serialize(p) for p in prereqs],
         "requirements": linked_requirements,
+        "accreditation_buckets": [serialize(b) for b in bucket_tags],
         "resources": [serialize(s) for s in sections],
         "history_hint": "Use /audit and filter entity_type=Course and this course id.",
     }
@@ -2087,9 +3098,493 @@ def list_records(cadet_id: Optional[str] = None, db: Session = Depends(get_db), 
     return [serialize(r) for r in db.scalars(stmt.order_by(CadetRecord.semester_label.asc())).all()]
 
 
+def build_canvas_sequence_payload(version_id: str, db: Session) -> dict:
+    version = db.get(CurriculumVersion, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    items = db.scalars(
+        select(PlanItem).where(PlanItem.version_id == version_id).order_by(PlanItem.semester_index.asc(), PlanItem.position.asc())
+    ).all()
+    program_by_id = {p.id: p for p in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id)).all()}
+    rows = []
+    for item in items:
+        c = db.get(Course, item.course_id)
+        if not c:
+            continue
+        prog = program_by_id.get(item.major_program_id) if item.major_program_id else None
+        rows.append(
+            {
+                "semester_index": item.semester_index,
+                "position": item.position,
+                "course_id": c.id,
+                "course_number": c.course_number,
+                "aspect": item.aspect,
+                "major_program_id": item.major_program_id,
+                "major_program_name": prog.name if prog else None,
+                "track_name": item.track_name,
+            }
+        )
+    return {
+        "version_id": version.id,
+        "version_name": version.name,
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "items": rows,
+    }
+
+
+def apply_canvas_sequence_import(version_id: str, payload: CanvasSequenceImportIn, db: Session) -> dict:
+    version = db.get(CurriculumVersion, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
+    course_by_id = {c.id: c for c in courses}
+    course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
+    programs = db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id)).all()
+    program_by_id = {p.id: p for p in programs}
+    program_id_by_name = {str(p.name or "").strip().lower(): p.id for p in programs}
+
+    if payload.replace_existing:
+        for row in db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all():
+            db.delete(row)
+        db.flush()
+
+    created = 0
+    skipped = 0
+    touched_semesters: set[int] = set()
+    ordered = sorted(payload.items, key=lambda x: (int(x.semester_index), int(x.position if x.position is not None else 1_000_000)))
+    semester_positions: dict[int, int] = {}
+    for row in ordered:
+        course_id = None
+        if row.course_id and row.course_id in course_by_id:
+            course_id = row.course_id
+        elif row.course_number:
+            course_id = course_id_by_number.get(normalize_course_number(row.course_number))
+        if not course_id:
+            skipped += 1
+            continue
+
+        major_program_id = None
+        if row.major_program_id and row.major_program_id in program_by_id:
+            major_program_id = row.major_program_id
+        elif row.major_program_name:
+            major_program_id = program_id_by_name.get(str(row.major_program_name).strip().lower())
+
+        aspect = str(row.aspect or "CORE").upper().strip()
+        if aspect not in {"CORE", "MAJOR", "TRACK", "PE", "MAJOR_REQUIRED", "MAJOR_TRACK"}:
+            aspect = "CORE"
+
+        sem = int(row.semester_index)
+        if row.position is None:
+            pos = semester_positions.get(sem, 0)
+        else:
+            pos = max(0, int(row.position))
+        semester_positions[sem] = pos + 1
+        touched_semesters.add(sem)
+
+        db.add(
+            PlanItem(
+                version_id=version_id,
+                semester_index=sem,
+                course_id=course_id,
+                position=pos,
+                aspect=aspect,
+                major_program_id=major_program_id,
+                track_name=(str(row.track_name).strip()[:120] if row.track_name else None),
+            )
+        )
+        created += 1
+
+    # Keep contiguous positions within each touched period.
+    for sem in touched_semesters:
+        rows = db.scalars(
+            select(PlanItem).where(PlanItem.version_id == version_id, PlanItem.semester_index == sem).order_by(PlanItem.position.asc(), PlanItem.id.asc())
+        ).all()
+        for idx, r in enumerate(rows):
+            r.position = idx
+
+    db.commit()
+    return {"created": created, "skipped": skipped, "replaced_existing": payload.replace_existing}
+
+
+DATASET_MODULE_ORDER = ("COURSES", "RULES", "CANVAS", "REPORTS")
+
+
+def normalize_dataset_modules(raw_modules: Optional[list[str] | str]) -> list[str]:
+    if raw_modules is None:
+        return list(DATASET_MODULE_ORDER)
+    if isinstance(raw_modules, str):
+        tokens = [x.strip().upper() for x in raw_modules.split(",") if x.strip()]
+    else:
+        tokens = [str(x).strip().upper() for x in raw_modules if str(x).strip()]
+    if not tokens or "ALL" in tokens:
+        return list(DATASET_MODULE_ORDER)
+    out = [m for m in DATASET_MODULE_ORDER if m in set(tokens)]
+    if not out:
+        raise HTTPException(status_code=400, detail="modules must include ALL or any of COURSES,RULES,CANVAS,REPORTS")
+    return out
+
+
+def stable_hash(payload: dict | list) -> str:
+    text = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def model_columns(model) -> set[str]:
+    return {c.key for c in inspect(model).mapper.column_attrs}
+
+
+def filter_model_row(model, row: dict) -> dict:
+    cols = model_columns(model)
+    return {k: row.get(k) for k in row.keys() if k in cols}
+
+
+def build_course_definitions_payload(version_id: str, db: Session) -> dict:
+    courses = db.scalars(select(Course).where(Course.version_id == version_id).order_by(Course.course_number.asc(), Course.id.asc())).all()
+    course_rows = [serialize(c) for c in courses]
+    course_ids = {c["id"] for c in course_rows}
+    prereq_rows = [
+        serialize(p)
+        for p in db.scalars(select(CoursePrerequisite).order_by(CoursePrerequisite.course_id.asc(), CoursePrerequisite.required_course_id.asc())).all()
+        if p.course_id in course_ids or p.required_course_id in course_ids
+    ]
+    substitution_rows = [
+        serialize(s)
+        for s in db.scalars(select(CourseSubstitution).order_by(CourseSubstitution.original_course_id.asc(), CourseSubstitution.substitute_course_id.asc())).all()
+        if s.original_course_id in course_ids or s.substitute_course_id in course_ids
+    ]
+    bucket_rows = [
+        serialize(b)
+        for b in db.scalars(select(CourseBucketTag).order_by(CourseBucketTag.bucket_code.asc(), CourseBucketTag.sort_order.asc())).all()
+        if b.course_id in course_ids
+    ]
+    return {
+        "courses": course_rows,
+        "course_prerequisites": prereq_rows,
+        "course_substitutions": substitution_rows,
+        "course_bucket_tags": bucket_rows,
+    }
+
+
+def build_rule_sets_payload(version_id: str, db: Session) -> dict:
+    programs = [serialize(p) for p in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id).order_by(AcademicProgram.name.asc())).all()]
+    requirements = [serialize(r) for r in db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc(), Requirement.name.asc())).all()]
+    req_ids = {r["id"] for r in requirements}
+    fulfillment = [
+        serialize(f)
+        for f in db.scalars(select(RequirementFulfillment).order_by(RequirementFulfillment.requirement_id.asc(), RequirementFulfillment.sort_order.asc())).all()
+        if f.requirement_id in req_ids
+    ]
+    req_substitutions = [
+        serialize(s)
+        for s in db.scalars(select(RequirementSubstitution).order_by(RequirementSubstitution.requirement_id.asc())).all()
+        if s.requirement_id in req_ids
+    ]
+    validation_rules = [serialize(v) for v in db.scalars(select(ValidationRule).order_by(ValidationRule.tier.asc(), ValidationRule.name.asc())).all()]
+    return {
+        "academic_programs": programs,
+        "requirements": requirements,
+        "requirement_fulfillment": fulfillment,
+        "requirement_substitutions": req_substitutions,
+        "validation_rules": validation_rules,
+    }
+
+
+def build_canvas_payload(version_id: str, db: Session) -> dict:
+    return build_canvas_sequence_payload(version_id, db)
+
+
+def build_report_results_payload(version_id: str, db: Session) -> dict:
+    return {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "validation": validate(version_id, db, None),
+        "feasibility": design_feasibility(version_id, db, None),
+        "checklist_core_only": design_checklist(version_id, None, True, db, None),
+    }
+
+
+def compute_dataset_module_ids(version_id: str, db: Session) -> dict:
+    course_payload = build_course_definitions_payload(version_id, db)
+    rules_payload = build_rule_sets_payload(version_id, db)
+    canvas_payload = build_canvas_payload(version_id, db)
+    return {
+        "courses_id": stable_hash(course_payload),
+        "rules_id": stable_hash(rules_payload),
+        "canvas_id": stable_hash(canvas_payload),
+    }
+
+
+def build_dataset_bundle(version_id: str, db: Session, modules: Optional[list[str] | str] = None) -> dict:
+    version = db.get(CurriculumVersion, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    selected = normalize_dataset_modules(modules)
+    ids = compute_dataset_module_ids(version_id, db)
+    payload: dict = {}
+    if "COURSES" in selected:
+        payload["courses"] = build_course_definitions_payload(version_id, db)
+    if "RULES" in selected:
+        payload["rules"] = build_rule_sets_payload(version_id, db)
+    if "CANVAS" in selected:
+        payload["canvas"] = build_canvas_payload(version_id, db)
+    reports_id = None
+    if "REPORTS" in selected:
+        report_payload = build_report_results_payload(version_id, db)
+        payload["reports"] = report_payload
+        reports_id = stable_hash(report_payload)
+    return {
+        "bundle_id": str(uuid.uuid4()),
+        "version_id": version.id,
+        "version_name": version.name,
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "modules": selected,
+        "module_ids": {
+            **ids,
+            "reports_id": reports_id,
+        },
+        "dependencies": {
+            "canvas": {"courses_id": ids["courses_id"], "rules_id": ids["rules_id"]},
+            "reports": {"courses_id": ids["courses_id"], "rules_id": ids["rules_id"], "canvas_id": ids["canvas_id"]},
+        },
+        "payload": payload,
+    }
+
+
+def apply_course_definitions_import(version_id: str, course_payload: dict, replace_existing: bool, db: Session) -> dict:
+    incoming_courses = course_payload.get("courses") or []
+    incoming_prereqs = course_payload.get("course_prerequisites") or []
+    incoming_subs = course_payload.get("course_substitutions") or []
+    incoming_buckets = course_payload.get("course_bucket_tags") or []
+
+    if replace_existing:
+        existing_course_ids = {c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
+        if existing_course_ids:
+            for row in db.scalars(select(PlanItem).where(PlanItem.course_id.in_(existing_course_ids))).all():
+                db.delete(row)
+            for row in db.scalars(select(CourseBucketTag).where(CourseBucketTag.course_id.in_(existing_course_ids))).all():
+                db.delete(row)
+            for row in db.scalars(select(CoursePrerequisite)).all():
+                if row.course_id in existing_course_ids or row.required_course_id in existing_course_ids:
+                    db.delete(row)
+            for row in db.scalars(select(CourseSubstitution)).all():
+                if row.original_course_id in existing_course_ids or row.substitute_course_id in existing_course_ids:
+                    db.delete(row)
+            for row in db.scalars(select(Course).where(Course.version_id == version_id)).all():
+                db.delete(row)
+            db.flush()
+
+    created_courses = 0
+    skipped_courses = 0
+    for raw in incoming_courses:
+        row = filter_model_row(Course, raw)
+        row["version_id"] = version_id
+        if row.get("id") and db.get(Course, row["id"]):
+            skipped_courses += 1
+            continue
+        db.add(Course(**row))
+        created_courses += 1
+    db.flush()
+
+    version_course_ids = {c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
+    created_prereqs = 0
+    for raw in incoming_prereqs:
+        row = filter_model_row(CoursePrerequisite, raw)
+        if row.get("course_id") not in version_course_ids or row.get("required_course_id") not in version_course_ids:
+            continue
+        if row.get("id") and db.get(CoursePrerequisite, row["id"]):
+            continue
+        db.add(CoursePrerequisite(**row))
+        created_prereqs += 1
+
+    created_subs = 0
+    for raw in incoming_subs:
+        row = filter_model_row(CourseSubstitution, raw)
+        if row.get("original_course_id") not in version_course_ids or row.get("substitute_course_id") not in version_course_ids:
+            continue
+        if row.get("id") and db.get(CourseSubstitution, row["id"]):
+            continue
+        db.add(CourseSubstitution(**row))
+        created_subs += 1
+
+    created_buckets = 0
+    for raw in incoming_buckets:
+        row = filter_model_row(CourseBucketTag, raw)
+        if row.get("course_id") not in version_course_ids:
+            continue
+        if row.get("id") and db.get(CourseBucketTag, row["id"]):
+            continue
+        db.add(CourseBucketTag(**row))
+        created_buckets += 1
+
+    db.flush()
+    return {
+        "courses_created": created_courses,
+        "courses_skipped": skipped_courses,
+        "prerequisites_created": created_prereqs,
+        "substitutions_created": created_subs,
+        "bucket_tags_created": created_buckets,
+    }
+
+
+def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existing: bool, db: Session) -> dict:
+    incoming_programs = rules_payload.get("academic_programs") or []
+    incoming_requirements = rules_payload.get("requirements") or []
+    incoming_fulfillment = rules_payload.get("requirement_fulfillment") or []
+    incoming_req_subs = rules_payload.get("requirement_substitutions") or []
+    incoming_validation = rules_payload.get("validation_rules") or []
+
+    if replace_existing:
+        req_rows = db.scalars(select(Requirement).where(Requirement.version_id == version_id)).all()
+        req_ids = {r.id for r in req_rows}
+        if req_ids:
+            for row in db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_(req_ids))).all():
+                db.delete(row)
+            for row in db.scalars(select(RequirementSubstitution).where(RequirementSubstitution.requirement_id.in_(req_ids))).all():
+                db.delete(row)
+        for row in req_rows:
+            db.delete(row)
+        for row in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id)).all():
+            db.delete(row)
+        if incoming_validation:
+            for row in db.scalars(select(ValidationRule)).all():
+                db.delete(row)
+        db.flush()
+
+    created_programs = 0
+    for raw in incoming_programs:
+        row = filter_model_row(AcademicProgram, raw)
+        row["version_id"] = version_id
+        if row.get("id") and db.get(AcademicProgram, row["id"]):
+            continue
+        db.add(AcademicProgram(**row))
+        created_programs += 1
+    db.flush()
+
+    created_requirements = 0
+    for raw in incoming_requirements:
+        row = filter_model_row(Requirement, raw)
+        row["version_id"] = version_id
+        if row.get("id") and db.get(Requirement, row["id"]):
+            continue
+        db.add(Requirement(**row))
+        created_requirements += 1
+    db.flush()
+
+    req_ids = {r.id for r in db.scalars(select(Requirement).where(Requirement.version_id == version_id)).all()}
+    course_ids = {c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
+
+    created_fulfillment = 0
+    for raw in incoming_fulfillment:
+        row = filter_model_row(RequirementFulfillment, raw)
+        if row.get("requirement_id") not in req_ids or row.get("course_id") not in course_ids:
+            continue
+        if row.get("id") and db.get(RequirementFulfillment, row["id"]):
+            continue
+        db.add(RequirementFulfillment(**row))
+        created_fulfillment += 1
+
+    created_req_subs = 0
+    for raw in incoming_req_subs:
+        row = filter_model_row(RequirementSubstitution, raw)
+        if (
+            row.get("requirement_id") not in req_ids
+            or row.get("primary_course_id") not in course_ids
+            or row.get("substitute_course_id") not in course_ids
+        ):
+            continue
+        if row.get("id") and db.get(RequirementSubstitution, row["id"]):
+            continue
+        db.add(RequirementSubstitution(**row))
+        created_req_subs += 1
+
+    created_validation = 0
+    for raw in incoming_validation:
+        row = filter_model_row(ValidationRule, raw)
+        if not row.get("name"):
+            continue
+        if db.scalar(select(ValidationRule).where(ValidationRule.name == row["name"])):
+            continue
+        if row.get("id") and db.get(ValidationRule, row["id"]):
+            row.pop("id", None)
+        db.add(ValidationRule(**row))
+        created_validation += 1
+
+    db.flush()
+    return {
+        "programs_created": created_programs,
+        "requirements_created": created_requirements,
+        "requirement_fulfillment_created": created_fulfillment,
+        "requirement_substitutions_created": created_req_subs,
+        "validation_rules_created": created_validation,
+    }
+
+
+def dataset_import_mismatch_report(modules: list[str], bundle: dict, current_ids: dict) -> list[str]:
+    incoming_ids = bundle.get("module_ids") or {}
+    deps = bundle.get("dependencies") or {}
+
+    def effective_id(kind: str) -> Optional[str]:
+        key = f"{kind}_id"
+        if kind.upper() in modules and incoming_ids.get(key):
+            return incoming_ids.get(key)
+        return current_ids.get(key)
+
+    mismatches: list[str] = []
+    if "CANVAS" in modules:
+        canvas_dep = deps.get("canvas") or {}
+        expected_courses = canvas_dep.get("courses_id")
+        expected_rules = canvas_dep.get("rules_id")
+        if expected_courses and expected_courses != effective_id("courses"):
+            mismatches.append(f"Canvas expects courses_id={expected_courses}, but active/imported courses_id={effective_id('courses')}.")
+        if expected_rules and expected_rules != effective_id("rules"):
+            mismatches.append(f"Canvas expects rules_id={expected_rules}, but active/imported rules_id={effective_id('rules')}.")
+    if "REPORTS" in modules:
+        report_dep = deps.get("reports") or {}
+        for k in ("courses", "rules", "canvas"):
+            expected = report_dep.get(f"{k}_id")
+            actual = effective_id(k)
+            if expected and expected != actual:
+                mismatches.append(f"Reports expect {k}_id={expected}, but active/imported {k}_id={actual}.")
+    return mismatches
+
+
+def apply_dataset_bundle_import(version_id: str, bundle: dict, db: Session, modules: Optional[list[str] | str] = None, replace_existing: bool = True) -> dict:
+    selected = normalize_dataset_modules(modules if modules is not None else bundle.get("modules"))
+    payload = bundle.get("payload") or {}
+    current_ids = compute_dataset_module_ids(version_id, db)
+    mismatches = dataset_import_mismatch_report(selected, bundle, current_ids)
+    applied: dict = {}
+
+    if "COURSES" in selected:
+        applied["courses"] = apply_course_definitions_import(version_id, payload.get("courses") or {}, replace_existing, db)
+    if "RULES" in selected:
+        applied["rules"] = apply_rule_sets_import(version_id, payload.get("rules") or {}, replace_existing, db)
+    if "CANVAS" in selected:
+        canvas_payload = payload.get("canvas") or {}
+        canvas_in = CanvasSequenceImportIn(
+            name=str(bundle.get("name") or "Imported Canvas"),
+            replace_existing=replace_existing,
+            items=[CanvasSequenceItemIn(**x) for x in (canvas_payload.get("items") or [])],
+        )
+        applied["canvas"] = apply_canvas_sequence_import(version_id, canvas_in, db)
+    if "REPORTS" in selected:
+        # Report rows are derived outputs; importing preserves archival context in the bundle itself.
+        applied["reports"] = {"status": "accepted", "result_count": len((payload.get("reports") or {}).keys())}
+
+    db.commit()
+    ids_after = compute_dataset_module_ids(version_id, db)
+    return {
+        "modules": selected,
+        "replace_existing": replace_existing,
+        "mismatches": mismatches,
+        "applied": applied,
+        "ids_before": current_ids,
+        "ids_after": ids_after,
+    }
+
+
 @app.get("/design/canvas/{version_id}")
 def canvas(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
-    out = {str(i): [] for i in range(1, 9)}
+    out = {str(i): [] for i in ALL_PLAN_PERIODS}
     items = db.scalars(select(PlanItem).where(PlanItem.version_id == version_id).order_by(PlanItem.semester_index, PlanItem.position)).all()
     for item in items:
         c = db.get(Course, item.course_id)
@@ -2153,7 +3648,7 @@ def canvas_view(
 def canvas_add(
     version_id: str,
     course_id: str,
-    semester_index: int = Query(..., ge=1, le=8),
+    semester_index: int = Query(..., ge=0, le=MAX_PLAN_PERIOD),
     aspect: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     major_mode: Optional[str] = Query(None),
@@ -2314,6 +3809,109 @@ def canvas_delete(plan_item_id: str, db: Session = Depends(get_db), _: User = De
     return {"status": "deleted"}
 
 
+@app.get("/design/datasets/{version_id}/export")
+def export_dataset_bundle(
+    version_id: str,
+    modules: str = Query("ALL"),
+    db: Session = Depends(get_db),
+    _: User = Depends(current_user),
+):
+    return build_dataset_bundle(version_id, db, modules)
+
+
+@app.post("/design/datasets/{version_id}/import")
+def import_dataset_bundle(
+    version_id: str,
+    payload: dict,
+    modules: Optional[str] = None,
+    replace_existing: bool = True,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_design),
+):
+    bundle = payload.get("bundle") if isinstance(payload, dict) and "bundle" in payload else payload
+    if not isinstance(bundle, dict):
+        raise HTTPException(status_code=400, detail="Invalid bundle payload")
+    result = apply_dataset_bundle_import(version_id, bundle, db, modules=modules, replace_existing=replace_existing)
+    write_audit(
+        db,
+        user,
+        "DATASET_IMPORT",
+        "CurriculumVersion",
+        version_id,
+        json.dumps({"modules": result["modules"], "replace_existing": replace_existing, "mismatches": result["mismatches"]}),
+    )
+    return {"status": "ok", **result}
+
+
+@app.get("/design/datasets/{version_id}/saved")
+def list_saved_dataset_bundles(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    version = db.get(CurriculumVersion, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    rows = db.scalars(
+        select(DataBundleSnapshot).where(DataBundleSnapshot.version_id == version_id).order_by(DataBundleSnapshot.created_at.desc())
+    ).all()
+    return [serialize(r) for r in rows]
+
+
+@app.post("/design/datasets/{version_id}/save")
+def save_dataset_bundle(
+    version_id: str,
+    name: str = Query(..., min_length=1, max_length=120),
+    modules: str = Query("ALL"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_design),
+):
+    bundle = build_dataset_bundle(version_id, db, modules)
+    row = DataBundleSnapshot(
+        version_id=version_id,
+        name=name.strip(),
+        modules_csv=",".join(bundle.get("modules") or []),
+        bundle_json=json.dumps(bundle),
+        created_by=user.id,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    write_audit(
+        db,
+        user,
+        "DATASET_SAVE",
+        "DataBundleSnapshot",
+        row.id,
+        json.dumps({"version_id": version_id, "modules": row.modules_csv, "name": row.name}),
+    )
+    return serialize(row)
+
+
+@app.post("/design/datasets/{version_id}/saved/{snapshot_id}/load")
+def load_saved_dataset_bundle(
+    version_id: str,
+    snapshot_id: str,
+    replace_existing: bool = True,
+    modules: Optional[str] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_design),
+):
+    row = db.get(DataBundleSnapshot, snapshot_id)
+    if not row or row.version_id != version_id:
+        raise HTTPException(status_code=404, detail="Saved dataset bundle not found")
+    try:
+        bundle = json.loads(row.bundle_json or "{}")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Saved dataset bundle payload is invalid") from exc
+    result = apply_dataset_bundle_import(version_id, bundle, db, modules=modules, replace_existing=replace_existing)
+    write_audit(
+        db,
+        user,
+        "DATASET_LOAD",
+        "DataBundleSnapshot",
+        row.id,
+        json.dumps({"version_id": version_id, "modules": result["modules"], "replace_existing": replace_existing}),
+    )
+    return {"status": "ok", "snapshot_id": row.id, **result}
+
+
 @app.get("/design/checklist/{version_id}")
 def design_checklist(
     version_id: str,
@@ -2334,9 +3932,18 @@ def design_checklist(
 
     reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc())).all()
     req_by_id = {r.id: r for r in reqs}
+    program_by_id = {p.id: p for p in db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id)).all()}
+    node_code_map = build_program_designer_code_map(reqs, program_by_id)
     courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
+    course_by_id = {c.id: c for c in courses}
     course_num_by_id = {c.id: c.course_number for c in courses}
     course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
+    planned_credit_hours = 0.0
+    for item in canvas_items:
+        c = course_by_id.get(item.course_id)
+        if c:
+            planned_credit_hours += float(c.credit_hours or 0.0)
+    planned_academic_semesters = sorted({x.semester_index for x in canvas_items if x.semester_index in ACADEMIC_PERIODS})
     child_map: dict[Optional[str], list[Requirement]] = {}
     for r in reqs:
         child_map.setdefault(r.parent_requirement_id, []).append(r)
@@ -2392,6 +3999,15 @@ def design_checklist(
         collect_cache[req_id] = set(found)
         return found
 
+    def gather_planned_program_requirement_courses(program_id: str) -> tuple[set[str], float]:
+        top_program_reqs = [r for r in reqs if r.program_id == program_id and r.parent_requirement_id is None]
+        out_courses: set[str] = set()
+        for tr in top_program_reqs:
+            out_courses |= collect_requirement_course_ids(tr.id)
+        out_courses = {cid for cid in out_courses if cid in planned_course_ids}
+        out_credits = sum(float(course_by_id[cid].credit_hours or 0.0) for cid in out_courses if cid in course_by_id)
+        return out_courses, out_credits
+
     def evaluate(req_id: str) -> dict:
         req = req_by_id[req_id]
         children = child_map.get(req_id, [])
@@ -2432,12 +4048,12 @@ def design_checklist(
                 option_nums = [course_num_by_id.get(x, x) for x in option_ids]
                 parts = []
                 if required_semester is not None:
-                    parts.append(f"Semester {required_semester}")
+                    parts.append(period_label(required_semester))
                 if required_semester_min is not None:
-                    parts.append(f"Semester {required_semester_min}+")
+                    parts.append(f"{period_label(required_semester_min)} or later")
                 if required_semester_max is not None:
-                    parts.append(f"Semester <= {required_semester_max}")
-                window_text = ", ".join(parts) if parts else "required semester window"
+                    parts.append(f"{period_label(required_semester_max)} or earlier")
+                window_text = ", ".join(parts) if parts else "required period window"
                 fixed_semester_violations.append(
                     f"{' / '.join(option_nums)} must satisfy: {window_text}"
                 )
@@ -2461,6 +4077,7 @@ def design_checklist(
 
         return {
             "requirement_id": req.id,
+            "node_code": node_code_map.get(req.id),
             "name": req.name,
             "program_id": req.program_id,
             "logic_type": logic,
@@ -2490,6 +4107,8 @@ def design_checklist(
             cfg = json.loads(rule.config_json or "{}")
         except Exception:
             cfg = {}
+        if is_cadet_performance_rule(cfg):
+            continue
         rule_type = str(cfg.get("type") or "").upper()
         if rule_type not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
             continue
@@ -2556,11 +4175,11 @@ def design_checklist(
             if len(matched_ids) < min_count:
                 sem_bits = []
                 if required_semester is not None:
-                    sem_bits.append(f"S{required_semester}")
+                    sem_bits.append(period_short_label(required_semester))
                 if required_semester_min is not None:
-                    sem_bits.append(f">=S{required_semester_min}")
+                    sem_bits.append(f">={period_short_label(required_semester_min)}")
                 if required_semester_max is not None:
-                    sem_bits.append(f"<=S{required_semester_max}")
+                    sem_bits.append(f"<={period_short_label(required_semester_max)}")
                 sem_suffix = f" [{', '.join(sem_bits)}]" if sem_bits else ""
                 if matched_ids_without_timing and not matched_ids:
                     violations.append(f"Choice is present but violates timing rule{sem_suffix}.")
@@ -2568,6 +4187,7 @@ def design_checklist(
             children.append(
                 {
                     "requirement_id": f"core-rule-group:{rule.id}:{idx}",
+                    "node_code": None,
                     "name": group_name,
                     "program_id": target_program.id,
                     "logic_type": "PICK_N",
@@ -2582,10 +4202,14 @@ def design_checklist(
                 }
             )
         top_satisfied = all(c["is_satisfied"] for c in children) if children else True
-        program_prefix = "Minor" if (target_program.program_type or "").upper() == "MINOR" else "Major"
+        parent_code = next((node_code_map.get(r.id) for r in target_reqs if r.program_id == target_program.id), None)
+        core_rule_code = f"{parent_code}.C1" if parent_code else "R1.C1"
+        for idx, child in enumerate(children):
+            child["node_code"] = f"{core_rule_code}.R{idx + 1}"
         rule_nodes.append(
             {
                 "requirement_id": f"core-rule:{rule.id}",
+                "node_code": core_rule_code,
                 "name": "Core Rules",
                 "program_id": target_program.id,
                 "logic_type": "ALL_REQUIRED",
@@ -2600,9 +4224,87 @@ def design_checklist(
             }
         )
 
+    active_rules = active_design_rules_with_config(db)
+    residency_hours_rule, residency_hours_cfg = find_active_rule(
+        active_rules,
+        rule_type="RESIDENCY_MIN_HOURS",
+        names=["Residency minimum in-residence hours", "COI residency requirements"],
+    )
+    residency_sem_rule, residency_sem_cfg = find_active_rule(
+        active_rules,
+        rule_type="RESIDENCY_MIN_ACADEMIC_SEMESTERS",
+        names=["Residency minimum academic semesters", "COI residency requirements"],
+    )
+    residency_min_hours = DEFAULT_RESIDENCY_MIN_HOURS
+    residency_min_academic = DEFAULT_RESIDENCY_MIN_ACADEMIC_SEMESTERS
+    try:
+        residency_min_hours = float(
+            residency_hours_cfg.get("min_hours", residency_hours_cfg.get("minimum_in_residence_hours", residency_min_hours))
+        )
+    except Exception:
+        residency_min_hours = DEFAULT_RESIDENCY_MIN_HOURS
+    try:
+        residency_min_academic = int(
+            residency_sem_cfg.get("min_semesters", residency_sem_cfg.get("minimum_academic_semesters", residency_min_academic))
+        )
+    except Exception:
+        residency_min_academic = DEFAULT_RESIDENCY_MIN_ACADEMIC_SEMESTERS
+
     all_results = [*results, *rule_nodes]
     total = len(all_results)
     satisfied = sum(1 for r in all_results if r["is_satisfied"])
+    # Validation rule line items (same structure used by Program Feasibility and Course-of-Study Feasibility).
+    validation_items = []
+    residency_hours_status = "PASS" if planned_credit_hours >= residency_min_hours else "FAIL"
+    validation_items.append(
+        {
+            "rule_code": str(residency_hours_rule.rule_code or "").strip() if residency_hours_rule else "",
+            "rule_name": residency_hours_rule.name if residency_hours_rule else "Residency minimum in-residence hours",
+            "status": residency_hours_status,
+            "message": (
+                f"Planned in-residence credit hours {planned_credit_hours:.1f}; minimum {residency_min_hours:.0f}."
+            ),
+        }
+    )
+    residency_sem_status = "PASS" if len(planned_academic_semesters) >= residency_min_academic else "FAIL"
+    validation_items.append(
+        {
+            "rule_code": str(residency_sem_rule.rule_code or "").strip() if residency_sem_rule else "",
+            "rule_name": residency_sem_rule.name if residency_sem_rule else "Residency minimum academic semesters",
+            "status": residency_sem_status,
+            "message": (
+                f"Academic semesters with load {len(planned_academic_semesters)}; minimum {residency_min_academic}."
+            ),
+        }
+    )
+    bucket_rows = db.scalars(select(CourseBucketTag).where(CourseBucketTag.course_id.in_(list(planned_course_ids)))).all() if planned_course_ids else []
+    validation_items.extend(
+        abet_validation_items_for_courses(
+            active_rules,
+            programs=selected_programs,
+            course_ids=set(planned_course_ids),
+            bucket_rows=bucket_rows,
+            course_by_id=course_by_id,
+        )
+    )
+    pathway_definitions = get_pathway_definitions(active_rules)
+    pathway_program_course_sets: dict[str, set[str]] = {}
+    pathway_program_credit_sums: dict[str, float] = {}
+    for p in selected_programs:
+        pcs, pcredits = gather_planned_program_requirement_courses(p.id)
+        pathway_program_course_sets[p.id] = set(pcs)
+        pathway_program_credit_sums[p.id] = float(pcredits)
+    validation_items.extend(
+        build_pathway_validation_items(
+            rule_rows=active_rules,
+            programs=selected_programs,
+            program_course_sets=pathway_program_course_sets,
+            program_credit_sums=pathway_program_credit_sums,
+            course_by_id=course_by_id,
+            definitions=pathway_definitions,
+        )
+    )
+
     return {
         "version_id": version_id,
         "selected_program_ids": selected_program_ids,
@@ -2613,8 +4315,10 @@ def design_checklist(
             "top_level_remaining": max(0, total - satisfied),
             "completion_percent": (round((satisfied / total) * 100, 1) if total else 100.0),
         },
+        "period_metadata": list_period_metadata(),
         "requirements": all_results,
         "core_rules": rule_nodes,
+        "validation_items": validation_items,
     }
 
 
@@ -2625,6 +4329,8 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
     minors = [p for p in programs if (p.program_type or "").upper() == "MINOR"]
     reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc())).all()
     req_by_id = {r.id: r for r in reqs}
+    program_by_id = {p.id: p for p in programs}
+    node_code_map = build_program_designer_code_map(reqs, program_by_id)
     child_map: dict[Optional[str], list[Requirement]] = {}
     for r in reqs:
         child_map.setdefault(r.parent_requirement_id, []).append(r)
@@ -2645,8 +4351,21 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
         m.setdefault(s.primary_course_id, set()).add(s.substitute_course_id)
         if s.is_bidirectional:
             m.setdefault(s.substitute_course_id, set()).add(s.primary_course_id)
-    rules = db.scalars(select(ValidationRule).where(ValidationRule.active.is_(True))).all()
+    bucket_rows = db.scalars(select(CourseBucketTag).where(CourseBucketTag.course_id.in_([c.id for c in courses]))).all() if courses else []
+    rules = []
+    rules_with_cfg: list[tuple[ValidationRule, dict]] = []
+    for r in db.scalars(select(ValidationRule).where(ValidationRule.active.is_(True))).all():
+        try:
+            cfg = json.loads(r.config_json or "{}")
+        except Exception:
+            cfg = {}
+        cfg = cfg if isinstance(cfg, dict) else {}
+        if is_cadet_performance_rule(cfg):
+            continue
+        rules.append(r)
+        rules_with_cfg.append((r, cfg))
     max_credits_per_semester = 21.0
+    max_credits_per_summer_period = 9.0
     for rule in rules:
         try:
             cfg = json.loads(rule.config_json or "{}")
@@ -2665,10 +4384,33 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                 continue
             if cap > 0:
                 max_credits_per_semester = min(max_credits_per_semester, cap)
+        for key in ["max_credits_per_summer_period", "max_summer_credits", "summer_cap"]:
+            raw = cfg.get(key)
+            if raw is None:
+                continue
+            try:
+                cap = float(raw)
+            except Exception:
+                continue
+            if cap > 0:
+                max_credits_per_summer_period = min(max_credits_per_summer_period, cap)
 
     req_name_map: dict[str, list[Requirement]] = {}
     for r in reqs:
         req_name_map.setdefault((r.name or "").strip().lower(), []).append(r)
+
+    req_names_sorted = sorted(
+        [(r.name or "", r.id) for r in reqs if (r.name or "").strip()],
+        key=lambda x: len(x[0]),
+        reverse=True,
+    )
+
+    def infer_node_code_from_message(msg: str) -> str:
+        text_msg = str(msg or "").lower()
+        for req_name, req_id in req_names_sorted:
+            if req_name and req_name.lower() in text_msg:
+                return node_code_map.get(req_id, "")
+        return ""
 
     # Find active Core Rules keyed by target program.
     core_rules_by_program_id: dict[str, list[dict]] = {}
@@ -2691,7 +4433,8 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
         children = child_map.get(req_id, [])
         child_results = [evaluate_requirement(c.id) for c in children]
         links = links_by_req.get(req_id, [])
-        issues = []
+        issues: list[str] = []
+        own_issues: list[str] = []
         constraints = []
         mandatory_courses = set()
         min_credit_lb = 0.0
@@ -2726,30 +4469,41 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
         if logic in {"PICK_N", "ANY_N"}:
             needed = max(1, int(req.pick_n or 1))
             if available < needed:
-                issues.append(f"{req.name}: requires {needed} options but only {available} defined.")
+                own_issues.append(f"Requires {needed} options but only {available} defined.")
             else:
                 choice_units = sorted(units, key=lambda u: float(u["min_credit_lb"]))[:needed]
                 min_credit_lb += sum(float(u["min_credit_lb"]) for u in choice_units)
             constraints.append(f"{req.name}: choose {needed} of {available}.")
         elif logic in {"ANY_ONE", "ONE_OF"}:
             if available < 1:
-                issues.append(f"{req.name}: requires one option but none defined.")
+                own_issues.append("Requires one option but none defined.")
             else:
                 min_credit_lb += min(float(u["min_credit_lb"]) for u in units)
             constraints.append(f"{req.name}: choose 1 of {available}.")
         else:
             if not units:
-                issues.append(f"{req.name}: no linked courses/subrequirements defined.")
+                own_issues.append("No linked courses/subrequirements defined.")
             for u in units:
                 mandatory_courses |= set(u["mandatory_courses"])
                 min_credit_lb += float(u["min_credit_lb"])
                 if u["type"] == "requirement":
                     mandatory_courses |= set(u["mandatory_courses"])
+        issues.extend(own_issues)
         all_courses = set()
         for u in units:
             all_courses |= set(u["course_ids"])
         # always_mandatory_courses excludes optional parent-choice units
         always_mandatory_courses = set(mandatory_courses if logic == "ALL_REQUIRED" else set())
+        child_consistency_nodes = [c["consistency_node"] for c in child_results]
+        node_status = "INCONSISTENT" if own_issues or any(x.get("status") == "INCONSISTENT" for x in child_consistency_nodes) else "CONSISTENT"
+        consistency_node = {
+            "requirement_id": req.id,
+            "node_code": node_code_map.get(req.id, ""),
+            "name": req.name,
+            "status": node_status,
+            "message": " | ".join(own_issues) if own_issues else "",
+            "children": child_consistency_nodes,
+        }
         return {
             "issues": issues,
             "constraints": constraints,
@@ -2757,7 +4511,18 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
             "always_mandatory_courses": always_mandatory_courses,
             "all_courses": all_courses,
             "min_credit_lb": min_credit_lb,
+            "consistency_node": consistency_node,
         }
+
+    def gather_program_requirement_courses(program_id: str) -> tuple[set[str], float]:
+        top_program_reqs = [r for r in reqs if r.program_id == program_id and r.parent_requirement_id is None]
+        out_courses: set[str] = set()
+        out_credits = 0.0
+        for tr in top_program_reqs:
+            ev = evaluate_requirement(tr.id)
+            out_courses |= set(ev["all_courses"])
+            out_credits += float(ev["min_credit_lb"])
+        return out_courses, out_credits
 
     def evaluate_combo(combo_programs: list[AcademicProgram], kind: str, label: str) -> dict:
         issues: list[str] = []
@@ -2774,6 +4539,7 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
         mandatory = set()
         all_courses = set()
         min_credit_lb = 0.0
+        consistency_roots = []
         for tr in top_reqs:
             e = evaluate_requirement(tr.id)
             issues.extend(e["issues"])
@@ -2781,6 +4547,24 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
             mandatory |= set(e["always_mandatory_courses"])
             all_courses |= set(e["all_courses"])
             min_credit_lb += float(e["min_credit_lb"])
+            consistency_roots.append(e["consistency_node"])
+
+        # Program/major pathway validation checks.
+        pathway_definitions = get_pathway_definitions(rules_with_cfg)
+        pathway_program_course_sets: dict[str, set[str]] = {}
+        pathway_program_credit_sums: dict[str, float] = {}
+        for p in combo_programs:
+            pcs, pcredits = gather_program_requirement_courses(p.id)
+            pathway_program_course_sets[p.id] = set(pcs)
+            pathway_program_credit_sums[p.id] = float(pcredits)
+        pathway_validation_items = build_pathway_validation_items(
+            rule_rows=rules_with_cfg,
+            programs=combo_programs,
+            program_course_sets=pathway_program_course_sets,
+            program_credit_sums=pathway_program_credit_sums,
+            course_by_id=course_by_id,
+            definitions=pathway_definitions,
+        )
 
         # Requirement timing windows and clashes.
         timing_by_course: dict[str, list[tuple[Optional[int], Optional[int], Optional[int], str]]] = {}
@@ -2854,11 +4638,11 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     issues.append(f"{p.name} - {group_name}: timing leaves only {viable} viable choices, needs {min_count}.")
                 sem_parts = []
                 if rs is not None:
-                    sem_parts.append(f"S{rs}")
+                    sem_parts.append(period_short_label(rs))
                 if rs_min is not None:
-                    sem_parts.append(f">=S{rs_min}")
+                    sem_parts.append(f">={period_short_label(rs_min)}")
                 if rs_max is not None:
-                    sem_parts.append(f"<=S{rs_max}")
+                    sem_parts.append(f"<={period_short_label(rs_max)}")
                 if sem_parts:
                     constraints.append(f"{p.name} - {group_name}: must satisfy {' ,'.join(sem_parts)}.")
 
@@ -2907,7 +4691,7 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
         # Dependency feasibility for mandatory courses.
         windows: dict[str, tuple[int, int]] = {}
         for cid in mandatory:
-            lo, hi = 1, 8
+            lo, hi = 0, MAX_PLAN_PERIOD
             for rs, rs_min, rs_max, _ in timing_by_course.get(cid, []):
                 if rs is not None:
                     lo = max(lo, rs)
@@ -2918,13 +4702,15 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     hi = min(hi, rs_max)
             if lo > hi:
                 cnum = course_by_id.get(cid).course_number if course_by_id.get(cid) else cid
-                issues.append(f"{cnum}: no feasible semester window ({lo}>{hi}).")
+                issues.append(
+                    f"{cnum}: no feasible period window ({period_short_label(lo)}>{period_short_label(hi)})."
+                )
             windows[cid] = (lo, hi)
         for p in prereqs:
             if p.course_id not in mandatory or p.required_course_id not in mandatory:
                 continue
-            a_lo, a_hi = windows.get(p.required_course_id, (1, 8))
-            b_lo, b_hi = windows.get(p.course_id, (1, 8))
+            a_lo, a_hi = windows.get(p.required_course_id, (0, MAX_PLAN_PERIOD))
+            b_lo, b_hi = windows.get(p.course_id, (0, MAX_PLAN_PERIOD))
             rel = (p.relationship_type or "PREREQUISITE").upper()
             feasible = False
             for sa in range(a_lo, a_hi + 1):
@@ -2945,14 +4731,36 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                 issues.append(f"{course_num}: dependency on {req_num} infeasible within timing windows.")
 
         # Credit cap checks.
-        if min_credit_lb > max_credits_per_semester * 8.0:
-            issues.append(
-                f"Minimum required credits {min_credit_lb:.1f} exceeds {max_credits_per_semester:.1f} x 8 semester capacity."
+        total_credit_capacity = (max_credits_per_semester * float(len(ACADEMIC_PERIODS))) + (
+            max_credits_per_summer_period * float(len(SUMMER_PERIODS))
+        )
+        residency_hours_rule, residency_hours_cfg = find_active_rule(
+            rules_with_cfg,
+            rule_type="RESIDENCY_MIN_HOURS",
+            names=["Residency minimum in-residence hours", "COI residency requirements"],
+        )
+        residency_min_hours = DEFAULT_RESIDENCY_MIN_HOURS
+        try:
+            residency_min_hours = float(
+                residency_hours_cfg.get("min_hours", residency_hours_cfg.get("minimum_in_residence_hours", residency_min_hours))
             )
-        avg = min_credit_lb / 8.0 if min_credit_lb > 0 else 0.0
+        except Exception:
+            residency_min_hours = DEFAULT_RESIDENCY_MIN_HOURS
+        if min_credit_lb < residency_min_hours:
+            constraints.append(
+                f"Residency requires >= {residency_min_hours:.0f} in-residence credit hours; "
+                f"defined minimum is {min_credit_lb:.1f}, so additional electives/requirements are needed."
+            )
+        if min_credit_lb > total_credit_capacity:
+            issues.append(
+                f"Minimum required credits {min_credit_lb:.1f} exceeds total period capacity {total_credit_capacity:.1f} "
+                f"({max_credits_per_semester:.1f} x {len(ACADEMIC_PERIODS)} academic, "
+                f"{max_credits_per_summer_period:.1f} x {len(SUMMER_PERIODS)} summer)."
+            )
+        avg = min_credit_lb / float(len(ALL_PLAN_PERIODS)) if min_credit_lb > 0 else 0.0
         if avg > max_credits_per_semester * 0.9:
             constraints.append(
-                f"Average load {avg:.1f}/semester is near max cap {max_credits_per_semester:.1f}; limited schedule flexibility."
+                f"Average load {avg:.1f}/period is near academic cap {max_credits_per_semester:.1f}; limited schedule flexibility."
             )
 
         # De-duplicate message lists while preserving order.
@@ -2970,24 +4778,92 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                 continue
             seen.add(c)
             constraints_dedup.append(c)
-        status = "PASS"
-        if issues_dedup:
-            status = "FAIL"
-        elif constraints_dedup:
-            status = "WARNING"
+        validation_items = []
+        validation_items.append(
+            {
+                "rule_code": str(residency_hours_rule.rule_code or "").strip() if residency_hours_rule else "",
+                "rule_name": residency_hours_rule.name if residency_hours_rule else "Residency minimum in-residence hours",
+                "status": ("PASS" if min_credit_lb >= residency_min_hours else "FAIL"),
+                "message": f"Defined minimum in-residence hours {min_credit_lb:.1f}; threshold {residency_min_hours:.0f}.",
+            }
+        )
+        validation_items.extend(
+            abet_validation_items_for_courses(
+                rules_with_cfg,
+                programs=combo_programs,
+                course_ids=set(mandatory),
+                bucket_rows=bucket_rows,
+                course_by_id=course_by_id,
+            )
+        )
+        validation_items.extend(pathway_validation_items)
+        if not consistency_roots:
+            consistency_roots = [
+                {
+                    "requirement_id": "none",
+                    "node_code": "",
+                    "name": "Program Rules",
+                    "status": "CONSISTENT",
+                    "message": "",
+                    "children": [],
+                }
+            ]
+        consistency_items = []
+        def flatten_consistency(nodes: list[dict], depth: int = 0):
+            for n in nodes or []:
+                consistency_items.append(
+                    {
+                        "node_code": n.get("node_code", ""),
+                        "name": n.get("name", ""),
+                        "status": n.get("status", "CONSISTENT"),
+                        "message": n.get("message", ""),
+                        "depth": depth,
+                    }
+                )
+                flatten_consistency(n.get("children") or [], depth + 1)
+        flatten_consistency(consistency_roots)
+        consistency_fail_count = sum(1 for x in consistency_items if x.get("status") == "INCONSISTENT")
+        consistency_pass_count = sum(1 for x in consistency_items if x.get("status") == "CONSISTENT")
+        consistency_status = "INCONSISTENT" if consistency_fail_count > 0 else "CONSISTENT"
+        status = "FAIL" if issues_dedup else "PASS"
+        gate_rule, _ = find_active_rule(
+            rules_with_cfg,
+            rule_type="PROGRAM_FEASIBILITY_GATE",
+            names=["Program feasibility gate"],
+        )
+        validation_items.append(
+            {
+                "rule_code": str(gate_rule.rule_code or "").strip() if gate_rule else "",
+                "rule_name": gate_rule.name if gate_rule else "Program feasibility gate",
+                "status": status,
+                "message": f"{len(issues_dedup)} consistency conflicts detected.",
+            }
+        )
+        validation_fail_count = sum(1 for x in validation_items if str(x.get("status") or "").upper() == "FAIL")
+        validation_pass_count = sum(1 for x in validation_items if str(x.get("status") or "").upper() == "PASS")
+        status = "FAIL" if (validation_fail_count > 0 or consistency_fail_count > 0) else "PASS"
         return {
             "kind": kind,
             "label": label,
             "program_ids": [p.id for p in combo_programs],
             "program_names": [p.name for p in combo_programs],
             "status": status,
+            "consistency_status": consistency_status,
+            "overall_status": f"{status} / {consistency_status}",
             "issue_count": len(issues_dedup),
-            "constraint_count": len(constraints_dedup),
             "issues": issues_dedup,
-            "constraints": constraints_dedup,
+            "program_design_consistency_items": consistency_items,
+            "program_design_consistency_tree": consistency_roots,
+            "validation_pass_count": validation_pass_count,
+            "validation_fail_count": validation_fail_count,
+            "consistency_pass_count": consistency_pass_count,
+            "consistency_fail_count": consistency_fail_count,
             "mandatory_course_count": len(mandatory),
             "min_required_credits": round(min_credit_lb, 1),
             "max_credits_per_semester": max_credits_per_semester,
+            "max_credits_per_summer_period": max_credits_per_summer_period,
+            "residency_hours_minimum": residency_min_hours,
+            "validation_items": validation_items,
         }
 
     rows = []
@@ -3003,10 +4879,11 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
 
     return {
         "version_id": version_id,
+        "period_metadata": list_period_metadata(),
         "row_count": len(rows),
         "summary": {
             "pass": sum(1 for r in rows if r["status"] == "PASS"),
-            "warning": sum(1 for r in rows if r["status"] == "WARNING"),
+            "warning": 0,
             "fail": sum(1 for r in rows if r["status"] == "FAIL"),
         },
         "rows": rows,
@@ -3015,19 +4892,23 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
 
 @app.get("/design/impact/{version_id}")
 def impact(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
-    hours = {i: 0.0 for i in range(1, 9)}
+    hours = {i: 0.0 for i in ALL_PLAN_PERIODS}
     for item in db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all():
         c = db.get(Course, item.course_id)
         if c:
             hours[item.semester_index] += c.credit_hours
-    return {"credit_hours_by_semester": hours}
+    return {
+        "credit_hours_by_semester": hours,
+        "credit_hours_by_period": hours,
+        "period_metadata": list_period_metadata(),
+    }
 
 
 @app.get("/design/impact-analysis/{version_id}")
 def impact_analysis(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
     canvas_items = db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all()
     course_by_id: dict[str, Course] = {}
-    semester_hours = {i: 0.0 for i in range(1, 9)}
+    semester_hours = {i: 0.0 for i in ALL_PLAN_PERIODS}
     canvas_course_ids: set[str] = set()
 
     for item in canvas_items:
@@ -3054,11 +4935,17 @@ def impact_analysis(version_id: str, db: Session = Depends(get_db), _: User = De
             continue
         if course.version_id != version_id or required.version_id != version_id:
             continue
-        if course.designated_semester and required.designated_semester and required.designated_semester >= course.designated_semester:
+        if (
+            course.designated_semester is not None
+            and required.designated_semester is not None
+            and required.designated_semester >= course.designated_semester
+        ):
             prereq_warnings.append(f"{required.course_number} should be before {course.course_number}")
 
     return {
         "credit_hours_by_semester": semester_hours,
+        "credit_hours_by_period": semester_hours,
+        "period_metadata": list_period_metadata(),
         "affected_programs": sorted(affected_programs),
         "prerequisite_warnings": prereq_warnings,
         "estimated_resource_delta": {
@@ -3072,8 +4959,18 @@ def impact_analysis(version_id: str, db: Session = Depends(get_db), _: User = De
 def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
     findings = []
     courses = db.scalars(select(Course).where(Course.version_id == version_id)).all()
-    rules = db.scalars(select(ValidationRule).where(ValidationRule.active == True)).all()  # noqa: E712
-
+    rules = []
+    rules_with_cfg = []
+    for r in db.scalars(select(ValidationRule).where(ValidationRule.active == True)).all():  # noqa: E712
+        try:
+            cfg = json.loads(r.config_json or "{}")
+        except Exception:
+            cfg = {}
+        cfg = cfg if isinstance(cfg, dict) else {}
+        if is_cadet_performance_rule(cfg) or is_definitional_rule(cfg):
+            continue
+        rules.append(r)
+        rules_with_cfg.append((r, cfg))
     rule_lookup = {r.name: r for r in rules}
     plan_items = db.scalars(select(PlanItem).where(PlanItem.version_id == version_id)).all()
     planned_course_ids = {item.course_id for item in plan_items}
@@ -3109,7 +5006,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 stack.append(child.id)
         return out
 
-    # COI policy minimum section size baseline
+    # Minimum section size baseline
     min_rule = rule_lookup.get("Minimum section size >= 6")
     min_value = 6
     if min_rule and min_rule.config_json:
@@ -3123,7 +5020,8 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 {
                     "severity": (min_rule.severity if min_rule else "WARNING"),
                     "tier": (min_rule.tier if min_rule else 1),
-                    "rule": "COI 2-3.9 minimum enrollment size",
+                    "rule_code": str(min_rule.rule_code or "").strip() if min_rule else "",
+                    "rule": (min_rule.name if min_rule else "Minimum section size >= 6"),
                     "message": f"{c.course_number} min section size {c.min_section_size} is below {min_value}",
                 }
             )
@@ -3136,7 +5034,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
             max_credits = float(json.loads(max_rule.config_json).get("max_credits", 24))
         except Exception:
             max_credits = 24
-    hours = {i: 0.0 for i in range(1, 9)}
+    hours = {i: 0.0 for i in ALL_PLAN_PERIODS}
     for item in plan_items:
         c = db.get(Course, item.course_id)
         if c:
@@ -3147,10 +5045,65 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 {
                     "severity": (max_rule.severity if max_rule else "WARNING"),
                     "tier": (max_rule.tier if max_rule else 1),
-                    "rule": "semester_credit_upper_bound",
-                    "message": f"Semester {sem} has {total} credit hours (max {max_credits}).",
+                    "rule_code": str(max_rule.rule_code or "").strip() if max_rule else "",
+                    "rule": (max_rule.name if max_rule else "Semester credit upper bound"),
+                    "message": f"{period_label(sem)} has {total} credit hours (max {max_credits}).",
                 }
             )
+
+    # Residency checks (editable validation rules).
+    residency_hours_rule, residency_hours_cfg = find_active_rule(
+        rules_with_cfg,
+        rule_type="RESIDENCY_MIN_HOURS",
+        names=["Residency minimum in-residence hours", "COI residency requirements"],
+    )
+    residency_sem_rule, residency_sem_cfg = find_active_rule(
+        rules_with_cfg,
+        rule_type="RESIDENCY_MIN_ACADEMIC_SEMESTERS",
+        names=["Residency minimum academic semesters", "COI residency requirements"],
+    )
+    residency_min_hours = DEFAULT_RESIDENCY_MIN_HOURS
+    residency_min_academic = DEFAULT_RESIDENCY_MIN_ACADEMIC_SEMESTERS
+    try:
+        residency_min_hours = float(
+            residency_hours_cfg.get("min_hours", residency_hours_cfg.get("minimum_in_residence_hours", residency_min_hours))
+        )
+    except Exception:
+        residency_min_hours = DEFAULT_RESIDENCY_MIN_HOURS
+    try:
+        residency_min_academic = int(
+            residency_sem_cfg.get("min_semesters", residency_sem_cfg.get("minimum_academic_semesters", residency_min_academic))
+        )
+    except Exception:
+        residency_min_academic = DEFAULT_RESIDENCY_MIN_ACADEMIC_SEMESTERS
+    total_planned_hours = sum(hours.values())
+    academic_periods_with_load = sum(1 for p in ACADEMIC_PERIODS if float(hours.get(p, 0.0)) > 0.0)
+    if total_planned_hours < residency_min_hours:
+        findings.append(
+            {
+                "severity": (residency_hours_rule.severity if residency_hours_rule else "WARNING"),
+                "tier": (residency_hours_rule.tier if residency_hours_rule else 1),
+                "rule_code": str(residency_hours_rule.rule_code or "").strip() if residency_hours_rule else "",
+                "rule": (residency_hours_rule.name if residency_hours_rule else "Residency minimum in-residence hours"),
+                "message": (
+                    f"Planned in-residence credit hours {total_planned_hours:.1f} are below required "
+                    f"{residency_min_hours:.0f}."
+                ),
+            }
+        )
+    if academic_periods_with_load < residency_min_academic:
+        findings.append(
+            {
+                "severity": (residency_sem_rule.severity if residency_sem_rule else "WARNING"),
+                "tier": (residency_sem_rule.tier if residency_sem_rule else 1),
+                "rule_code": str(residency_sem_rule.rule_code or "").strip() if residency_sem_rule else "",
+                "rule": (residency_sem_rule.name if residency_sem_rule else "Residency minimum academic semesters"),
+                "message": (
+                    f"Planned academic semesters with load {academic_periods_with_load} are below required "
+                    f"{residency_min_academic}."
+                ),
+            }
+        )
 
     # Prerequisite sequencing checks based on designated semester when available
     pre_rule = rule_lookup.get("Prerequisite ordering")
@@ -3161,12 +5114,17 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
             continue
         if course.version_id != version_id or required.version_id != version_id:
             continue
-        if course.designated_semester and required.designated_semester and required.designated_semester >= course.designated_semester:
+        if (
+            course.designated_semester is not None
+            and required.designated_semester is not None
+            and required.designated_semester >= course.designated_semester
+        ):
             findings.append(
                 {
                     "severity": (pre_rule.severity if pre_rule else "FAIL"),
                     "tier": (pre_rule.tier if pre_rule else 1),
-                    "rule": "prerequisite_ordering",
+                    "rule_code": str(pre_rule.rule_code or "").strip() if pre_rule else "",
+                    "rule": (pre_rule.name if pre_rule else "Prerequisite ordering"),
                     "message": f"{required.course_number} should occur before {course.course_number}.",
                 }
             )
@@ -3189,19 +5147,21 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
             if not room:
                 findings.append(
                     {
-                        "severity": (cap_rule.severity if cap_rule else "WARNING"),
-                        "tier": (cap_rule.tier if cap_rule else 3),
-                        "rule": "classroom_missing",
-                        "message": f"Section {sec.id} references missing classroom {sec.classroom_id}.",
-                    }
-                )
+                            "severity": (cap_rule.severity if cap_rule else "WARNING"),
+                            "tier": (cap_rule.tier if cap_rule else 3),
+                            "rule_code": str(cap_rule.rule_code or "").strip() if cap_rule else "",
+                            "rule": (cap_rule.name if cap_rule else "Classroom capacity constraints"),
+                            "message": f"Section {sec.id} references missing classroom {sec.classroom_id}.",
+                        }
+                    )
             else:
                 if room.capacity < sec.max_enrollment:
                     findings.append(
                         {
                             "severity": (cap_rule.severity if cap_rule else "WARNING"),
                             "tier": (cap_rule.tier if cap_rule else 3),
-                            "rule": "classroom_capacity",
+                            "rule_code": str(cap_rule.rule_code or "").strip() if cap_rule else "",
+                            "rule": (cap_rule.name if cap_rule else "Classroom capacity constraints"),
                             "message": f"{room.building} {room.room_number} capacity {room.capacity} < section max {sec.max_enrollment}.",
                         }
                     )
@@ -3213,12 +5173,13 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
             if not instructor:
                 findings.append(
                     {
-                        "severity": (load_rule.severity if load_rule else "WARNING"),
-                        "tier": (load_rule.tier if load_rule else 3),
-                        "rule": "instructor_missing",
-                        "message": f"Section {sec.id} references missing instructor {sec.instructor_id}.",
-                    }
-                )
+                            "severity": (load_rule.severity if load_rule else "WARNING"),
+                            "tier": (load_rule.tier if load_rule else 3),
+                            "rule_code": str(load_rule.rule_code or "").strip() if load_rule else "",
+                            "rule": (load_rule.name if load_rule else "Instructor load limits"),
+                            "message": f"Section {sec.id} references missing instructor {sec.instructor_id}.",
+                        }
+                    )
             else:
                 instructor_load[instructor.id] = instructor_load.get(instructor.id, 0) + 1
                 qualification = db.scalar(
@@ -3231,7 +5192,8 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                         {
                             "severity": (qual_rule.severity if qual_rule else "WARNING"),
                             "tier": (qual_rule.tier if qual_rule else 3),
-                            "rule": "instructor_unqualified",
+                            "rule_code": str(qual_rule.rule_code or "").strip() if qual_rule else "",
+                            "rule": (qual_rule.name if qual_rule else "Instructor qualification constraints"),
                             "message": f"Instructor {instructor.name} is not qualified for {course.course_number}.",
                         }
                     )
@@ -3243,7 +5205,8 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 {
                     "severity": (load_rule.severity if load_rule else "WARNING"),
                     "tier": (load_rule.tier if load_rule else 3),
-                    "rule": "instructor_load",
+                    "rule_code": str(load_rule.rule_code or "").strip() if load_rule else "",
+                    "rule": (load_rule.name if load_rule else "Instructor load limits"),
                     "message": f"Instructor {instructor.name} assigned {count} sections (max {instructor.max_sections_per_semester}).",
                 }
             )
@@ -3256,21 +5219,15 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 {
                     "severity": (cap_rule.severity if cap_rule else "WARNING"),
                     "tier": (cap_rule.tier if cap_rule else 3),
-                    "rule": "room_double_booked",
+                    "rule_code": str(cap_rule.rule_code or "").strip() if cap_rule else "",
+                    "rule": (cap_rule.name if cap_rule else "Classroom capacity constraints"),
                     "message": f"Room {room_name} has {count} sections in {semester_label} (possible conflict).",
                 }
             )
 
-    # Program/Major pathway rules (within existing engine, config-driven)
-    # Example config:
-    # {
-    #   "type": "MAJOR_PATHWAY_CORE",
-    #   "program_name": "Aeronautical Engineering",
-    #   "required_core_groups": [
-    #     {"name": "Advanced STEM", "min_count": 1, "course_numbers": ["MATH 300", "PHYS 300"]},
-    #     {"name": "Advanced Humanities", "min_count": 1, "requirement_names": ["Track - Advanced Liberal Arts: Any One"]}
-    #   ]
-    # }
+    # Program/Major core pathway rules are enforced in Program Design Rules checks
+    # (checklist + feasibility) and intentionally excluded from this Validation Rules
+    # engine to avoid duplicate findings.
     for rule in rules:
         cfg = {}
         try:
@@ -3280,6 +5237,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
         rule_type = str(cfg.get("type") or "").upper()
         if rule_type not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
             continue
+        continue
 
         program_id = cfg.get("program_id")
         program_name = str(cfg.get("program_name") or "").strip()
@@ -3298,6 +5256,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 {
                     "severity": rule.severity,
                     "tier": rule.tier,
+                    "rule_code": str(rule.rule_code or "").strip(),
                     "rule": "major_pathway_rule_scope",
                     "message": f"Pathway rule '{rule.name}' target program not found.",
                 }
@@ -3310,6 +5269,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 {
                     "severity": rule.severity,
                     "tier": rule.tier,
+                    "rule_code": str(rule.rule_code or "").strip(),
                     "rule": "major_pathway_rule_config",
                     "message": f"Pathway rule '{rule.name}' has no required_core_groups.",
                 }
@@ -3341,6 +5301,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                     {
                         "severity": rule.severity,
                         "tier": rule.tier,
+                        "rule_code": str(rule.rule_code or "").strip(),
                         "rule": "major_pathway_group_config",
                         "message": f"{target_program.name}: '{group_name}' has invalid semester range.",
                     }
@@ -3351,6 +5312,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                     {
                         "severity": rule.severity,
                         "tier": rule.tier,
+                        "rule_code": str(rule.rule_code or "").strip(),
                         "rule": "major_pathway_group_config",
                         "message": f"{target_program.name}: '{group_name}' mixes fixed semester with range constraints.",
                     }
@@ -3374,6 +5336,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                     {
                         "severity": rule.severity,
                         "tier": rule.tier,
+                        "rule_code": str(rule.rule_code or "").strip(),
                         "rule": "major_pathway_group_config",
                         "message": f"{target_program.name}: '{group_name}' has no resolvable courses.",
                     }
@@ -3395,15 +5358,16 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
                 matched_nums = [course_number_by_id.get(cid) for cid in matched_ids if course_number_by_id.get(cid)]
                 sem_parts = []
                 if required_semester is not None:
-                    sem_parts.append(f"Semester {required_semester}")
+                    sem_parts.append(period_short_label(required_semester))
                 if required_semester_min is not None:
-                    sem_parts.append(f"Semester {required_semester_min}+")
+                    sem_parts.append(f">={period_short_label(required_semester_min)}")
                 if required_semester_max is not None:
-                    sem_parts.append(f"Semester <= {required_semester_max}")
+                    sem_parts.append(f"<={period_short_label(required_semester_max)}")
                 findings.append(
                     {
                         "severity": rule.severity,
                         "tier": rule.tier,
+                        "rule_code": str(rule.rule_code or "").strip(),
                         "rule": "major_pathway_core",
                         "message": (
                             f"{target_program.name}: '{group_name}' needs {min_count}, has {len(matched_ids)}"
@@ -3418,7 +5382,7 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
         status = "FAIL"
     elif findings:
         status = "WARNING"
-    return {"status": status, "findings": findings}
+    return {"status": status, "findings": findings, "period_metadata": list_period_metadata()}
 
 
 @app.get("/design/validation-dashboard/{version_id}")
@@ -3433,9 +5397,16 @@ def validation_dashboard(version_id: str, db: Session = Depends(get_db), _: User
         tier = int(f.get("tier", 1))
         by_tier[tier] = by_tier.get(tier, 0) + 1
     total = len(findings)
-    pass_count = max(0, len(db.scalars(select(ValidationRule).where(ValidationRule.active == True)).all()) - total)  # noqa: E712
+    active_design_count = len(active_design_rules_with_config(db))
+    pass_count = max(0, active_design_count - total)
     by_severity["PASS"] = pass_count
-    return {"status": result["status"], "counts_by_severity": by_severity, "counts_by_tier": by_tier, "findings": findings}
+    return {
+        "status": result["status"],
+        "counts_by_severity": by_severity,
+        "counts_by_tier": by_tier,
+        "findings": findings,
+        "period_metadata": result.get("period_metadata", list_period_metadata()),
+    }
 
 
 @app.get("/design/requirements/gap-analysis/{cadet_id}")
@@ -3468,13 +5439,21 @@ def cadet_gap_analysis(cadet_id: str, db: Session = Depends(get_db), _: User = D
 
 @app.get("/design/validation-rules")
 def list_validation_rules(db: Session = Depends(get_db), _: User = Depends(current_user)):
-    return [serialize(r) for r in db.scalars(select(ValidationRule).order_by(ValidationRule.tier.asc(), ValidationRule.name.asc())).all()]
+    ensure_validation_rule_codes(db)
+    return [
+        serialize(r)
+        for r in db.scalars(select(ValidationRule).order_by(ValidationRule.rule_code.asc(), ValidationRule.tier.asc(), ValidationRule.name.asc())).all()
+    ]
 
 
 @app.post("/design/validation-rules")
 def create_validation_rule(payload: ValidationRuleIn, db: Session = Depends(get_db), user: User = Depends(require_design)):
     validate_core_pathway_rule_config(payload.config or {}, db)
+    requested_code = str(payload.rule_code or "").strip().upper()
+    if requested_code and db.scalar(select(ValidationRule).where(ValidationRule.rule_code == requested_code)):
+        raise HTTPException(status_code=400, detail="Validation rule code already exists")
     rule = ValidationRule(
+        rule_code=(requested_code or next_validation_rule_code(db)),
         name=payload.name,
         tier=payload.tier,
         severity=payload.severity,
@@ -3494,6 +5473,15 @@ def update_validation_rule(rule_id: str, payload: ValidationRuleUpdateIn, db: Se
     if not rule:
         raise HTTPException(status_code=404, detail="Validation rule not found")
     data = payload.model_dump(exclude_unset=True)
+    if "rule_code" in data:
+        requested_code = str(data["rule_code"] or "").strip().upper()
+        if requested_code:
+            existing = db.scalar(select(ValidationRule).where(ValidationRule.rule_code == requested_code))
+            if existing and existing.id != rule.id:
+                raise HTTPException(status_code=400, detail="Validation rule code already exists")
+            rule.rule_code = requested_code
+        else:
+            rule.rule_code = next_validation_rule_code(db)
     if "name" in data:
         rule.name = data["name"]
     if "tier" in data:
@@ -3720,14 +5708,7 @@ def validate_csv_entity(entity_name: str, file: UploadFile = File(...), db: Sess
 
 @app.post("/import/coi/text")
 def parse_coi_text(file: UploadFile = File(...), _: User = Depends(require_design)):
-    text = file.file.read().decode("utf-8", errors="ignore")
-    policies = {
-        "minimum_core_gpa_2_0": bool(re.search(r"minimum\\s+2\\.0\\s+core\\s+grade\\s+point\\s+average", text, re.IGNORECASE)),
-        "minimum_cumulative_gpa_2_0": bool(re.search(r"2\\.0\\s+cumulative\\s+GPA", text, re.IGNORECASE)),
-        "minimum_residency_hours_125": bool(re.search(r"at\\s+least\\s+125\\s+semester\\s+hours", text, re.IGNORECASE)),
-    }
-    course_numbers = sorted(set(re.findall(r"\\b[A-Z]{2,4}\\s?\\d{3}[A-Z]?\\b", text)))
-    return {"policies": policies, "detected_course_numbers": course_numbers[:1500], "count": len(course_numbers)}
+    raise HTTPException(status_code=410, detail="COI auto-parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.post("/import/coi/analyze")
@@ -3737,32 +5718,7 @@ def analyze_coi(
     db: Session = Depends(get_db),
     _: User = Depends(require_design),
 ):
-    version = db.get(CurriculumVersion, options.version_id)
-    if not version:
-        raise HTTPException(status_code=404, detail="Version not found")
-    text = file.file.read().decode("utf-8", errors="ignore")
-    parsed = parse_coi_courses(text, min_occurrences=options.min_course_number_occurrences)
-    parsed_filtered = {k: v for k, v in parsed.items() if v.get("confidence", 0.0) >= options.min_confidence}
-    existing = {c.course_number for c in db.scalars(select(Course).where(Course.version_id == options.version_id)).all()}
-    to_create = [p for p in parsed_filtered.values() if p["course_number"] not in existing]
-    to_update = [p for p in parsed_filtered.values() if p["course_number"] in existing]
-    low_conf = [p for p in parsed.values() if p.get("confidence", 0.0) < options.min_confidence]
-    by_source = {}
-    for p in parsed.values():
-        src = p.get("source", "unknown")
-        by_source[src] = by_source.get(src, 0) + 1
-    return {
-        "version_id": options.version_id,
-        "detected_courses": len(parsed),
-        "above_confidence_threshold": len(parsed_filtered),
-        "to_create": len(to_create),
-        "to_update": len(to_update),
-        "low_confidence_count": len(low_conf),
-        "counts_by_source": by_source,
-        "min_confidence": options.min_confidence,
-        "sample_to_create": to_create[:30],
-        "sample_low_confidence": low_conf[:30],
-    }
+    raise HTTPException(status_code=410, detail="COI auto-parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.post("/import/coi/review/start")
@@ -3772,81 +5728,12 @@ def start_coi_review(
     db: Session = Depends(get_db),
     user: User = Depends(require_design),
 ):
-    version = db.get(CurriculumVersion, options.version_id)
-    if not version:
-        raise HTTPException(status_code=404, detail="Version not found")
-
-    text = file.file.read().decode("utf-8", errors="ignore")
-    parsed = parse_coi_courses(text, min_occurrences=options.min_course_number_occurrences)
-
-    session = CoiImportSession(
-        version_id=options.version_id,
-        source_filename=file.filename,
-        min_course_number_occurrences=options.min_course_number_occurrences,
-        min_confidence=options.min_confidence,
-        status="DRAFT",
-        created_by=user.id,
-    )
-    db.add(session)
-    db.commit()
-    db.refresh(session)
-
-    created = 0
-    auto_approved = 0
-    needs_review = 0
-    for _, item in sorted(parsed.items()):
-        include = item.get("confidence", 0.0) >= options.min_confidence
-        db.add(
-            CoiImportItem(
-                session_id=session.id,
-                course_number=item["course_number"],
-                title=item["title"],
-                occurrences=int(item.get("occurrences", 1)),
-                confidence=float(item.get("confidence", 0.0)),
-                source=item.get("source"),
-                include=include,
-            )
-        )
-        created += 1
-        if include:
-            auto_approved += 1
-        else:
-            needs_review += 1
-    db.commit()
-
-    write_audit(
-        db,
-        user,
-        "COI_REVIEW_START",
-        "CoiImportSession",
-        session.id,
-        json.dumps({"created": created, "auto_approved": auto_approved, "needs_review": needs_review}),
-    )
-    return {
-        "session_id": session.id,
-        "version_id": session.version_id,
-        "created_items": created,
-        "auto_approved": auto_approved,
-        "needs_review": needs_review,
-    }
+    raise HTTPException(status_code=410, detail="COI auto-review parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.get("/import/coi/review/{session_id}")
 def get_coi_review_session(session_id: str, db: Session = Depends(get_db), _: User = Depends(require_design)):
-    session = db.get(CoiImportSession, session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Review session not found")
-    items = db.scalars(select(CoiImportItem).where(CoiImportItem.session_id == session_id).order_by(CoiImportItem.confidence.asc())).all()
-    out = [serialize(i) for i in items]
-    return {
-        "session": serialize(session),
-        "counts": {
-            "total": len(out),
-            "included": sum(1 for x in out if x["include"]),
-            "excluded": sum(1 for x in out if not x["include"]),
-        },
-        "items": out,
-    }
+    raise HTTPException(status_code=410, detail="COI auto-review parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.post("/import/coi/review/{session_id}/decide")
@@ -3856,21 +5743,7 @@ def decide_coi_review(
     db: Session = Depends(get_db),
     user: User = Depends(require_design),
 ):
-    session = db.get(CoiImportSession, session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Review session not found")
-    updated = 0
-    for d in payload.decisions:
-        item = db.get(CoiImportItem, d.item_id)
-        if not item or item.session_id != session_id:
-            continue
-        item.include = d.include
-        if d.edited_title is not None:
-            item.edited_title = d.edited_title.strip()[:240]
-        updated += 1
-    db.commit()
-    write_audit(db, user, "COI_REVIEW_DECIDE", "CoiImportSession", session_id, json.dumps({"updated": updated}))
-    return {"session_id": session_id, "updated": updated}
+    raise HTTPException(status_code=410, detail="COI auto-review parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.post("/import/coi/review/{session_id}/commit")
@@ -3880,49 +5753,7 @@ def commit_coi_review(
     db: Session = Depends(get_db),
     user: User = Depends(require_design),
 ):
-    session = db.get(CoiImportSession, session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Review session not found")
-    if session.status == "COMMITTED":
-        raise HTTPException(status_code=400, detail="Review session already committed")
-
-    existing_by_number = {c.course_number: c for c in db.scalars(select(Course).where(Course.version_id == session.version_id)).all()}
-    items = db.scalars(select(CoiImportItem).where(CoiImportItem.session_id == session_id, CoiImportItem.include == True)).all()  # noqa: E712
-    inserted = 0
-    updated = 0
-    skipped = 0
-    for item in items:
-        title = (item.edited_title or item.title or "TBD Title").strip()
-        code = item.course_number
-        if code not in existing_by_number:
-            db.add(
-                Course(
-                    version_id=session.version_id,
-                    course_number=code,
-                    title=title,
-                    credit_hours=options.default_credit_hours,
-                    min_section_size=6,
-                )
-            )
-            inserted += 1
-        else:
-            if options.replace_existing:
-                c = existing_by_number[code]
-                c.title = title
-                updated += 1
-            else:
-                skipped += 1
-    session.status = "COMMITTED"
-    db.commit()
-    write_audit(
-        db,
-        user,
-        "COI_REVIEW_COMMIT",
-        "CoiImportSession",
-        session_id,
-        json.dumps({"inserted": inserted, "updated": updated, "skipped": skipped}),
-    )
-    return {"session_id": session_id, "inserted": inserted, "updated": updated, "skipped_existing": skipped}
+    raise HTTPException(status_code=410, detail="COI auto-review parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.post("/import/coi/load-baseline")
@@ -3932,77 +5763,7 @@ def load_coi_baseline(
     db: Session = Depends(get_db),
     user: User = Depends(require_design),
 ):
-    version = db.get(CurriculumVersion, options.version_id)
-    if not version:
-        raise HTTPException(status_code=404, detail="Version not found")
-
-    text = file.file.read().decode("utf-8", errors="ignore")
-    parsed = parse_coi_courses(text, min_occurrences=options.min_course_number_occurrences)
-    parsed = {k: v for k, v in parsed.items() if v.get("confidence", 0.0) >= options.min_confidence}
-    existing_by_number = {c.course_number: c for c in db.scalars(select(Course).where(Course.version_id == options.version_id)).all()}
-
-    inserted = 0
-    updated = 0
-    skipped = 0
-    low_confidence = 0
-    examples = []
-
-    for code, data in sorted(parsed.items()):
-        title = data["title"]
-        occurrences = data["occurrences"]
-        if data.get("confidence", 0.0) < options.min_confidence:
-            low_confidence += 1
-
-        if code not in existing_by_number:
-            course = Course(
-                version_id=options.version_id,
-                course_number=code,
-                title=title,
-                credit_hours=options.default_credit_hours,
-                min_section_size=6,
-            )
-            db.add(course)
-            inserted += 1
-            if len(examples) < 20:
-                examples.append({"action": "insert", "course_number": code, "title": title, "occurrences": occurrences})
-        else:
-            if options.replace_existing:
-                course = existing_by_number[code]
-                course.title = title if title else course.title
-                updated += 1
-                if len(examples) < 20:
-                    examples.append({"action": "update", "course_number": code, "title": title, "occurrences": occurrences})
-            else:
-                skipped += 1
-
-    db.commit()
-    write_audit(
-        db,
-        user,
-        "IMPORT_COI_BASELINE",
-        "CurriculumVersion",
-        options.version_id,
-        json.dumps(
-            {
-                "inserted": inserted,
-                "updated": updated,
-                "skipped": skipped,
-                "low_confidence": low_confidence,
-                "min_occurrences": options.min_course_number_occurrences,
-                "min_confidence": options.min_confidence,
-            }
-        ),
-    )
-
-    return {
-        "version_id": options.version_id,
-        "inserted": inserted,
-        "updated": updated,
-        "skipped_existing": skipped,
-        "low_confidence_rows": low_confidence,
-        "min_confidence": options.min_confidence,
-        "sample_actions": examples,
-    }
+    raise HTTPException(status_code=410, detail="COI baseline auto-parsing is disabled. Use manual Program Designer + dataset import workflows.")
 
 
 @app.get("/audit")

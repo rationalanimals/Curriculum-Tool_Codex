@@ -1,0 +1,57 @@
+{
+  "bundle_id": "",
+  "name": "Geospatial Science Rec Seq COI2526",
+  "major": "Geospatial Science",
+  "source_document": "COI 2025-2026",
+  "source_section_title": "GEOSPATIAL SCIENCE",
+  "exported_at": "",
+  "modules": [
+    "CANVAS"
+  ],
+  "module_ids": {
+    "courses_id": null,
+    "rules_id": null,
+    "canvas_id": "5569e6a5426e0635",
+    "reports_id": null
+  },
+  "dependencies": {
+    "canvas": {
+      "courses_id": null,
+      "rules_id": null
+    },
+    "reports": {
+      "courses_id": null,
+      "rules_id": null,
+      "canvas_id": "5569e6a5426e0635"
+    }
+  },
+  "payload": {
+    "canvas": {
+      "version_id": "",
+      "version_name": "",
+      "exported_at": "",
+      "items": [
+        {
+          "semester_index": 1,
+          "course_number": "Comp Sci 110",
+          "position": 0
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Law 220",
+          "position": 0
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Geo 340",
+          "position": 0
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Pol Sci 462",
+          "position": 0
+        }
+      ]
+    }
+  }
+}

@@ -8,8 +8,46 @@ body {
   min-height: 250px;
 }
 
+.timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.timeline-cell {
+  min-height: 250px;
+}
+
+.timeline-blank-cell {
+  min-height: 250px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 1200px) {
+  .timeline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .timeline-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
 pre {
   margin: 0;
   overflow-x: auto;
   font-size: 12px;
+}
+
+.tree-node-actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.tree-node-actions.ant-space {
+  gap: 8px !important;
 }

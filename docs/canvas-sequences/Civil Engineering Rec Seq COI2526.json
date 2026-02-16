@@ -1,0 +1,242 @@
+{
+  "bundle_id": "",
+  "name": "Civil Engineering Rec Seq COI2526",
+  "major": "Civil Engineering",
+  "source_document": "COI 2025-2026",
+  "source_section_title": "CIVIL ENGINEERING",
+  "exported_at": "",
+  "modules": [
+    "CANVAS"
+  ],
+  "module_ids": {
+    "courses_id": null,
+    "rules_id": null,
+    "canvas_id": "7d1f6e569b64664e",
+    "reports_id": null
+  },
+  "dependencies": {
+    "canvas": {
+      "courses_id": null,
+      "rules_id": null
+    },
+    "reports": {
+      "courses_id": null,
+      "rules_id": null,
+      "canvas_id": "7d1f6e569b64664e"
+    }
+  },
+  "payload": {
+    "canvas": {
+      "version_id": "",
+      "version_name": "",
+      "exported_at": "",
+      "items": [
+        {
+          "semester_index": 1,
+          "course_number": "English 111",
+          "position": 0
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Math 141",
+          "position": 1
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Beh Sci 110",
+          "position": 2
+        },
+        {
+          "semester_index": 1,
+          "course_number": "History 100",
+          "position": 3
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Chem 100",
+          "position": 4
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Physics 110",
+          "position": 0
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Comp Sci 110",
+          "position": 1
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Ldrshp 100",
+          "position": 2
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Math 142",
+          "position": 3
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Law 220",
+          "position": 0
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Pol Sci 211",
+          "position": 1
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Philos 210",
+          "position": 2
+        },
+        {
+          "semester_index": 6,
+          "course_number": "MSS 251",
+          "position": 3
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Econ 201",
+          "position": 4
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Chem 200",
+          "position": 5
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Mech Engr 220",
+          "position": 0
+        },
+        {
+          "semester_index": 7,
+          "course_number": "English 211",
+          "position": 1
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Math 245",
+          "position": 2
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Biology 215",
+          "position": 3
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Ldrshp 200",
+          "position": 4
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Math 243",
+          "position": 5
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Astr Engr 310",
+          "position": 0
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Soc Sci 311",
+          "position": 1
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Math 356",
+          "position": 2
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Civ Engr 330",
+          "position": 3
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Civ Engr 372",
+          "position": 4
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Civ Engr 362",
+          "position": 5
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Civ Engr 351",
+          "position": 6
+        },
+        {
+          "semester_index": 12,
+          "course_number": "ECE 315",
+          "position": 0
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Aero Engr 315",
+          "position": 1
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Ldrshp 300",
+          "position": 2
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Civ Engr 361",
+          "position": 3
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Civ Engr 390",
+          "position": 4
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Civ Engr 385",
+          "position": 5
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Civ Engr 461",
+          "position": 0
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Civ Engr 451",
+          "position": 1
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Civ Engr 488",
+          "position": 2
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Civ Engr 405",
+          "position": 3
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Civ Engr 485",
+          "position": 0
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Civ Engr 452",
+          "position": 1
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Engr 402",
+          "position": 2
+        }
+      ]
+    }
+  }
+}

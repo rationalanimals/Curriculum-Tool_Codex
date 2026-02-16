@@ -1,0 +1,307 @@
+{
+  "version_id": "26645fdc-5a9f-4752-93bb-323b1434ec32",
+  "version_name": "COI 2025-2026",
+  "generated_at": "C:\\Users\\infin\\OneDrive\\Documents\\USAFA\\Curriculum Tool\\V1\\backend",
+  "majors": [
+    {
+      "major": "Aeronautical Engineering",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 0
+    },
+    {
+      "major": "Astronautical Engineering",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Basic Sciences",
+      "bundle_present": true,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Behavioral Sciences",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Biology",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Chemistry",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Civil Engineering",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Computer Science",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Cyber Science",
+      "bundle_present": true,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Data Science",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Economics",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Electrical And Computer Engineering",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 0
+    },
+    {
+      "major": "English",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Foreign Area Studies",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "General Engineering",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Geospatial Science",
+      "bundle_present": true,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "History",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Humanities",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Legal Studies",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Management",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Mathematics",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Mechanical Engineering",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Meteorology",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Military & Strategic Studies",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Operations Research",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Philosophy",
+      "bundle_present": true,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    },
+    {
+      "major": "Physics",
+      "bundle_present": false,
+      "program_feasibility_status": "FAIL",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Political Science",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Social Sciences",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 2
+    },
+    {
+      "major": "Systems Engineering",
+      "bundle_present": true,
+      "program_feasibility_status": "PASS",
+      "program_feasibility_consistency": "CONSISTENT",
+      "program_feasibility_issue_count": 0,
+      "course_of_study_unsatisfied_count": 0,
+      "course_of_study_unsatisfied_examples": [],
+      "course_of_study_validation_fail_count": 1
+    }
+  ]
+}

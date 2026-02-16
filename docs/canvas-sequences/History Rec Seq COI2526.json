@@ -1,0 +1,177 @@
+{
+  "bundle_id": "",
+  "name": "History Rec Seq COI2526",
+  "major": "History",
+  "source_document": "COI 2025-2026",
+  "source_section_title": "HISTORY",
+  "exported_at": "",
+  "modules": [
+    "CANVAS"
+  ],
+  "module_ids": {
+    "courses_id": null,
+    "rules_id": null,
+    "canvas_id": "a0c210b7357e4e5a",
+    "reports_id": null
+  },
+  "dependencies": {
+    "canvas": {
+      "courses_id": null,
+      "rules_id": null
+    },
+    "reports": {
+      "courses_id": null,
+      "rules_id": null,
+      "canvas_id": "a0c210b7357e4e5a"
+    }
+  },
+  "payload": {
+    "canvas": {
+      "version_id": "",
+      "version_name": "",
+      "exported_at": "",
+      "items": [
+        {
+          "semester_index": 1,
+          "course_number": "Math 141",
+          "position": 0
+        },
+        {
+          "semester_index": 1,
+          "course_number": "History 100",
+          "position": 1
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Chem 100",
+          "position": 2
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Math 142",
+          "position": 3
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Ldrshp 100",
+          "position": 4
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Beh Sci 110",
+          "position": 0
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Comp Sci 110",
+          "position": 1
+        },
+        {
+          "semester_index": 2,
+          "course_number": "English 111",
+          "position": 2
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Physics 110",
+          "position": 3
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Law 220",
+          "position": 0
+        },
+        {
+          "semester_index": 6,
+          "course_number": "History 210",
+          "position": 1
+        },
+        {
+          "semester_index": 6,
+          "course_number": "English 211",
+          "position": 2
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Mech Engr 220",
+          "position": 3
+        },
+        {
+          "semester_index": 6,
+          "course_number": "History 220",
+          "position": 4
+        },
+        {
+          "semester_index": 7,
+          "course_number": "History 200",
+          "position": 0
+        },
+        {
+          "semester_index": 7,
+          "course_number": "MSS 251",
+          "position": 1
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Pol Sci 211",
+          "position": 2
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Ldrshp 200",
+          "position": 3
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Astr Engr 310",
+          "position": 0
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Soc Sci 311",
+          "position": 1
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Aero Engr 315",
+          "position": 2
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Ldrshp 300",
+          "position": 3
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Math 300",
+          "position": 0
+        },
+        {
+          "semester_index": 12,
+          "course_number": "History 300",
+          "position": 1
+        },
+        {
+          "semester_index": 12,
+          "course_number": "ECE 315",
+          "position": 2
+        },
+        {
+          "semester_index": 16,
+          "course_number": "History 401",
+          "position": 0
+        },
+        {
+          "semester_index": 16,
+          "course_number": "History 400",
+          "position": 1
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Ldrshp 400",
+          "position": 0
+        }
+      ]
+    }
+  }
+}

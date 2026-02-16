@@ -1,0 +1,47 @@
+{
+  "bundle_id": "",
+  "name": "Cyber Science Rec Seq COI2526",
+  "major": "Cyber Science",
+  "source_document": "COI 2025-2026",
+  "source_section_title": "CYBER SCIENCE",
+  "exported_at": "",
+  "modules": [
+    "CANVAS"
+  ],
+  "module_ids": {
+    "courses_id": null,
+    "rules_id": null,
+    "canvas_id": "84079e215f36ecd5",
+    "reports_id": null
+  },
+  "dependencies": {
+    "canvas": {
+      "courses_id": null,
+      "rules_id": null
+    },
+    "reports": {
+      "courses_id": null,
+      "rules_id": null,
+      "canvas_id": "84079e215f36ecd5"
+    }
+  },
+  "payload": {
+    "canvas": {
+      "version_id": "",
+      "version_name": "",
+      "exported_at": "",
+      "items": [
+        {
+          "semester_index": 16,
+          "course_number": "Cyber Sci 431",
+          "position": 0
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Cyber Sci 406",
+          "position": 0
+        }
+      ]
+    }
+  }
+}

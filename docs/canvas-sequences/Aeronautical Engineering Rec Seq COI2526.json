@@ -1,0 +1,252 @@
+{
+  "bundle_id": "",
+  "name": "Aeronautical Engineering Rec Seq COI2526",
+  "major": "Aeronautical Engineering",
+  "source_document": "COI 2025-2026",
+  "source_section_title": "AERONAUTICAL ENGINEERING",
+  "exported_at": "",
+  "modules": [
+    "CANVAS"
+  ],
+  "module_ids": {
+    "courses_id": null,
+    "rules_id": null,
+    "canvas_id": "59ae39f6fc6065f6",
+    "reports_id": null
+  },
+  "dependencies": {
+    "canvas": {
+      "courses_id": null,
+      "rules_id": null
+    },
+    "reports": {
+      "courses_id": null,
+      "rules_id": null,
+      "canvas_id": "59ae39f6fc6065f6"
+    }
+  },
+  "payload": {
+    "canvas": {
+      "version_id": "",
+      "version_name": "",
+      "exported_at": "",
+      "items": [
+        {
+          "semester_index": 1,
+          "course_number": "Beh Sci 110",
+          "position": 0
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Math 141",
+          "position": 1
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Chem 100",
+          "position": 2
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Math 142",
+          "position": 3
+        },
+        {
+          "semester_index": 1,
+          "course_number": "Ldrshp 100",
+          "position": 4
+        },
+        {
+          "semester_index": 2,
+          "course_number": "History 100",
+          "position": 0
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Comp Sci 110",
+          "position": 1
+        },
+        {
+          "semester_index": 2,
+          "course_number": "English 111",
+          "position": 2
+        },
+        {
+          "semester_index": 2,
+          "course_number": "Physics 110",
+          "position": 3
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Math 243",
+          "position": 0
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Econ 201",
+          "position": 1
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Physics 215",
+          "position": 2
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Pol Sci 211",
+          "position": 3
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Law 220",
+          "position": 4
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Aero Engr 206",
+          "position": 5
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Chem 200",
+          "position": 6
+        },
+        {
+          "semester_index": 6,
+          "course_number": "Ldrshp 200",
+          "position": 7
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Aero Engr 210",
+          "position": 0
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Mech Engr 220",
+          "position": 1
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Philos 210",
+          "position": 2
+        },
+        {
+          "semester_index": 7,
+          "course_number": "English 211",
+          "position": 3
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Aero Engr 241",
+          "position": 4
+        },
+        {
+          "semester_index": 7,
+          "course_number": "Math 245",
+          "position": 5
+        },
+        {
+          "semester_index": 7,
+          "course_number": "MSS 251",
+          "position": 6
+        },
+        {
+          "semester_index": 11,
+          "course_number": "ECE 315",
+          "position": 0
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Aero Engr 341",
+          "position": 1
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Mech Engr 350",
+          "position": 2
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Aero Engr 342",
+          "position": 3
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Astr Engr 310",
+          "position": 4
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Ldrshp 300",
+          "position": 5
+        },
+        {
+          "semester_index": 11,
+          "course_number": "Aero Engr 352",
+          "position": 6
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Soc Sci 311",
+          "position": 0
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Aero Engr 351",
+          "position": 1
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Engr 346",
+          "position": 2
+        },
+        {
+          "semester_index": 12,
+          "course_number": "History 300",
+          "position": 3
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Math 356",
+          "position": 4
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Mech Engr 330",
+          "position": 5
+        },
+        {
+          "semester_index": 12,
+          "course_number": "Aero Engr 361",
+          "position": 6
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Aero Engr 442",
+          "position": 0
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Aero Engr 480",
+          "position": 1
+        },
+        {
+          "semester_index": 16,
+          "course_number": "Ldrshp 400",
+          "position": 2
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Aero Engr 471",
+          "position": 0
+        },
+        {
+          "semester_index": 17,
+          "course_number": "Aero Engr 436",
+          "position": 1
+        }
+      ]
+    }
+  }
+}

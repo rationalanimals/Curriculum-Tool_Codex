@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+.semester-card {
+  min-height: 250px;
+}
+
+pre {
+  margin: 0;
+  overflow-x: auto;
+  font-size: 12px;
+}

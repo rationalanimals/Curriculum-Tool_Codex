@@ -1,0 +1,724 @@
+{
+  "version_id": "26645fdc-5a9f-4752-93bb-323b1434ec32",
+  "version_name": "COI 2025-2026",
+  "total_courses": 974,
+  "total_prerequisites": 2,
+  "courses_with_prereqs": 2,
+  "prefix_counts": {
+    "Aero": 30,
+    "AF": 1,
+    "Ar": 15,
+    "Armnshp": 13,
+    "Astr": 21,
+    "Astro": 1,
+    "AV": 1,
+    "Aviation": 4,
+    "AX": 2,
+    "Bas": 1,
+    "Beh": 33,
+    "Biology": 28,
+    "CE": 4,
+    "Chem": 32,
+    "Chinese": 3,
+    "Civ": 36,
+    "CL": 4,
+    "Comm": 1,
+    "Comp": 30,
+    "Creat": 14,
+    "CS": 6,
+    "Cyber": 13,
+    "Data": 8,
+    "Division": 2,
+    "EAP": 2,
+    "ECE": 37,
+    "Econ": 33,
+    "Ed": 4,
+    "English": 33,
+    "Engr": 7,
+    "For": 7,
+    "French": 3,
+    "FYE": 2,
+    "GENR": 22,
+    "Geo": 30,
+    "German": 5,
+    "History": 54,
+    "Hum": 7,
+    "Interdis": 6,
+    "Law": 24,
+    "Ldrshp": 4,
+    "Lrn": 2,
+    "Math": 38,
+    "ME": 1,
+    "Mech": 32,
+    "Meteor": 17,
+    "Mgt": 29,
+    "Mil": 42,
+    "MSS": 26,
+    "Ops": 14,
+    "PE": 3,
+    "Philos": 27,
+    "Phy": 39,
+    "Physics": 31,
+    "Pol": 36,
+    "Portuguese": 4,
+    "Read": 3,
+    "Russian": 3,
+    "Smr": 3,
+    "SmrAcad": 1,
+    "Soc": 13,
+    "Space": 8,
+    "Spanish": 2,
+    "Sys": 17
+  },
+  "anomaly_count": 107,
+  "anomaly_counts": {
+    "title_contains_metadata_not_short_title": 60,
+    "prereq_or_coreq_text_in_title_but_no_structured_rows": 12,
+    "title_too_long_for_short_title": 13,
+    "placeholder_course": 22
+  },
+  "anomalies_sample": [
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "c9423571-7ead-4c07-b579-5944362f618e",
+      "course_number": "Aero Engr 241",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "15fded97-e523-470f-8694-ca0f988ac280",
+      "course_number": "Aero Engr 315",
+      "title": "Coreq: Physics 110"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "15fded97-e523-470f-8694-ca0f988ac280",
+      "course_number": "Aero Engr 315",
+      "title": "Coreq: Physics 110"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "503ef1c2-bf40-441e-8548-7f736360a576",
+      "course_number": "Aero Engr 341",
+      "title": "Coreq: Engr 346 or equivalent"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "503ef1c2-bf40-441e-8548-7f736360a576",
+      "course_number": "Aero Engr 341",
+      "title": "Coreq: Engr 346 or equivalent"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "26f7f333-caff-4725-9b05-3016ca3f3aad",
+      "course_number": "Aero Engr 342",
+      "title": "Sem hrs: 3 fall"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "edf78966-8b1b-46e6-81bc-f98711f2f1b0",
+      "course_number": "Aero Engr 361",
+      "title": "Sem hrs: 3 fall"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "fd0efb54-98d6-4544-bcd6-10e6db6aad22",
+      "course_number": "Aero Engr 456",
+      "title": "Students receive credit for this course by participating in a field trip to Edwards AFB, flight test sortie in a high performance aircraft, c"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "0aabf355-5fb4-4e54-931f-83a1e07b4f29",
+      "course_number": "Ar Stu 495",
+      "title": "A cadet may typically earn credit for a maximum of 6 courses while abroad and may request authorization from the DFLCP Director to receive cr"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "ecb6ecbe-1997-4ae1-b6ef-68a53c0325ac",
+      "course_number": "Armnshp 201",
+      "title": "Early enrollment and superior performance in Aviation-100, Armnshp251 and/or Armnshp 201 are highly desired and normally contribute to select"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "91efb631-3aac-4018-82c7-b4935f54650e",
+      "course_number": "Astr Engr 310",
+      "title": "Prereq: C1C standing (C2C accepted with department approval)"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "91efb631-3aac-4018-82c7-b4935f54650e",
+      "course_number": "Astr Engr 310",
+      "title": "Prereq: C1C standing (C2C accepted with department approval)"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "9adc62a8-20b9-4e6c-8ce9-e39a7034820b",
+      "course_number": "Astr Engr 321",
+      "title": "The course focuses on applying numerical and analytical techniques to solve realistic Air and Space Force problems in astrodynamics and space"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "8dfc7750-68e3-4014-90fe-1fb560ddd162",
+      "course_number": "Aviation 100",
+      "title": "Enrollment is based on program requirements, will vary by semester, and is orchestrated by the HQ USAFA/A3O Operations Career Field Manager \u2013"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "cc5a3e03-cae0-44f0-99cc-c0187787fbc7",
+      "course_number": "Aviation 400",
+      "title": "Candidates are vetted by permanent party cadre based on demonstrated instructional potential and overall excellent performance in prior cours"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "0af43e1e-3c4d-4505-8db0-18d01c4bef87",
+      "course_number": "Beh Sci 332",
+      "title": "Sem hrs: 3 fall"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "0db9ab7f-9f33-4433-aab6-468d625fe9b7",
+      "course_number": "Biology 330",
+      "title": "Sem hrs: 3 spring of oddnumbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "07a5976e-2614-4c0e-af8d-a0e91d589fbc",
+      "course_number": "Biology 363",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "912eefae-a32d-4f5b-a8bf-f0c8bcb46537",
+      "course_number": "Chem 100",
+      "title": "Topics will include solutions, kinetics, equilibrium, acid/base chemistry, thermodynamics, electrochemistry, and special topics such as nucle"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "764a6d08-e75d-49cc-88e0-476039f01b44",
+      "course_number": "Chem 233",
+      "title": "Topics include mechanisms and reactions of aromatic compounds, organometallics, alcohols, ethers, and carbonyl-containing functional groups t"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "284e9341-0205-4c19-8780-08ec47b8a07a",
+      "course_number": "Chem 243",
+      "title": "Coreq: Chem 335 and Chem 344"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "284e9341-0205-4c19-8780-08ec47b8a07a",
+      "course_number": "Chem 243",
+      "title": "Coreq: Chem 335 and Chem 344"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "726aeff7-26e2-4d65-88a2-6ea56b03054b",
+      "course_number": "Chem 336",
+      "title": "Sem hrs: 4 spring of oddnumbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "9dfcbc1f-d93c-4bb9-a7d9-c4884df80c69",
+      "course_number": "Chem 444",
+      "title": "Coreq: Chem 431 or DFCH approval"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "9dfcbc1f-d93c-4bb9-a7d9-c4884df80c69",
+      "course_number": "Chem 444",
+      "title": "Coreq: Chem 431 or DFCH approval"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "9d4c5ca7-3e39-4791-afb5-bc10d0721b88",
+      "course_number": "Chinese 365",
+      "title": "Sem hrs: 3 fall of even years"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "88819fba-98dc-4e4e-bd11-e1511b748fba",
+      "course_number": "Civ Engr 351",
+      "title": "Cadets lead second-class students through hands-on engineering/construction activities, a variety of team building activities, and field trip"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "760e34c9-45aa-4de2-83eb-d43c0f10dba6",
+      "course_number": "Civ Engr 361",
+      "title": "Coreq: Civ Engr 362 and Civ Engr 390"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "760e34c9-45aa-4de2-83eb-d43c0f10dba6",
+      "course_number": "Civ Engr 361",
+      "title": "Coreq: Civ Engr 362 and Civ Engr 390"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "1387fe8f-a0f6-48ec-99a7-041214285ea4",
+      "course_number": "Civ Engr 377",
+      "title": "Sem hrs: 0 third summer period"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "9c02f2f2-5b67-48e2-87f8-021c4483f57b",
+      "course_number": "Civ Engr 474",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "e38f3ffa-9ea5-47bc-84c2-00db15506cc7",
+      "course_number": "Cyber Sci 334",
+      "title": "Sem hrs: 3 fall"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "a9b8f6fa-a084-4a54-9b8c-9734351a9a31",
+      "course_number": "ECE 321",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "a58a5c13-a6fa-4101-981a-d392d2458480",
+      "course_number": "ECE 332",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "1d08e5a2-e431-44e3-9064-0f41a73b4394",
+      "course_number": "ECE 382",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "18c6019f-d7cb-4cf6-bb57-a3209db1d637",
+      "course_number": "ECE 447",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "40c68e90-5e40-40b4-81b5-7aa54e6abdce",
+      "course_number": "Econ 365",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "2501acdc-a588-4205-ac5f-84fde113e0a9",
+      "course_number": "Econ 465",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "a356356a-ae24-4a22-88cd-7dd00ea88cfd",
+      "course_number": "English 111",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "5187d80c-c92f-48c5-b78c-8aeb44b272d8",
+      "course_number": "English 211",
+      "title": "Introduces students to literature, an art form requiring deliberative method of reading that addresses questions of meaning in the context of"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "c8415644-ee57-443f-bbdb-2536da3369c8",
+      "course_number": "English 400S",
+      "title": "Cadets enrolled in the ASP or in one of the Humanities Division majors who did not take English 200S may contact the course director to be pl"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "42923a1d-a0dd-4d52-9793-b6b09ae846ea",
+      "course_number": "Engr 346",
+      "title": "Sem hrs: 3 spring of even-numbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "6cce0a7b-be86-4314-a2f0-c49108fc4539",
+      "course_number": "FYE 101",
+      "title": "Sem hrs: 1 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "ea216735-65dc-4243-9670-0cc74c8e5a88",
+      "course_number": "French 365",
+      "title": "Sem hrs: 3 spring of even years"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "09b2fe0a-f040-4350-906a-70eb9d2c641c",
+      "course_number": "GENR 105",
+      "title": "Behavioral Sciences Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "9c7a8d1b-dbc0-4c33-8207-7586778b50c0",
+      "course_number": "GENR 107",
+      "title": "Chemistry Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "8f1c49ae-1736-4185-8f9a-c25faf65f9b4",
+      "course_number": "GENR 112",
+      "title": "Economics Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "ce3d3c42-39e9-4d0b-8ba5-b522f3534623",
+      "course_number": "GENR 120",
+      "title": "Legal Studies Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "9a34896d-132f-4b75-af9e-afd98a57ed6e",
+      "course_number": "GENR 123",
+      "title": "Mechanical Engineering Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "9ff02115-75e1-47b9-bf6b-4bff40c75107",
+      "course_number": "GENR 126",
+      "title": "Operations Research Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "edcaba02-aff9-472a-ab9e-9ecaa6ab956f",
+      "course_number": "GENR 127",
+      "title": "Philosophy Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "19146e59-3ef3-406f-a6ba-456f45b9142a",
+      "course_number": "GENR 128",
+      "title": "Physics Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "caddc7f5-a269-46b8-805f-5815d7c82db4",
+      "course_number": "GENR 132",
+      "title": "Aerospace Materials Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "7df10b4e-f22a-4094-b7b0-f8cf90165469",
+      "course_number": "GENR 133",
+      "title": "Airpower Studies Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "664808db-65e2-477b-b132-5a4b26685141",
+      "course_number": "GENR 134",
+      "title": "American Studies Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "93844506-f330-4694-93a4-a3d1c903899a",
+      "course_number": "GENR 135",
+      "title": "Foreign Language Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "25f3907c-e60f-4918-9c4b-c87bbfe080b9",
+      "course_number": "GENR 136",
+      "title": "Future Conflict Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "cbdd7824-188a-4ed0-9465-303bfebc1059",
+      "course_number": "GENR 137",
+      "title": "Global Logistics Management Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "3bf77f9a-5953-42e8-bbcd-1b53d860c3f4",
+      "course_number": "GENR 138",
+      "title": "High Performance Computing Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "977a3925-5111-456c-b531-d5f0cce01017",
+      "course_number": "GENR 139",
+      "title": "Nuclear Weapons And Strategy Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "0669545e-49a5-4590-80fa-c9975f5b8beb",
+      "course_number": "GENR 140",
+      "title": "Pre-Health Professions Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "325d745b-366a-4b34-b8ce-9861c33c1ea0",
+      "course_number": "GENR 141",
+      "title": "Quantum Technologies Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "d20777c0-af7f-4017-924c-36eded5cb271",
+      "course_number": "GENR 142",
+      "title": "Religion Studies Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "863ec7a2-5c58-4484-a0bd-24a9c104ed66",
+      "course_number": "GENR 143",
+      "title": "Robotics And Autonomous Systems Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "204ab747-44ca-4a69-b405-fb131370f107",
+      "course_number": "GENR 144",
+      "title": "Space Warfighting Option Placeholder"
+    },
+    {
+      "type": "placeholder_course",
+      "course_id": "145be55d-a352-47c0-804f-e63d33f40d08",
+      "course_number": "GENR 145",
+      "title": "Sustainability Option Placeholder"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "97307843-9316-4e2a-b56c-9226af888929",
+      "course_number": "Geo 351",
+      "title": "Sem hrs: 3 fall of even-numbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "1190436d-f001-47aa-8cb2-1f1a691098a5",
+      "course_number": "German 365",
+      "title": "Sem hrs: 3 spring of even years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "95b8aab4-6e22-482b-85fb-1c4e73062768",
+      "course_number": "History 100",
+      "title": "Sem hrs: 3 spring of even- numbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "8d6281bf-de0a-4e86-a854-4737b5d4bd48",
+      "course_number": "Ldrshp 200",
+      "title": "Sem hrs"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "13244e39-8a28-4df3-857f-dca53ea5c440",
+      "course_number": "Ldrshp 300",
+      "title": "Sem hrs"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "0e78b3fb-d857-4aff-b3bb-356d4ff621f1",
+      "course_number": "MSS 298",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "f028b4bc-6dad-4667-82b3-ea6309e26cc1",
+      "course_number": "Math 141",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "f12efd97-dd2e-4763-8d1b-28edd8466606",
+      "course_number": "Math 142",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "456ddba1-469b-4c3a-8d73-3963c6e66968",
+      "course_number": "Math 243",
+      "title": "Sem hrs: 3 fall"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "05d5d316-dbfc-48c7-8191-d8458c24d133",
+      "course_number": "Math 300",
+      "title": "Credit will not be given for Math 377 and either Math 300 or Math 356"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "4aa89472-0566-4aee-9604-65d51f485adc",
+      "course_number": "Math 374",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "802d3e0f-c1f1-48f1-9fcc-ea857eab9e97",
+      "course_number": "Mech Engr 220",
+      "title": "Sem hrs: 3 spring of even-numbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "4c2f8985-9b39-4794-8d29-388c32def7b0",
+      "course_number": "Mech Engr 312",
+      "title": "Coreq: Mech Engr 341 and Math 342, Math 346, or Engr 346"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "4c2f8985-9b39-4794-8d29-388c32def7b0",
+      "course_number": "Mech Engr 312",
+      "title": "Coreq: Mech Engr 341 and Math 342, Math 346, or Engr 346"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "b2e6822d-0770-42a5-a725-f1fe1ad48aed",
+      "course_number": "Mech Engr 330",
+      "title": "Coreq: Aero Engr 315 and Mech Engr 320"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "b2e6822d-0770-42a5-a725-f1fe1ad48aed",
+      "course_number": "Mech Engr 330",
+      "title": "Coreq: Aero Engr 315 and Mech Engr 320"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "ab4e9c1d-fa06-496a-aca1-0ae587eef68c",
+      "course_number": "Mech Engr 341",
+      "title": "Coreq (required for Mech Engr majors): Mech Engr 460"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "ab4e9c1d-fa06-496a-aca1-0ae587eef68c",
+      "course_number": "Mech Engr 341",
+      "title": "Coreq (required for Mech Engr majors): Mech Engr 460"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "4d61e246-fa23-43ea-bd55-2984db7239af",
+      "course_number": "Mgt 382",
+      "title": "Prereq: C or better in Mgt 337 or Sys Engr 336, or AIC approval"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "4d61e246-fa23-43ea-bd55-2984db7239af",
+      "course_number": "Mgt 382",
+      "title": "Prereq: C or better in Mgt 337 or Sys Engr 336, or AIC approval"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "499f7db9-2d0a-4c89-8f10-487b1d5f3fe8",
+      "course_number": "Mgt 400",
+      "title": "This substitution occurs on a cadet-by-cadet basis and requires joint approval by the Department Head for each cadet\u2019s major and the DFMA Dep"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "81993c01-6d7d-44f9-a3fa-8d969a152645",
+      "course_number": "Philos 210",
+      "title": "Sem hrs: 3 fall of evennumbered years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "e9852f2f-b6dc-4a0a-97f8-91495cdfce88",
+      "course_number": "Phy Ed 111",
+      "title": "Sem hrs: 0"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "585bd559-385a-43db-81ab-53b766cc8892",
+      "course_number": "Phy Ed 215",
+      "title": "Sem hrs: 0"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "f75ed274-a2f8-4d2a-890e-d9223171d027",
+      "course_number": "Physics 110",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "4bb8ed01-3438-4265-b907-0ff95e6b5b1d",
+      "course_number": "Physics 215",
+      "title": "Coreq: Math 346 or department approval"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "4bb8ed01-3438-4265-b907-0ff95e6b5b1d",
+      "course_number": "Physics 215",
+      "title": "Coreq: Math 346 or department approval"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "c33a8d5e-c32a-4e86-97e4-9f9ffc7003cf",
+      "course_number": "Physics 264",
+      "title": "Coreq: Physics 264 or department approval"
+    },
+    {
+      "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
+      "course_id": "c33a8d5e-c32a-4e86-97e4-9f9ffc7003cf",
+      "course_number": "Physics 264",
+      "title": "Coreq: Physics 264 or department approval"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "50c84d39-29b3-476d-aa10-32eea4feae60",
+      "course_number": "Physics 310",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "ada8702c-08db-45a9-a342-ee4901f7ca56",
+      "course_number": "Physics 354",
+      "title": "Sem hrs: 3 fall"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "4ad15644-1ab8-43aa-8fae-b73e46fd3b80",
+      "course_number": "Physics 355",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "d6738ed3-ed8b-400e-b83b-9e4398c9a9fa",
+      "course_number": "Physics 405",
+      "title": "Sem hrs: 4 fall or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "2b9a3f4b-3366-481b-aaa8-e8afb8f004a2",
+      "course_number": "Physics 490",
+      "title": "Sem hrs: 0 fall or spring"
+    },
+    {
+      "type": "title_too_long_for_short_title",
+      "course_id": "cc4bccd6-cbf2-4880-8177-f39d49b83c78",
+      "course_number": "Pol Sci 211",
+      "title": "This course introduces students to the study of politics and government and examines the basic theoretical, structural, and procedural choice"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "943907fc-c462-413b-bc7b-a45212a292a7",
+      "course_number": "Portuguese 365",
+      "title": "Sem hrs: 3 fall of even years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "86bce790-7d6e-4bff-9740-b2047c5fb35c",
+      "course_number": "Russian 365",
+      "title": "Sem hrs: 3 spring of even years"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "da9abcac-c451-4ae5-aa0a-e82f676ac241",
+      "course_number": "Space 252",
+      "title": "Sem hrs: 3 fall or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "982cf198-d5a4-4094-88d3-d8a7a49dbbab",
+      "course_number": "Space 350",
+      "title": "Sem hrs: 0 summer, fall, or spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "d7bceb3f-6788-41d9-8233-29059b76f36a",
+      "course_number": "Spanish 365",
+      "title": "Sem hrs: 3 spring"
+    },
+    {
+      "type": "title_contains_metadata_not_short_title",
+      "course_id": "4145c8a8-b990-4ae7-b81e-c62a55f8ee4c",
+      "course_number": "Sys Engr 491",
+      "title": "Sem hrs: 3-4 spring"
+    }
+  ]
+}

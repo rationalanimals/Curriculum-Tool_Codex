@@ -12,6 +12,17 @@ Invoke-RestMethod "http://127.0.0.1:8000/design/course-catalog-qc/<VERSION_ID>?s
 
 Get `<VERSION_ID>` from the active version in Design Studio. Use your current login token for `<TOKEN>`.
 
+Or run local DB-based QC generation (no running server required):
+
+```powershell
+python tools/generate_course_curation_queue.py
+```
+
+This writes:
+- `docs/course_catalog_qc_report_pass2.json`
+- `docs/course_curation_queue.csv`
+- `docs/course_curation_updates_template.csv`
+
 ## 2) Triage anomalies in this order
 
 1. `orphan_requirement_link`
@@ -46,6 +57,18 @@ After each cleanup batch:
 1. Re-run `/design/course-catalog-qc/{version_id}`.
 2. Confirm anomaly count is reduced.
 3. Confirm requirement tree course labels no longer show missing/ID-like values.
+
+To apply curated updates from CSV:
+
+1. Edit `docs/course_curation_updates_template.csv`:
+- Set `action` to `UPDATE` or `DELETE`.
+- Fill `new_title`/`new_credit_hours` and optional prereq/coreq numbers.
+
+2. Apply:
+
+```powershell
+python tools/apply_course_curation_csv.py
+```
 
 ## 5) Completion gate before pathway work
 

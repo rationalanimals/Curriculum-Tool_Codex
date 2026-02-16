@@ -2417,9 +2417,14 @@ def design_course_catalog_qc(version_id: str, db: Session = Depends(get_db), _: 
     req_ids = [r.id for r in reqs]
     fulfillments = db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_(req_ids))).all() if req_ids else []
 
-    malformed_number_re = re.compile(r"^[A-Z]{2,10}\s\d{3}[A-Z]?$")
+    malformed_number_re = re.compile(r"^[A-Z][A-Z\s&.\-]{0,24}\s\d{3}[A-Z]?$", re.IGNORECASE)
     title_credit_like_re = re.compile(r"^\s*(\d+(\.\d+)?)\s*(credits?|hrs?|hours?)?\s*$", re.IGNORECASE)
     title_id_like_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", re.IGNORECASE)
+    polluted_title_re = re.compile(
+        r"^\s*(sem\s*hrs?|prereq|coreq|co-?req|hours?|credit|course,\s*summer|required\.)\b",
+        re.IGNORECASE,
+    )
+    prereq_text_re = re.compile(r"\b(prereq|coreq|co-?req)\b", re.IGNORECASE)
 
     anomalies: list[dict] = []
     prefix_counts: dict[str, int] = {}
@@ -2437,18 +2442,19 @@ def design_course_catalog_qc(version_id: str, db: Session = Depends(get_db), _: 
             anomalies.append({"type": "title_looks_like_credit_hours", "course_id": c.id, "course_number": num, "title": title})
         elif title_id_like_re.match(title):
             anomalies.append({"type": "title_looks_like_id", "course_id": c.id, "course_number": num, "title": title})
+        elif polluted_title_re.search(title):
+            anomalies.append({"type": "title_contains_metadata_not_short_title", "course_id": c.id, "course_number": num, "title": title})
+        if len(title) > 140:
+            anomalies.append({"type": "title_too_long_for_short_title", "course_id": c.id, "course_number": num, "title": title})
         if num.upper().startswith("GENR "):
             anomalies.append({"type": "placeholder_course", "course_id": c.id, "course_number": num, "title": title})
-        level_match = re.search(r"(\d{3})", num)
-        level = int(level_match.group(1)) if level_match else None
-        if level is not None and level >= 200 and not prereq_by_course.get(c.id):
+        if prereq_text_re.search(title) and not prereq_by_course.get(c.id):
             anomalies.append(
                 {
-                    "type": "possible_missing_prereq",
+                    "type": "prereq_or_coreq_text_in_title_but_no_structured_rows",
                     "course_id": c.id,
                     "course_number": num,
                     "title": title,
-                    "note": "200+ course has no prerequisite rows; verify against COI.",
                 }
             )
 

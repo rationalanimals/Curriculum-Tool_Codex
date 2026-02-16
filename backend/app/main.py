@@ -2388,7 +2388,7 @@ def list_courses(
     q: Optional[str] = None,
     sort_by: str = "course_number",
     order: str = "asc",
-    limit: int = Query(50, ge=1, le=500),
+    limit: int = Query(50, ge=1, le=5000),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     _: User = Depends(current_user),
@@ -2401,6 +2401,87 @@ def list_courses(
     col = getattr(Course, sort_by, Course.course_number)
     stmt = stmt.order_by(col.desc() if order == "desc" else col.asc()).limit(limit).offset(offset)
     return [serialize(c) for c in db.scalars(stmt).all()]
+
+
+@app.get("/design/course-catalog-qc/{version_id}")
+def design_course_catalog_qc(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    courses = db.scalars(select(Course).where(Course.version_id == version_id).order_by(Course.course_number.asc(), Course.id.asc())).all()
+    course_by_id = {c.id: c for c in courses}
+    prereqs = db.scalars(
+        select(CoursePrerequisite).where(CoursePrerequisite.course_id.in_([c.id for c in courses]))
+    ).all() if courses else []
+    prereq_by_course: dict[str, list[CoursePrerequisite]] = {}
+    for row in prereqs:
+        prereq_by_course.setdefault(row.course_id, []).append(row)
+    reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id)).all()
+    req_ids = [r.id for r in reqs]
+    fulfillments = db.scalars(select(RequirementFulfillment).where(RequirementFulfillment.requirement_id.in_(req_ids))).all() if req_ids else []
+
+    malformed_number_re = re.compile(r"^[A-Z]{2,10}\s\d{3}[A-Z]?$")
+    title_credit_like_re = re.compile(r"^\s*(\d+(\.\d+)?)\s*(credits?|hrs?|hours?)?\s*$", re.IGNORECASE)
+    title_id_like_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", re.IGNORECASE)
+
+    anomalies: list[dict] = []
+    prefix_counts: dict[str, int] = {}
+    for c in courses:
+        num = str(c.course_number or "").strip()
+        title = str(c.title or "").strip()
+        prefix = num.split(" ")[0] if " " in num else re.sub(r"[^A-Z]", "", num.upper())[:10]
+        if prefix:
+            prefix_counts[prefix] = prefix_counts.get(prefix, 0) + 1
+        if not malformed_number_re.match(num):
+            anomalies.append({"type": "malformed_course_number", "course_id": c.id, "course_number": num, "title": title})
+        if not title:
+            anomalies.append({"type": "missing_title", "course_id": c.id, "course_number": num, "title": title})
+        elif title_credit_like_re.match(title):
+            anomalies.append({"type": "title_looks_like_credit_hours", "course_id": c.id, "course_number": num, "title": title})
+        elif title_id_like_re.match(title):
+            anomalies.append({"type": "title_looks_like_id", "course_id": c.id, "course_number": num, "title": title})
+        if num.upper().startswith("GENR "):
+            anomalies.append({"type": "placeholder_course", "course_id": c.id, "course_number": num, "title": title})
+        level_match = re.search(r"(\d{3})", num)
+        level = int(level_match.group(1)) if level_match else None
+        if level is not None and level >= 200 and not prereq_by_course.get(c.id):
+            anomalies.append(
+                {
+                    "type": "possible_missing_prereq",
+                    "course_id": c.id,
+                    "course_number": num,
+                    "title": title,
+                    "note": "200+ course has no prerequisite rows; verify against COI.",
+                }
+            )
+
+    orphan_links = []
+    for rf in fulfillments:
+        if rf.course_id not in course_by_id:
+            orphan_links.append(
+                {
+                    "fulfillment_id": rf.id,
+                    "requirement_id": rf.requirement_id,
+                    "course_id": rf.course_id,
+                }
+            )
+            anomalies.append(
+                {
+                    "type": "orphan_requirement_link",
+                    "requirement_id": rf.requirement_id,
+                    "fulfillment_id": rf.id,
+                    "course_id": rf.course_id,
+                }
+            )
+
+    return {
+        "version_id": version_id,
+        "total_courses": len(courses),
+        "total_prerequisites": len(prereqs),
+        "courses_with_prereqs": len(prereq_by_course),
+        "unique_prefix_count": len(prefix_counts),
+        "prefix_counts": dict(sorted(prefix_counts.items(), key=lambda x: x[0])),
+        "orphan_requirement_links": orphan_links,
+        "anomaly_count": len(anomalies),
+        "anomalies": anomalies,
+    }
 
 
 @app.get("/courses/{course_id}")

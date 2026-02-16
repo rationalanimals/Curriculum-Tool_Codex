@@ -124,3 +124,12 @@ npm run dev
 - Check audit panel.
 - Expected: recent actions (seed, import, edits) are listed.
 
+## Manual COI Course Catalog QC
+
+Before defining additional major/minor pathways, run the methodical course-data QC workflow in:
+
+- `docs/course_catalog_qc_workflow.md`
+
+New API endpoint for this workflow:
+
+- `GET /design/course-catalog-qc/{version_id}`

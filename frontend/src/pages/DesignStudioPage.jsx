@@ -399,7 +399,7 @@ export function DesignStudioPage() {
   const coursesQ = useQuery({
     queryKey: ["courses", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
-    queryFn: () => authed(`/courses?version_id=${selectedVersion.id}&limit=500`)
+    queryFn: () => authed(`/courses?version_id=${selectedVersion.id}&limit=5000`)
   });
   const cadetsQ = useQuery({
     queryKey: ["cadets"],
@@ -2813,7 +2813,7 @@ export function DesignStudioPage() {
         ),
         children: (b.courses || []).map((bc) => ({
           key: `basket-course:${b.id}:${bc.id}`,
-          title: <span>{bc.course_number || "Course"}</span>,
+          title: <span>{bc.course_number || bc.course_title || "Missing course"}</span>,
           isLeaf: true,
           selectable: false,
           disableCheckbox: true,
@@ -2848,7 +2848,7 @@ export function DesignStudioPage() {
                     seen.add(id);
                     return true;
                   })
-                  .map((id) => courseMapById[id]?.course_number || id)
+                  .map((id) => courseMapById[id]?.course_number || courseMapById[id]?.title || "Missing course")
                   .join(" / ");
               })()}
             </span>
@@ -3111,8 +3111,12 @@ export function DesignStudioPage() {
             if (!seen.has(nxt)) stack.push(nxt);
           }
         }
-        const ordered = group.sort((a, b) => String(courseMapById[a]?.course_number || a).localeCompare(String(courseMapById[b]?.course_number || b)));
-        const label = ordered.map((cid) => courseMapById[cid]?.course_number || cid).join(" / ");
+        const ordered = group.sort((a, b) =>
+          String(courseMapById[a]?.course_number || courseMapById[a]?.title || "").localeCompare(
+            String(courseMapById[b]?.course_number || courseMapById[b]?.title || "")
+          )
+        );
+        const label = ordered.map((cid) => courseMapById[cid]?.course_number || courseMapById[cid]?.title || "Missing course").join(" / ");
         groups.push({ value: ordered[0], label, group_course_ids: ordered });
       }
       byReq[reqId] = groups.sort((a, b) => a.label.localeCompare(b.label));

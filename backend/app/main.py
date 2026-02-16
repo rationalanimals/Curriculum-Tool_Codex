@@ -553,6 +553,18 @@ class RequirementBasketLinkIn(BaseModel):
     sort_order: Optional[int] = Field(default=None, ge=0)
 
 
+class CourseBasketItemOrderIn(BaseModel):
+    item_id: str
+    basket_id: Optional[str] = None
+    sort_order: int = Field(ge=0)
+
+
+class RequirementBasketOrderIn(BaseModel):
+    link_id: str
+    requirement_id: Optional[str] = None
+    sort_order: int = Field(ge=0)
+
+
 class RequirementFulfillmentOrderIn(BaseModel):
     fulfillment_id: str
     sort_order: int = Field(ge=0)
@@ -2875,6 +2887,20 @@ def delete_basket_item(item_id: str, db: Session = Depends(get_db), _: User = De
     return {"status": "deleted"}
 
 
+@app.post("/baskets/items/reorder")
+def reorder_basket_items(payload: list[CourseBasketItemOrderIn], db: Session = Depends(get_db), _: User = Depends(require_design)):
+    updated = 0
+    for item in payload:
+        row = db.get(CourseBasketItem, item.item_id)
+        if row:
+            if item.basket_id is not None:
+                row.basket_id = item.basket_id
+            row.sort_order = item.sort_order
+            updated += 1
+    db.commit()
+    return {"status": "ok", "updated": updated}
+
+
 @app.post("/requirements/baskets")
 def create_requirement_basket_link(payload: RequirementBasketLinkIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
     if payload.max_count is not None and payload.max_count < payload.min_count:
@@ -2930,6 +2956,22 @@ def delete_requirement_basket_link(link_id: str, db: Session = Depends(get_db), 
     db.delete(row)
     db.commit()
     return {"status": "deleted"}
+
+
+@app.post("/requirements/baskets/reorder")
+def reorder_requirement_basket_links(
+    payload: list[RequirementBasketOrderIn], db: Session = Depends(get_db), _: User = Depends(require_design)
+):
+    updated = 0
+    for item in payload:
+        row = db.get(RequirementBasketLink, item.link_id)
+        if row:
+            if item.requirement_id is not None:
+                row.requirement_id = item.requirement_id
+            row.sort_order = item.sort_order
+            updated += 1
+    db.commit()
+    return {"status": "ok", "updated": updated}
 
 
 @app.get("/requirements/baskets/by-requirement/{requirement_id}")
@@ -3046,6 +3088,7 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
         baskets_by_req.setdefault(row.requirement_id, []).append(
             {
                 "id": row.id,
+                "requirement_id": row.requirement_id,
                 "basket_id": row.basket_id,
                 "basket_name": b.name if b else None,
                 "min_count": row.min_count,

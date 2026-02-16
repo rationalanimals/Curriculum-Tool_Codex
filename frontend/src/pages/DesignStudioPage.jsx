@@ -2106,8 +2106,150 @@ export function DesignStudioPage() {
     const dragKey = String(info.dragNode?.key || "");
     const dropKey = String(info.node?.key || "");
     if (dropKey.startsWith("core-rules:") || dropKey.startsWith("core-rule-group:")) return;
+    const dragIsBasket = dragKey.startsWith("basket:");
+    const dropIsBasket = dropKey.startsWith("basket:");
+    const dragIsBasketCourse = dragKey.startsWith("basket-course:");
+    const dropIsBasketCourse = dropKey.startsWith("basket-course:");
     const dragIsCourse = dragKey.startsWith("course:");
     const dropIsCourse = dropKey.startsWith("course:");
+
+    if (dragIsBasketCourse) {
+      const dragItemId = dragKey.split(":")[2] || "";
+      const dragged = basketCourseItemById[dragItemId];
+      if (!dragged) return;
+
+      let targetBasketId = null;
+      if (dropIsBasketCourse) {
+        const dropItemId = dropKey.split(":")[2] || "";
+        targetBasketId = basketCourseItemById[dropItemId]?.basket_id || null;
+      } else if (dropIsBasket) {
+        const dropLinkId = dropKey.split(":")[1] || "";
+        targetBasketId = basketLinkById[dropLinkId]?.basket_id || null;
+      }
+      if (!targetBasketId) return;
+
+      const allItems = Object.values(basketCourseItemById || {});
+      const byBasket = {};
+      allItems.forEach((x) => {
+        byBasket[x.basket_id] = byBasket[x.basket_id] || [];
+        byBasket[x.basket_id].push({ ...x, id: x.id });
+      });
+      const sourceBasketId = dragged.basket_id;
+      const sourceRows = [...(byBasket[sourceBasketId] || [])];
+      const targetRows = sourceBasketId === targetBasketId ? sourceRows : [...(byBasket[targetBasketId] || [])];
+      const sourceWithoutDragged = sourceRows.filter((r) => r.id !== dragItemId);
+      const targetWithoutDragged =
+        sourceBasketId === targetBasketId ? sourceWithoutDragged : targetRows.filter((r) => r.id !== dragItemId);
+
+      let insertIndex = targetWithoutDragged.length;
+      if (dropIsBasketCourse) {
+        const dropItemId = dropKey.split(":")[2] || "";
+        const idx = targetWithoutDragged.findIndex((r) => r.id === dropItemId);
+        if (idx >= 0) {
+          if (info.dropToGap) {
+            const dropPos = info.node.pos.split("-");
+            const relativeDropPos = info.dropPosition - Number(dropPos[dropPos.length - 1]);
+            insertIndex = relativeDropPos < 0 ? idx : idx + 1;
+          } else {
+            insertIndex = idx;
+          }
+        }
+      }
+      if (insertIndex < 0) insertIndex = 0;
+      if (insertIndex > targetWithoutDragged.length) insertIndex = targetWithoutDragged.length;
+
+      const movedRow = { ...dragged, basket_id: targetBasketId };
+      const nextTargetRows = [...targetWithoutDragged];
+      nextTargetRows.splice(insertIndex, 0, movedRow);
+
+      const payload = [];
+      if (sourceBasketId !== targetBasketId) {
+        sourceWithoutDragged.forEach((r, i) => payload.push({ item_id: r.id, basket_id: sourceBasketId, sort_order: i }));
+      }
+      nextTargetRows.forEach((r, i) => payload.push({ item_id: r.id, basket_id: targetBasketId, sort_order: i }));
+
+      await authed("/baskets/items/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["baskets", selectedVersion?.id] }),
+        qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion?.id] }),
+        qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion?.id] }),
+      ]);
+      return;
+    }
+
+    if (dragIsBasket) {
+      const dragLinkId = dragKey.split(":")[1] || "";
+      const dragged = basketLinkById[dragLinkId];
+      if (!dragged) return;
+
+      let targetRequirementId = null;
+      if (dropIsBasket) {
+        const dropLinkId = dropKey.split(":")[1] || "";
+        targetRequirementId = basketLinkById[dropLinkId]?.requirement_id || null;
+      } else if (!dropIsCourse && !dropIsBasketCourse && !dropKey.startsWith("core-rules:") && !dropKey.startsWith("core-rule-group:")) {
+        targetRequirementId = dropKey || null;
+      }
+      if (!targetRequirementId || !requirementById[targetRequirementId]) return;
+
+      const allLinks = Object.values(basketLinkById || {});
+      const byReq = {};
+      allLinks.forEach((x) => {
+        byReq[x.requirement_id] = byReq[x.requirement_id] || [];
+        byReq[x.requirement_id].push({ ...x, id: x.id });
+      });
+      const sourceRequirementId = dragged.requirement_id;
+      const sourceRows = [...(byReq[sourceRequirementId] || [])];
+      const targetRows = sourceRequirementId === targetRequirementId ? sourceRows : [...(byReq[targetRequirementId] || [])];
+      const sourceWithoutDragged = sourceRows.filter((r) => r.id !== dragLinkId);
+      const targetWithoutDragged =
+        sourceRequirementId === targetRequirementId ? sourceWithoutDragged : targetRows.filter((r) => r.id !== dragLinkId);
+
+      let insertIndex = targetWithoutDragged.length;
+      if (dropIsBasket) {
+        const dropLinkId = dropKey.split(":")[1] || "";
+        const idx = targetWithoutDragged.findIndex((r) => r.id === dropLinkId);
+        if (idx >= 0) {
+          if (info.dropToGap) {
+            const dropPos = info.node.pos.split("-");
+            const relativeDropPos = info.dropPosition - Number(dropPos[dropPos.length - 1]);
+            insertIndex = relativeDropPos < 0 ? idx : idx + 1;
+          } else {
+            insertIndex = idx;
+          }
+        }
+      }
+      if (insertIndex < 0) insertIndex = 0;
+      if (insertIndex > targetWithoutDragged.length) insertIndex = targetWithoutDragged.length;
+
+      const movedRow = { ...dragged, requirement_id: targetRequirementId };
+      const nextTargetRows = [...targetWithoutDragged];
+      nextTargetRows.splice(insertIndex, 0, movedRow);
+
+      const payload = [];
+      if (sourceRequirementId !== targetRequirementId) {
+        sourceWithoutDragged.forEach((r, i) =>
+          payload.push({ link_id: r.id, requirement_id: sourceRequirementId, sort_order: i })
+        );
+      }
+      nextTargetRows.forEach((r, i) =>
+        payload.push({ link_id: r.id, requirement_id: targetRequirementId, sort_order: i })
+      );
+
+      await authed("/requirements/baskets/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion?.id] }),
+        qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion?.id] }),
+      ]);
+      return;
+    }
 
     if (dragIsCourse) {
       const dragFulfillmentId = dragKey.replace("course:", "");
@@ -2183,7 +2325,7 @@ export function DesignStudioPage() {
       return;
     }
 
-    if (dropIsCourse) return;
+    if (dropIsCourse || dropIsBasket || dropIsBasketCourse) return;
     const treeData = (requirementsTreeQ.data?.tree || []).map(function mapNode(n) {
       return {
         key: n.id,
@@ -2257,7 +2399,12 @@ export function DesignStudioPage() {
 
   function handleRequirementTreeSelect(keys, info) {
     const key = info?.node?.key || keys?.[0];
-    if (!key || String(key).startsWith("course:")) return;
+    if (
+      !key
+      || String(key).startsWith("course:")
+      || String(key).startsWith("basket:")
+      || String(key).startsWith("basket-course:")
+    ) return;
     loadRequirementNodeToEditor(String(key));
   }
 
@@ -2399,6 +2546,24 @@ export function DesignStudioPage() {
     for (const r of requirementsListQ.data || []) out[r.id] = r;
     return out;
   }, [requirementsListQ.data]);
+  const basketLinkById = useMemo(() => {
+    const out = {};
+    Object.values(requirementNodeMap || {}).forEach((n) => {
+      (n.baskets || []).forEach((b) => {
+        out[b.id] = { ...b, requirement_id: n.id };
+      });
+    });
+    return out;
+  }, [requirementNodeMap]);
+  const basketCourseItemById = useMemo(() => {
+    const out = {};
+    Object.values(basketLinkById || {}).forEach((b) => {
+      (b.courses || []).forEach((c) => {
+        out[c.id] = { ...c, basket_link_id: b.id, basket_id: b.basket_id, requirement_id: b.requirement_id };
+      });
+    });
+    return out;
+  }, [basketLinkById]);
   const courseMapById = useMemo(() => {
     const out = {};
     for (const c of coursesQ.data || []) out[c.id] = c;
@@ -2620,11 +2785,9 @@ export function DesignStudioPage() {
           isLeaf: true,
           selectable: false,
           disableCheckbox: true,
-          draggable: false,
         })),
         disableCheckbox: true,
         selectable: false,
-        draggable: false,
       }));
       const sourceCourses =
         (mappedByReq[n.id] && mappedByReq[n.id].length ? mappedByReq[n.id] : null) ||

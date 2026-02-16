@@ -2905,6 +2905,11 @@ def reorder_basket_items(payload: list[CourseBasketItemOrderIn], db: Session = D
 def create_requirement_basket_link(payload: RequirementBasketLinkIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
     if payload.max_count is not None and payload.max_count < payload.min_count:
         raise HTTPException(status_code=400, detail="max_count must be >= min_count")
+    basket_item_count = len(db.scalars(select(CourseBasketItem.id).where(CourseBasketItem.basket_id == payload.basket_id)).all())
+    if basket_item_count <= 0:
+        raise HTTPException(status_code=400, detail="basket must contain at least one course")
+    if int(payload.min_count) > basket_item_count:
+        raise HTTPException(status_code=400, detail="min_count cannot exceed basket course count")
     existing = db.scalar(
         select(RequirementBasketLink).where(
             RequirementBasketLink.requirement_id == payload.requirement_id,
@@ -2936,6 +2941,11 @@ def update_requirement_basket_link(
 ):
     if payload.max_count is not None and payload.max_count < payload.min_count:
         raise HTTPException(status_code=400, detail="max_count must be >= min_count")
+    basket_item_count = len(db.scalars(select(CourseBasketItem.id).where(CourseBasketItem.basket_id == payload.basket_id)).all())
+    if basket_item_count <= 0:
+        raise HTTPException(status_code=400, detail="basket must contain at least one course")
+    if int(payload.min_count) > basket_item_count:
+        raise HTTPException(status_code=400, detail="min_count cannot exceed basket course count")
     row = db.get(RequirementBasketLink, link_id)
     if not row:
         raise HTTPException(status_code=404, detail="Requirement basket link not found")

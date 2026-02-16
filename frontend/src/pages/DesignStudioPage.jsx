@@ -860,6 +860,7 @@ export function DesignStudioPage() {
 
   async function saveRequirementBasketModal() {
     if (!selectedVersion?.id || !basketRequirementId) return;
+    if (basketValidationErrors.length) return;
     const parsedMin = Number(basketMinCount || 1);
     const minCount = Number.isFinite(parsedMin) && parsedMin > 0 ? Math.floor(parsedMin) : 1;
     const selectedExisting = basketSelectedId ? (basketsQ.data || []).find((b) => b.id === basketSelectedId) : null;
@@ -2584,6 +2585,27 @@ export function DesignStudioPage() {
     });
     return out;
   }, [basketLinkById]);
+  const basketValidationErrors = useMemo(() => {
+    if (reqLinkKind !== "BASKET") return [];
+    const errors = [];
+    const uniqueCourseIds = Array.from(new Set((basketCourseIds || []).filter(Boolean)));
+    const parsedMin = Number(basketMinCount || 1);
+    const minCount = Number.isFinite(parsedMin) && parsedMin > 0 ? Math.floor(parsedMin) : 0;
+    if (!minCount) errors.push("Min count must be a whole number greater than 0.");
+    if (!uniqueCourseIds.length) errors.push("Select at least one basket course.");
+    if (minCount && uniqueCourseIds.length && minCount > uniqueCourseIds.length) {
+      errors.push("Min count cannot exceed the number of selected basket courses.");
+    }
+    const usingExisting = !!basketSelectedId;
+    if (!usingExisting && !(basketName || "").trim()) {
+      errors.push("Basket name is required when not using an existing basket.");
+    }
+    const siblingLinks = (requirementNodeMap[basketRequirementId || ""]?.baskets || []);
+    if (basketSelectedId && siblingLinks.some((b) => b.basket_id === basketSelectedId && b.id !== basketLinkId)) {
+      errors.push("This basket is already linked to the selected requirement.");
+    }
+    return errors;
+  }, [reqLinkKind, basketCourseIds, basketMinCount, basketSelectedId, basketName, requirementNodeMap, basketRequirementId, basketLinkId]);
   const courseMapById = useMemo(() => {
     const out = {};
     for (const c of coursesQ.data || []) out[c.id] = c;
@@ -3996,7 +4018,7 @@ export function DesignStudioPage() {
         }}
         onOk={reqLinkKind === "BASKET" ? saveRequirementBasketModal : saveRequirementCourseModal}
         okText={reqLinkKind === "BASKET" ? (basketLinkId ? "Save Basket" : "Add Basket") : "Save Course"}
-        okButtonProps={reqLinkKind === "BASKET" ? {} : { disabled: !reqCourseId }}
+        okButtonProps={reqLinkKind === "BASKET" ? { disabled: basketValidationErrors.length > 0 } : { disabled: !reqCourseId }}
       >
         <Space direction="vertical" style={{ width: "100%" }}>
           <Typography.Text type="secondary">
@@ -4200,6 +4222,11 @@ export function DesignStudioPage() {
                 onChange={(v) => setBasketCourseIds(v || [])}
                 options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
               />
+              {(basketValidationErrors || []).map((msg, idx) => (
+                <Typography.Text key={`basket-error-${idx}`} type="danger">
+                  {msg}
+                </Typography.Text>
+              ))}
             </>
           )}
         </Space>

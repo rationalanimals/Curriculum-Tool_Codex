@@ -1,0 +1,11 @@
+action,course_number,new_title,course_id
+UPDATE,Chem 335,Physical Chemistry I,
+UPDATE,Civ Engr 378,Forest Service Bridge Construction,
+UPDATE,Econ 374,Survey of International Economics Issues,
+UPDATE,ME 205,Engineering Tools Seminar,
+UPDATE,Math 245,Differential Equations,
+UPDATE,Math 320,Foundations of Mathematics,
+UPDATE,Math 340,Discrete Mathematics,
+UPDATE,Math 344,Applied Linear Algebra,
+UPDATE,Math 360,Linear Algebra,
+UPDATE,Portuguese 212,Accelerated Basic Portuguese II,

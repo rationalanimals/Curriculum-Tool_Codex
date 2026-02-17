@@ -70,6 +70,33 @@ To apply curated updates from CSV:
 python tools/apply_course_curation_csv.py
 ```
 
+## 4b) Import OR/EITHER prerequisites (disjunction support)
+
+The data layer now supports grouped prerequisite disjunctions (`pick 1 of N`) using:
+- `course_prerequisites.prerequisite_group_key`
+- `course_prerequisites.group_min_required`
+- `course_prerequisites.group_label`
+
+Workflow:
+
+1. Build OR-resolution queue:
+
+```powershell
+python tools/generate_prereq_candidate_queue.py
+```
+
+2. Import OR/EITHER clauses into grouped prerequisite rows:
+
+```powershell
+python tools/import_or_prerequisites.py
+```
+
+3. (Optional) Apply targeted edge-case fixes for mixed AND+OR clauses:
+
+```powershell
+python tools/fix_or_prereq_edge_cases.py
+```
+
 ## 5) Completion gate before pathway work
 
 Proceed to major/minor pathway definition only when:

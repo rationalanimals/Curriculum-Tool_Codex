@@ -1,0 +1,43 @@
+action,course_number,new_title,course_id,prereq_numbers_semicolon,coreq_numbers_semicolon,notes,raw_prereq_text
+UPDATE,Aero Engr 316,,e6b10d12-d855-4705-a8bc-ba564bf0f5c0,AERO ENGR 241,,partial-safe from OR/manual queue (non-OR clauses only),Aero Engr 210S or Aero Engr 315; Aero Engr 241
+UPDATE,Aero Engr 342,,26f7f333-caff-4725-9b05-3016ca3f3aad,AERO ENGR 341,,partial-safe from OR/manual queue (non-OR clauses only),Aero Engr 341. Coreq: Engr 346 or equivalent
+UPDATE,Aero Engr 351,,9f37c7cb-6b86-4b0f-8f4a-5047ea8d034f,,PHYSICS 110,partial-safe from OR/manual queue (non-OR clauses only),Math 243 and either Aero Engr 210 or Aero Engr 315. Coreq: Physics 110
+UPDATE,Aero Engr 436,,87268632-18a3-4a61-a17e-d3008a159ea9,,MECH ENGR 350,partial-safe from OR/manual queue (non-OR clauses only),Aero Engr 210S or Aero Engr 315 and Mech Engr 330. Coreq: Mech Engr 350
+UPDATE,Aero Engr 482,,5206cdf0-702d-4403-9d43-443b2ef43fc2,AERO ENGR 352; AERO ENGR 481,,partial-safe from OR/manual queue (non-OR clauses only),"Aero Engr 352, Aero Engr 481, and Aero Engr 342 (or department approval)"
+UPDATE,Aero Engr 483,,c6b0863e-885c-43cd-b294-3e709c0914c8,AERO ENGR 466,,partial-safe from OR/manual queue (non-OR clauses only),Aero Engr 466 and Aero Engr 480 (or department approval)
+UPDATE,Astr Engr 310S,,3984b1f7-cdf2-431d-b49c-acef8569ee1c,MATH 142,,partial-safe from OR/manual queue (non-OR clauses only),Math 142 and Physics 110; Academy Scholar status or Department Head and Martinson Honors Program Director approval
+UPDATE,Astr Engr 321,,9adc62a8-20b9-4e6c-8ce9-e39a7034820b,ASTR ENGR 310,,partial-safe from OR/manual queue (non-OR clauses only),Astr Engr 201 or Comp Sci 211; Astr Engr 310; completed or enrolled in Math 245
+UPDATE,Biology 360,,10934bad-98e9-40d4-a86b-6ebe2d720e68,BIOLOGY 215,,partial-safe from OR/manual queue (non-OR clauses only),Biology 215; Chem 230 or Chem 233 or concurrent enrollment
+UPDATE,Biology 363,,07a5976e-2614-4c0e-af8d-a0e91d589fbc,BIOLOGY 215,,partial-safe from OR/manual queue (non-OR clauses only),Biology 215; Chem 230 or Chem 233 or concurrent enrollment
+UPDATE,Chem 234,,f4b0679f-0d2c-4ffc-8d2d-9af69de9c4fb,CHEM 233,,partial-safe from OR/manual queue (non-OR clauses only),"Chem 233; a grade of ""C"" or better in Chem 233 or Department Head approval. Concurrent enrollment in Chem 243 is recommended but is optional for non-chemistry majors"
+UPDATE,Chem 445,,ecaa2cd4-791e-452c-ac23-f0779ee4c8d5,CHEM 234; CHEM 243; CHEM 335,,partial-safe from OR/manual queue (non-OR clauses only),"Chem 234, Chem 243, Chem 335, and Chem 444. Coreq: Chem 431 or DFCH approval"
+UPDATE,Civ Engr 461,,3903a25e-bd44-4bc1-a63c-5bf73ee69da0,CIV ENGR 361,,partial-safe from OR/manual queue (non-OR clauses only),Civ Engr 361 (C- or better)
+UPDATE,Civ Engr 462,,4021276d-3990-456e-96c8-083683b447ba,,CIV ENGR 362,partial-safe from OR/manual queue (non-OR clauses only),C- or better in Civ Engr 361. Coreq: Civ Engr 362 and Civ Engr 390
+UPDATE,Civ Engr 464,,77d8c170-5863-4686-b8c4-f9c459ccad84,CIV ENGR 215,,partial-safe from OR/manual queue (non-OR clauses only),Civ Engr 215 and Civ Engr 351; or department approval
+UPDATE,Comp Sci 380,,5452e55e-0ec4-4788-868b-02b86b631714,COMP SCI 220,,partial-safe from OR/manual queue (non-OR clauses only),Comp Sci 220; Math 340 or Math 374
+UPDATE,Econ 351,,5cdca445-4c73-4f25-8829-365efcc07992,ECON 201,,partial-safe from OR/manual queue (non-OR clauses only),Econ 201; Econ 350 or Econ 374
+UPDATE,Econ 422,,e01ded7c-cb2a-4421-bbb8-3ecbdadc6c1b,ECON 333,,partial-safe from OR/manual queue (non-OR clauses only),Econ 333 (or Ops Rsch 331) and Econ 365
+UPDATE,Econ 450,,940284a1-fbf6-4600-a038-8aa90105bce1,ECON 333,,partial-safe from OR/manual queue (non-OR clauses only),Econ 333 and Econ 350 (or departmental approval)
+UPDATE,Econ 454,,23e92dc6-3e3b-457d-9d7e-4f2881168a74,ECON 201,,partial-safe from OR/manual queue (non-OR clauses only),Econ 201; Econ 350 or Econ 374. Final exam or final project
+UPDATE,Econ 475,,042511fd-922f-483b-9d1a-822a875967eb,ECON 350,,partial-safe from OR/manual queue (non-OR clauses only),Econ 350 (or department approval)
+UPDATE,Econ 476,,e9b4205f-6fea-484d-b51f-02ea2638c170,ECON 201; ECON 333,,partial-safe from OR/manual queue (non-OR clauses only),"Econ 201, Econ 333 (or Ops Rsch 331), and Econ 365"
+UPDATE,Econ 482,,acdbc1dc-976a-4cd4-a755-b32c2d7a2f35,ECON 481,,partial-safe from OR/manual queue (non-OR clauses only),Econ 481; C1C standing in the Economics major or course director approval
+UPDATE,Ece 447,,18c6019f-d7cb-4cf6-bb57-a3209db1d637,ECE 333; ECE 346,,partial-safe from OR/manual queue (non-OR clauses only),"ECE 333, ECE 346, and Math 356 (or department approval)"
+UPDATE,Engr 443,,7775df85-e4aa-47b9-9782-7e135bb8ce33,MATH 346; MATH 356,,partial-safe from OR/manual queue (non-OR clauses only),"Math 346, Math 356 (or Math 377), and Engr 342 (or ECE 333 or Mech Engr 325 or Aero Engr 457). (Administered by Department of Astronautics)"
+UPDATE,Mech Engr 220S,,2b7044f9-79e5-421d-a0a0-1183bc7aa4ba,MATH 141,PHYSICS 110,partial-safe from OR/manual queue (non-OR clauses only),Math 141; Academy Scholar status or Department Head and Martinson Honors Program Director approval. Coreq: Physics 110
+UPDATE,Mech Engr 441,,907d07d8-c7c9-4d18-a2c8-3a94243b35b1,MECH ENGR 312,,partial-safe from OR/manual queue (non-OR clauses only),"Mech Engr 312. Coreq: Mech Engr 341 and Math 342, Math 346, or Engr 346"
+UPDATE,Mech Engr 468,,1ed9b663-c068-4237-9e3f-d12449de80f4,MECH ENGR 312,,partial-safe from OR/manual queue (non-OR clauses only),"Mech Engr 312. Coreq: Mech Engr 341, or department approval"
+UPDATE,Meteor 330,,4f4a6fad-1ed4-4f25-bbf0-75c3f310954c,MATH 243,,partial-safe from OR/manual queue (non-OR clauses only),Math 243 (or Math 253) and Meteor 320
+UPDATE,Meteor 351,,e601a9fe-d4b1-4a92-83dc-e7f64077903d,MATH 243,METEOR 330,partial-safe from OR/manual queue (non-OR clauses only),Math 243 (or Math 253) and Meteor 320. Coreq: Meteor 330
+UPDATE,Mss 251S,,17266fa4-cbf7-4c7f-bf23-9aab111e7bed,HISTORY 100,,partial-safe from OR/manual queue (non-OR clauses only),History 100; Academy Scholar status or Department Head and Martinson Honors Program Director approval
+UPDATE,Ops Rsch 311,,002d74bf-7b1a-4295-b494-61fc4ecc7b75,,MATH 243,partial-safe from OR/manual queue (non-OR clauses only),"Math 344 or Math 360, and either Ops Rsch 310 or department approval. Coreq: Math 243/253"
+UPDATE,Ops Rsch 421,,f61a4606-ed95-42a4-8bb6-689ffcc13fc7,OPS RSCH 310,,partial-safe from OR/manual queue (non-OR clauses only),"Ops Rsch 310; C1C standing in the Ops Rsch or Sys Engr majors, or course director approval"
+UPDATE,Physics 264,,c33a8d5e-c32a-4e86-97e4-9f9ffc7003cf,,MATH 243,partial-safe from OR/manual queue (non-OR clauses only),Physics 215 or department approval. Coreq: Math 243 (or Math 253)
+UPDATE,Physics 291,,3650cc91-16fc-4190-9584-3e51659ec6d9,PHYSICS 215,,partial-safe from OR/manual queue (non-OR clauses only),Physics 215. Coreq: Math 245 or department approval
+UPDATE,Physics 355,,4ad15644-1ab8-43aa-8fae-b73e46fd3b80,PHYSICS 215,,partial-safe from OR/manual queue (non-OR clauses only),Physics 215; completed or enrolled in Math 346 or department approval
+UPDATE,Physics 361,,b90265c0-0368-47fe-97cc-c64a52d5c9db,PHYSICS 215,,partial-safe from OR/manual queue (non-OR clauses only),Physics 215. Coreq: Math 346 or department approval
+UPDATE,Physics 405,,d6738ed3-ed8b-400e-b83b-9e4398c9a9fa,,PHYSICS 490,partial-safe from OR/manual queue (non-OR clauses only),"C1C standing, Physics major or department approval. Coreq: Physics 490"
+UPDATE,Physics 451,,b50b06dc-6ae1-49d2-af24-1194ecff854e,PHYSICS 370,,partial-safe from OR/manual queue (non-OR clauses only),Physics 370 recommended but not required. Coreq: Physics 362 and Math 346 or department approval. Not offered every year; check with DFPM before scheduling
+UPDATE,Physics 473,,7b7fb4c2-1c06-453b-add3-c53a9c6447b6,PHYSICS 215,,partial-safe from OR/manual queue (non-OR clauses only),Physics 215. Coreq: Physics 465 and Math 245 or department approval. Not offered every year; check with DFPM before scheduling
+UPDATE,Sys Engr 311,,93cc0aae-6006-4682-9914-df4e64ade979,OPS RSCH 310,,partial-safe from OR/manual queue (non-OR clauses only),"Ops Rsch 310 Coreq: Math 300, Math 356, or Math 377"
+UPDATE,Sys Engr 320,,e2ee1b14-4c15-4434-88e3-2496e0adbcc6,MATH 142,,partial-safe from OR/manual queue (non-OR clauses only),"Math 142/152 (C or better), and Comp Sci 211. The Course Director may waive Comp Sci 211 with evidence of prior MatLab skills"

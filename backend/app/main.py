@@ -216,6 +216,9 @@ class CoursePrerequisite(Base):
     required_course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
     relationship_type: Mapped[str] = mapped_column(String, default="PREREQUISITE")
     enforcement: Mapped[str] = mapped_column(String, default="HARD")
+    prerequisite_group_key: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
+    group_min_required: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    group_label: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class CourseSubstitution(Base):
@@ -487,6 +490,9 @@ class PrerequisiteIn(BaseModel):
     required_course_id: str
     relationship_type: str = "PREREQUISITE"
     enforcement: str = "HARD"
+    prerequisite_group_key: Optional[str] = None
+    group_min_required: Optional[int] = Field(default=None, ge=1)
+    group_label: Optional[str] = None
 
 
 class SubstitutionIn(BaseModel):
@@ -1009,6 +1015,34 @@ def map_legacy_period_index(value: Optional[int]) -> Optional[int]:
     return mapping.get(value, value)
 
 
+def prerequisite_constraint_groups(prereqs: list[CoursePrerequisite]) -> list[dict]:
+    grouped: dict[tuple[str, str, str], dict] = {}
+    for p in prereqs:
+        rel = str(p.relationship_type or "PREREQUISITE").upper()
+        gk = str(p.prerequisite_group_key or "").strip()
+        if gk:
+            key = (p.course_id, rel, gk)
+            label = str(p.group_label or "").strip() or f"{rel} group"
+            min_required = int(p.group_min_required or 1)
+        else:
+            key = (p.course_id, rel, f"__SINGLE__:{p.id}")
+            label = ""
+            min_required = 1
+        entry = grouped.setdefault(
+            key,
+            {
+                "course_id": p.course_id,
+                "relationship_type": rel,
+                "group_key": (gk or None),
+                "group_label": label,
+                "min_required": max(1, min_required),
+                "items": [],
+            },
+        )
+        entry["items"].append(p)
+    return list(grouped.values())
+
+
 def ensure_runtime_migrations() -> None:
     with engine.begin() as conn:
         conn.execute(
@@ -1130,6 +1164,14 @@ def ensure_runtime_migrations() -> None:
         vr_col_names = {c[1] for c in vr_cols}
         if "rule_code" not in vr_col_names:
             conn.execute(text("ALTER TABLE validation_rules ADD COLUMN rule_code TEXT"))
+        prereq_cols = conn.execute(text("PRAGMA table_info(course_prerequisites)")).fetchall()
+        prereq_col_names = {c[1] for c in prereq_cols}
+        if "prerequisite_group_key" not in prereq_col_names:
+            conn.execute(text("ALTER TABLE course_prerequisites ADD COLUMN prerequisite_group_key TEXT"))
+        if "group_min_required" not in prereq_col_names:
+            conn.execute(text("ALTER TABLE course_prerequisites ADD COLUMN group_min_required INTEGER DEFAULT 1"))
+        if "group_label" not in prereq_col_names:
+            conn.execute(text("ALTER TABLE course_prerequisites ADD COLUMN group_label TEXT"))
 
         migrated = conn.execute(
             text("SELECT value FROM runtime_flags WHERE key = 'period_model_v2_migrated'")
@@ -2587,6 +2629,21 @@ def create_prerequisite(payload: PrerequisiteIn, db: Session = Depends(get_db), 
     return serialize(p)
 
 
+@app.put("/prerequisites/{prerequisite_id}")
+def update_prerequisite(prerequisite_id: str, payload: PrerequisiteIn, db: Session = Depends(get_db), user: User = Depends(require_design)):
+    p = db.get(CoursePrerequisite, prerequisite_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Prerequisite not found")
+    if payload.course_id == payload.required_course_id:
+        raise HTTPException(status_code=400, detail="Course cannot require itself")
+    for k, v in payload.model_dump().items():
+        setattr(p, k, v)
+    db.commit()
+    db.refresh(p)
+    write_audit(db, user, "UPDATE", "CoursePrerequisite", p.id, str(payload.model_dump()))
+    return serialize(p)
+
+
 @app.delete("/prerequisites/{prerequisite_id}")
 def delete_prerequisite(prerequisite_id: str, db: Session = Depends(get_db), user: User = Depends(require_design)):
     p = db.get(CoursePrerequisite, prerequisite_id)
@@ -2650,6 +2707,9 @@ def prerequisite_graph(version_id: str, db: Session = Depends(get_db), _: User =
                     "to": pre.course_id,
                     "relationship_type": pre.relationship_type,
                     "enforcement": pre.enforcement,
+                    "prerequisite_group_key": pre.prerequisite_group_key,
+                    "group_min_required": pre.group_min_required,
+                    "group_label": pre.group_label,
                 }
             )
     return {"nodes": nodes, "edges": edges}
@@ -5361,29 +5421,50 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     f"{cnum}: no feasible period window ({period_short_label(lo)}>{period_short_label(hi)})."
                 )
             windows[cid] = (lo, hi)
-        for p in prereqs:
-            if p.course_id not in mandatory or p.required_course_id not in mandatory:
+        prereq_constraints = prerequisite_constraint_groups(prereqs)
+        for g in prereq_constraints:
+            course_id = g["course_id"]
+            if course_id not in mandatory:
                 continue
-            a_lo, a_hi = windows.get(p.required_course_id, (0, MAX_PLAN_PERIOD))
-            b_lo, b_hi = windows.get(p.course_id, (0, MAX_PLAN_PERIOD))
-            rel = (p.relationship_type or "PREREQUISITE").upper()
-            feasible = False
-            for sa in range(a_lo, a_hi + 1):
-                for sb in range(b_lo, b_hi + 1):
-                    if rel == "COREQUISITE":
-                        if sa <= sb:
-                            feasible = True
-                            break
-                    else:
-                        if sa < sb:
-                            feasible = True
-                            break
+            considered = [p for p in g["items"] if p.required_course_id in mandatory]
+            if not considered:
+                continue
+            b_lo, b_hi = windows.get(course_id, (0, MAX_PLAN_PERIOD))
+            rel = str(g["relationship_type"] or "PREREQUISITE").upper()
+            feasible_count = 0
+            for p in considered:
+                a_lo, a_hi = windows.get(p.required_course_id, (0, MAX_PLAN_PERIOD))
+                feasible = False
+                for sa in range(a_lo, a_hi + 1):
+                    for sb in range(b_lo, b_hi + 1):
+                        if rel == "COREQUISITE":
+                            if sa <= sb:
+                                feasible = True
+                                break
+                        else:
+                            if sa < sb:
+                                feasible = True
+                                break
+                    if feasible:
+                        break
                 if feasible:
-                    break
-            if not feasible:
-                req_num = course_by_id.get(p.required_course_id).course_number if course_by_id.get(p.required_course_id) else p.required_course_id
-                course_num = course_by_id.get(p.course_id).course_number if course_by_id.get(p.course_id) else p.course_id
-                issues.append(f"{course_num}: dependency on {req_num} infeasible within timing windows.")
+                    feasible_count += 1
+            required_count = max(1, int(g.get("min_required") or 1))
+            required_count = min(required_count, len(considered))
+            if feasible_count < required_count:
+                course_num = course_by_id.get(course_id).course_number if course_by_id.get(course_id) else course_id
+                req_nums = [
+                    course_by_id.get(p.required_course_id).course_number if course_by_id.get(p.required_course_id) else p.required_course_id
+                    for p in considered
+                ]
+                if g.get("group_key"):
+                    issues.append(
+                        f"{course_num}: dependency group infeasible ({required_count} of {len(considered)} required) "
+                        f"within timing windows: {' / '.join(req_nums)}."
+                    )
+                else:
+                    req_num = req_nums[0] if req_nums else "UNKNOWN"
+                    issues.append(f"{course_num}: dependency on {req_num} infeasible within timing windows.")
 
         # Credit cap checks.
         total_credit_capacity = (max_credits_per_semester * float(len(ACADEMIC_PERIODS))) + (
@@ -5760,29 +5841,50 @@ def validate(version_id: str, db: Session = Depends(get_db), _: User = Depends(c
             }
         )
 
-    # Prerequisite sequencing checks based on designated semester when available
+    # Prerequisite sequencing checks based on designated semester when available.
+    # Supports disjunction groups via prerequisite_group_key + group_min_required.
     pre_rule = rule_lookup.get("Prerequisite ordering")
-    for pre in db.scalars(select(CoursePrerequisite)).all():
-        course = db.get(Course, pre.course_id)
-        required = db.get(Course, pre.required_course_id)
-        if not course or not required:
+    version_prereqs = [
+        p
+        for p in db.scalars(select(CoursePrerequisite)).all()
+        if p.course_id in course_number_by_id and p.required_course_id in course_number_by_id
+    ]
+    prereq_groups = prerequisite_constraint_groups(version_prereqs)
+    for g in prereq_groups:
+        course = db.get(Course, g["course_id"])
+        if not course or course.version_id != version_id or course.designated_semester is None:
             continue
-        if course.version_id != version_id or required.version_id != version_id:
+        members = []
+        for p in g["items"]:
+            required = db.get(Course, p.required_course_id)
+            if not required or required.version_id != version_id or required.designated_semester is None:
+                continue
+            members.append((p, required))
+        if not members:
             continue
-        if (
-            course.designated_semester is not None
-            and required.designated_semester is not None
-            and required.designated_semester >= course.designated_semester
-        ):
-            findings.append(
-                {
-                    "severity": (pre_rule.severity if pre_rule else "FAIL"),
-                    "tier": (pre_rule.tier if pre_rule else 1),
-                    "rule_code": str(pre_rule.rule_code or "").strip() if pre_rule else "",
-                    "rule": (pre_rule.name if pre_rule else "Prerequisite ordering"),
-                    "message": f"{required.course_number} should occur before {course.course_number}.",
-                }
+        valid_count = sum(1 for _, required in members if required.designated_semester < course.designated_semester)
+        min_required = max(1, int(g.get("min_required") or 1))
+        min_required = min(min_required, len(members))
+        if valid_count >= min_required:
+            continue
+        req_numbers = [required.course_number for _, required in members]
+        message = (
+            f"{' / '.join(req_numbers)} should occur before {course.course_number}."
+            if not g.get("group_key")
+            else (
+                f"{course.course_number} requires at least {min_required} of {len(members)} prerequisites "
+                f"to occur earlier: {' / '.join(req_numbers)}."
             )
+        )
+        findings.append(
+            {
+                "severity": (pre_rule.severity if pre_rule else "FAIL"),
+                "tier": (pre_rule.tier if pre_rule else 1),
+                "rule_code": str(pre_rule.rule_code or "").strip() if pre_rule else "",
+                "rule": (pre_rule.name if pre_rule else "Prerequisite ordering"),
+                "message": message,
+            }
+        )
 
     # Resource constraints: classroom capacity, instructor load, qualification
     sections = db.scalars(select(Section).where(Section.version_id == version_id)).all()

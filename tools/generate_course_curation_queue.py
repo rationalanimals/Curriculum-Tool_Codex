@@ -62,7 +62,7 @@ def main() -> None:
     title_credit_like_re = re.compile(r"^\s*(\d+(\.\d+)?)\s*(credits?|hrs?|hours?)?\s*$", re.IGNORECASE)
     title_id_like_re = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-", re.IGNORECASE)
     polluted_title_re = re.compile(
-        r"^\s*(sem\s*hrs?|prereq|coreq|co-?req|hours?|credit|course,\s*summer|required\.)\b",
+        r"^\s*(sem\s*hrs?|prereq|coreq|co-?req|hours?|credit|course,\s*summer|required\.|final\s+exam|pass/?fail|not\s+graded|waiver\s+authority|department\s+approval|course\s+enrollment|coreq:|prereq:)\b",
         re.IGNORECASE,
     )
     prereq_text_re = re.compile(r"\b(prereq|coreq|co-?req)\b", re.IGNORECASE)

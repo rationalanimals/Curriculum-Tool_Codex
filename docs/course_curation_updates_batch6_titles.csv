@@ -1,0 +1,8 @@
+action,course_number,new_title,course_id
+UPDATE,Chinese 365,Chinese Civilization and Culture,
+UPDATE,French 365,French Civilization and Culture,
+UPDATE,German 365,German Civilization and Culture,
+UPDATE,Portuguese 365,Portuguese Civilization and Culture,
+UPDATE,Russian 365,Russian Civilization and Culture,
+UPDATE,Spanish 365,Spanish Civilization and Culture,
+UPDATE,Math 243,Calculus III,

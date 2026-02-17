@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AutoComplete, Button, Card, Input, List, Modal, Select, Space, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
+import { AutoComplete, Button, Card, Input, List, Modal, Select, Space, Switch, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
 
 const API = "http://127.0.0.1:8000";
 const DEFAULT_PERIOD_ROWS = [
@@ -155,6 +155,69 @@ function withDot(code) {
   return t.endsWith(".") ? t : `${t}.`;
 }
 
+function ScrollPane({ maxHeight = 560, children }) {
+  const viewportRef = useRef(null);
+  const [thumb, setThumb] = useState({ top: 0, height: 28, visible: false });
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return undefined;
+    let raf = null;
+    const update = () => {
+      const vh = el.clientHeight || 1;
+      const ch = el.scrollHeight || 1;
+      const st = el.scrollTop || 0;
+      if (ch <= vh + 1) {
+        setThumb({ top: 0, height: Math.max(vh - 8, 20), visible: false });
+        return;
+      }
+      const trackHeight = Math.max(vh - 8, 20);
+      const h = Math.max(28, Math.floor((vh / ch) * trackHeight));
+      const maxTop = Math.max(trackHeight - h, 0);
+      const denom = Math.max(ch - vh, 1);
+      const top = Math.floor((st / denom) * maxTop);
+      setThumb({ top, height: h, visible: true });
+    };
+    const schedule = () => {
+      if (raf != null) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        update();
+      });
+    };
+    update();
+    el.addEventListener("scroll", schedule, { passive: true });
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    window.addEventListener("resize", schedule);
+    return () => {
+      el.removeEventListener("scroll", schedule);
+      ro.disconnect();
+      window.removeEventListener("resize", schedule);
+      if (raf != null) cancelAnimationFrame(raf);
+    };
+  }, [children, maxHeight]);
+
+  return (
+    <div className="studio-scroll-shell" style={{ maxHeight }}>
+      <div ref={viewportRef} className="studio-scroll-viewport" style={{ maxHeight }}>
+        {children}
+      </div>
+      <div className="studio-scroll-track" aria-hidden="true" style={{ opacity: thumb.visible ? 1 : 0 }}>
+        <div
+          className="studio-scroll-thumb"
+          style={{
+            transform: `translateY(${thumb.top}px)`,
+            height: `${thumb.height}px`,
+            opacity: thumb.visible ? 1 : 0.35,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function DesignStudioPage() {
   const qc = useQueryClient();
   const [commentText, setCommentText] = useState("");
@@ -165,6 +228,7 @@ export function DesignStudioPage() {
   const [selectedSavedDatasetId, setSelectedSavedDatasetId] = useState();
   const datasetImportInputRef = useRef(null);
   const [canvasViewMode, setCanvasViewMode] = useState("STANDARD");
+  const [courseTitleHoverEnabled, setCourseTitleHoverEnabled] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addSemester, setAddSemester] = useState();
   const [addCourseId, setAddCourseId] = useState();
@@ -226,11 +290,23 @@ export function DesignStudioPage() {
   const [compareTo, setCompareTo] = useState();
   const [selectedCadetId, setSelectedCadetId] = useState();
   const [selectedCourseId, setSelectedCourseId] = useState();
+  const [courseSearchValue, setCourseSearchValue] = useState("");
+  const [newCourseModalOpen, setNewCourseModalOpen] = useState(false);
+  const [newCourseBusy, setNewCourseBusy] = useState(false);
+  const [newCourseForm, setNewCourseForm] = useState({
+    course_number: "",
+    title: "",
+    credit_hours: "3",
+    designated_semester: null,
+    offered_periods_json: "",
+    min_section_size: "6",
+  });
   const [newCourseBucketCode, setNewCourseBucketCode] = useState("ABET_MATH_BASIC_SCI");
   const [newCourseBucketHours, setNewCourseBucketHours] = useState("");
   const [newPrereqId, setNewPrereqId] = useState();
   const [newPrereqType, setNewPrereqType] = useState("PREREQUISITE");
   const [newPrereqEnforcement, setNewPrereqEnforcement] = useState("HARD");
+  const [prereqEdits, setPrereqEdits] = useState({});
   const [substituteCourseId, setSubstituteCourseId] = useState();
   const [subBidirectional, setSubBidirectional] = useState(false);
   const [subRequiresApproval, setSubRequiresApproval] = useState(false);
@@ -262,6 +338,20 @@ export function DesignStudioPage() {
   const [ruleFormDomain, setRuleFormDomain] = useState("General");
   const [ruleFormDomainSearch, setRuleFormDomainSearch] = useState("");
   const [ruleCategoryGuideOpen, setRuleCategoryGuideOpen] = useState(false);
+  const [prereqFromQuery, setPrereqFromQuery] = useState("");
+  const [prereqToQuery, setPrereqToQuery] = useState("");
+  const [feasibilitySearch, setFeasibilitySearch] = useState("");
+  const [courseGeneralForm, setCourseGeneralForm] = useState({
+    course_number: "",
+    title: "",
+  });
+  const [courseSchedulingForm, setCourseSchedulingForm] = useState({
+    credit_hours: "",
+    designated_semester: null,
+    offered_periods_json: "",
+    min_section_size: "",
+  });
+  const [courseSaveBusy, setCourseSaveBusy] = useState(false);
   const periodsQ = useQuery({ queryKey: ["period-metadata"], queryFn: () => authed("/meta/periods") });
   const periodRows = useMemo(() => {
     const rows = periodsQ.data?.periods || [];
@@ -493,6 +583,57 @@ export function DesignStudioPage() {
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/baskets?version_id=${selectedVersion.id}`),
   });
+
+  useEffect(() => {
+    const general = courseDetailQ.data?.general;
+    const scheduling = courseDetailQ.data?.scheduling;
+    if (!general) {
+      setCourseGeneralForm({ course_number: "", title: "" });
+      setCourseSchedulingForm({
+        credit_hours: "",
+        designated_semester: null,
+        offered_periods_json: "",
+        min_section_size: "",
+      });
+      return;
+    }
+    setCourseGeneralForm({
+      course_number: String(general.course_number || ""),
+      title: String(general.title || ""),
+    });
+    setCourseSchedulingForm({
+      credit_hours: scheduling?.credit_hours == null ? "" : String(scheduling.credit_hours),
+      designated_semester: scheduling?.designated_semester ?? null,
+      offered_periods_json: String(scheduling?.offered_periods_json || ""),
+      min_section_size: scheduling?.min_section_size == null ? "" : String(scheduling.min_section_size),
+    });
+  }, [courseDetailQ.data?.general, courseDetailQ.data?.scheduling, selectedCourseId]);
+
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setCourseSearchValue("");
+      return;
+    }
+    const selected = (coursesQ.data || []).find((c) => c.id === selectedCourseId);
+    setCourseSearchValue(selected ? `${selected.course_number} - ${selected.title}` : "");
+  }, [selectedCourseId, coursesQ.data]);
+
+  useEffect(() => {
+    const rows = courseDetailQ.data?.prerequisites || [];
+    const next = {};
+    for (const r of rows) {
+      next[r.id] = {
+        required_course_id: r.required_course_id,
+        relationship_type: r.relationship_type || "PREREQUISITE",
+        enforcement: r.enforcement || "HARD",
+      };
+    }
+    setPrereqEdits(next);
+  }, [courseDetailQ.data?.prerequisites]);
+
+  useEffect(() => {
+    if (canvasViewMode === "VERBOSE") setCourseTitleHoverEnabled(true);
+  }, [canvasViewMode]);
 
   async function move(planItemId, targetSemester, targetPosition = 0) {
     await authed("/design/canvas/move", {
@@ -1459,6 +1600,84 @@ export function DesignStudioPage() {
     await qc.invalidateQueries({ queryKey: ["versions"] });
   }
 
+  async function saveCourseDetail() {
+    if (!selectedCourseId || !courseDetailQ.data?.general?.version_id) return;
+    const payload = {
+      version_id: courseDetailQ.data.general.version_id,
+      course_number: normalizeCourseNumber(courseGeneralForm.course_number),
+      title: String(courseGeneralForm.title || "").trim(),
+      credit_hours: Number(courseSchedulingForm.credit_hours || 0),
+      designated_semester:
+        courseSchedulingForm.designated_semester == null || courseSchedulingForm.designated_semester === ""
+          ? null
+          : Number(courseSchedulingForm.designated_semester),
+      offered_periods_json: String(courseSchedulingForm.offered_periods_json || "").trim() || null,
+      min_section_size: Number(courseSchedulingForm.min_section_size || 0),
+    };
+    if (!payload.course_number || !payload.title || Number.isNaN(payload.credit_hours) || Number.isNaN(payload.min_section_size)) {
+      window.alert("Please provide valid values for course number, title, credit hours, and minimum section size.");
+      return;
+    }
+    setCourseSaveBusy(true);
+    try {
+      await authed(`/courses/${selectedCourseId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
+        qc.invalidateQueries({ queryKey: ["courses", selectedVersion?.id] }),
+      ]);
+    } finally {
+      setCourseSaveBusy(false);
+    }
+  }
+
+  async function createCourseFromEditor() {
+    if (!selectedVersion?.id) return;
+    const payload = {
+      version_id: selectedVersion.id,
+      course_number: normalizeCourseNumber(newCourseForm.course_number),
+      title: String(newCourseForm.title || "").trim(),
+      credit_hours: Number(newCourseForm.credit_hours || 0),
+      designated_semester:
+        newCourseForm.designated_semester == null || newCourseForm.designated_semester === ""
+          ? null
+          : Number(newCourseForm.designated_semester),
+      offered_periods_json: String(newCourseForm.offered_periods_json || "").trim() || null,
+      min_section_size: Number(newCourseForm.min_section_size || 0),
+    };
+    if (!payload.course_number || !payload.title || Number.isNaN(payload.credit_hours) || Number.isNaN(payload.min_section_size)) {
+      window.alert("Please provide valid values for course number, title, credit hours, and minimum section size.");
+      return;
+    }
+    setNewCourseBusy(true);
+    try {
+      const created = await authed("/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      setNewCourseModalOpen(false);
+      setNewCourseForm({
+        course_number: "",
+        title: "",
+        credit_hours: "3",
+        designated_semester: null,
+        offered_periods_json: "",
+        min_section_size: "6",
+      });
+      setSelectedCourseId(created.id);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["courses", selectedVersion?.id] }),
+        qc.invalidateQueries({ queryKey: ["course-detail", created.id] }),
+      ]);
+    } finally {
+      setNewCourseBusy(false);
+    }
+  }
+
   async function addPrerequisite() {
     if (!selectedCourseId || !newPrereqId) return;
     await authed("/prerequisites", {
@@ -1472,6 +1691,44 @@ export function DesignStudioPage() {
       })
     });
     setNewPrereqId(undefined);
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
+      qc.invalidateQueries({ queryKey: ["prereq-graph"] }),
+      qc.invalidateQueries({ queryKey: ["validation"] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+    ]);
+  }
+
+  async function deletePrerequisiteRow(prerequisiteId) {
+    if (!prerequisiteId) return;
+    await authed(`/prerequisites/${prerequisiteId}`, { method: "DELETE" });
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
+      qc.invalidateQueries({ queryKey: ["prereq-graph"] }),
+      qc.invalidateQueries({ queryKey: ["validation"] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion?.id] }),
+    ]);
+  }
+
+  async function savePrerequisiteRow(row) {
+    const draft = prereqEdits[row.id];
+    if (!draft?.required_course_id) {
+      window.alert("Required course is required.");
+      return;
+    }
+    await authed(`/prerequisites/${row.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        course_id: selectedCourseId,
+        required_course_id: draft.required_course_id,
+        relationship_type: draft.relationship_type || "PREREQUISITE",
+        enforcement: draft.enforcement || "HARD",
+        prerequisite_group_key: row.prerequisite_group_key || null,
+        group_min_required: row.group_min_required || null,
+        group_label: row.group_label || null,
+      }),
+    });
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
       qc.invalidateQueries({ queryKey: ["prereq-graph"] }),
@@ -2434,6 +2691,116 @@ export function DesignStudioPage() {
     for (const n of prereqGraphQ.data?.nodes || []) map[n.id] = n.label;
     return map;
   }, [prereqGraphQ.data]);
+  const courseLabelById = useMemo(() => {
+    const map = {};
+    for (const c of coursesQ.data || []) {
+      map[c.id] = `${c.course_number}${c.title ? ` - ${c.title}` : ""}`;
+    }
+    return map;
+  }, [coursesQ.data]);
+  const courseTitleByNumber = useMemo(() => {
+    const map = {};
+    for (const c of coursesQ.data || []) {
+      map[normalizeCourseNumber(c.course_number)] = String(c.title || "");
+    }
+    return map;
+  }, [coursesQ.data]);
+  function renderCourseCodeWithHover(courseNumber) {
+    const code = String(courseNumber || "").trim();
+    if (!code) return <span>Missing course</span>;
+    const title = courseTitleByNumber[normalizeCourseNumber(code)];
+    const enabled = courseTitleHoverEnabled || canvasViewMode === "VERBOSE";
+    if (!enabled || !title) return <span>{code}</span>;
+    return (
+      <Tooltip title={title}>
+        <span>{code}</span>
+      </Tooltip>
+    );
+  }
+  function renderCourseCodeSeries(courseNumbers) {
+    const nums = (courseNumbers || []).map((n) => String(n || "").trim()).filter(Boolean);
+    if (!nums.length) return <span>Missing course</span>;
+    return (
+      <span>
+        {nums.map((n, idx) => (
+          <span key={`${n}-${idx}`}>
+            {idx > 0 ? " / " : ""}
+            {renderCourseCodeWithHover(n)}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  const courseAutoOptions = useMemo(
+    () => (coursesQ.data || []).map((c) => ({ value: `${c.course_number} - ${c.title}`, courseId: c.id })),
+    [coursesQ.data]
+  );
+  const requirementLinkOptions = useMemo(() => {
+    const out = [];
+    function walk(nodes) {
+      for (const n of nodes || []) {
+        const category = String(n.category || "").toUpperCase();
+        const prefixParts = [];
+        if (n.node_code) prefixParts.push(withDot(n.node_code));
+        if (category === "CORE") prefixParts.push("Core");
+        if (category === "MAJOR") prefixParts.push(`Major${n.program_name ? ` - ${n.program_name}` : ""}`);
+        if (category === "MINOR") prefixParts.push(`Minor${n.program_name ? ` - ${n.program_name}` : ""}`);
+        if (category === "PE") prefixParts.push("PE");
+        const prefix = prefixParts.filter(Boolean).join(" | ");
+        out.push({ value: n.id, label: `${prefix} | ${n.name}` });
+        walk(n.children || []);
+      }
+    }
+    walk(requirementsTreeQ.data?.tree || []);
+    return out;
+  }, [requirementsTreeQ.data]);
+  const prereqEdgesEnriched = useMemo(() => {
+    const edges = prereqGraphQ.data?.edges || [];
+    const groupedCounts = {};
+    for (const e of edges) {
+      const gk = String(e.prerequisite_group_key || "").trim();
+      if (!gk) continue;
+      const rel = String(e.relationship_type || "PREREQUISITE").toUpperCase();
+      const key = `${e.to}|${rel}|${gk}`;
+      groupedCounts[key] = (groupedCounts[key] || 0) + 1;
+    }
+    return edges.map((e) => {
+      const fromLabel = nodeLabel[e.from] || e.from;
+      const toLabel = nodeLabel[e.to] || e.to;
+      const rel = String(e.relationship_type || "PREREQUISITE").toUpperCase();
+      const gk = String(e.prerequisite_group_key || "").trim();
+      const groupCount = gk ? groupedCounts[`${e.to}|${rel}|${gk}`] || 0 : 0;
+      const minReq = Number(e.group_min_required || 1);
+      const groupDisplay = gk
+        ? `${e.group_label || "Disjunction"} (${Math.min(minReq, Math.max(1, groupCount))}/${Math.max(1, groupCount)})`
+        : "All Required";
+      return {
+        ...e,
+        from_label: fromLabel,
+        to_label: toLabel,
+        group_display: groupDisplay,
+        _group_count: groupCount,
+        _group_key: gk,
+      };
+    });
+  }, [prereqGraphQ.data, nodeLabel]);
+  const prereqFromOptions = useMemo(() => {
+    const labels = Array.from(new Set(prereqEdgesEnriched.map((e) => e.from_label).filter(Boolean))).sort();
+    return labels.map((x) => ({ value: x, label: x }));
+  }, [prereqEdgesEnriched]);
+  const prereqToOptions = useMemo(() => {
+    const labels = Array.from(new Set(prereqEdgesEnriched.map((e) => e.to_label).filter(Boolean))).sort();
+    return labels.map((x) => ({ value: x, label: x }));
+  }, [prereqEdgesEnriched]);
+  const prereqEdgesFiltered = useMemo(() => {
+    const fromSearch = String(prereqFromQuery || "").trim().toLowerCase();
+    const toSearch = String(prereqToQuery || "").trim().toLowerCase();
+    return prereqEdgesEnriched.filter((e) => {
+      if (fromSearch && !String(e.from_label || "").toLowerCase().includes(fromSearch)) return false;
+      if (toSearch && !String(e.to_label || "").toLowerCase().includes(toSearch)) return false;
+      return true;
+    });
+  }, [prereqEdgesEnriched, prereqFromQuery, prereqToQuery]);
 
   const plannedCourseNumbers = useMemo(() => {
     const set = new Set();
@@ -2813,7 +3180,7 @@ export function DesignStudioPage() {
         ),
         children: (b.courses || []).map((bc) => ({
           key: `basket-course:${b.id}:${bc.id}`,
-          title: <span>{bc.course_number || bc.course_title || "Missing course"}</span>,
+          title: renderCourseCodeWithHover(bc.course_number || bc.course_title || "Missing course"),
           isLeaf: true,
           selectable: false,
           disableCheckbox: true,
@@ -2842,14 +3209,14 @@ export function DesignStudioPage() {
                 });
                 const orderedIds = [primaryCourseId, ...substituteIds];
                 const seen = new Set();
-                return orderedIds
+                const rendered = orderedIds
                   .filter((id) => {
                     if (!id || seen.has(id)) return false;
                     seen.add(id);
                     return true;
                   })
-                  .map((id) => courseMapById[id]?.course_number || courseMapById[id]?.title || "Missing course")
-                  .join(" / ");
+                  .map((id) => courseMapById[id]?.course_number || courseMapById[id]?.title || "Missing course");
+                return renderCourseCodeSeries(rendered);
               })()}
             </span>
             {formatSemesterConstraint(c) ? <Tag>{formatSemesterConstraint(c)}</Tag> : null}
@@ -2901,7 +3268,10 @@ export function DesignStudioPage() {
           title: (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
               <Space>
-                <span>{`${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${g.name || `Core Rule ${idx + 1}`}: ${(g.course_numbers || []).join(" / ")}`}</span>
+                <span>
+                  {`${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${g.name || `Core Rule ${idx + 1}`}: `}
+                  {renderCourseCodeSeries(g.course_numbers || [])}
+                </span>
                 {formatSemesterConstraint(g) ? <Tag>{formatSemesterConstraint(g)}</Tag> : null}
               </Space>
               <Button
@@ -3422,6 +3792,12 @@ export function DesignStudioPage() {
     if (status === "FAIL") return "red";
     return "green";
   }
+  function formatPrereqType(v) {
+    return String(v || "").toUpperCase() === "COREQUISITE" ? "Corequisite" : "Prerequisite";
+  }
+  function formatEnforcement(v) {
+    return String(v || "").toUpperCase() === "SOFT" ? "Soft" : "Hard";
+  }
   function renderValidationLineItems(items, emptyText = "None") {
     const rows = items || [];
     if (!rows.length) return <Typography.Text type="secondary">{emptyText}</Typography.Text>;
@@ -3479,6 +3855,15 @@ export function DesignStudioPage() {
           .replaceAll("_", " ")
           .replace(/\b\w/g, (m) => m.toUpperCase());
       },
+      filters: [
+        { text: "Major", value: "MAJOR" },
+        { text: "Minor", value: "MINOR" },
+        { text: "Double Major", value: "DOUBLE_MAJOR" },
+        { text: "Double Minor", value: "DOUBLE_MINOR" },
+        { text: "Major/Minor", value: "MAJOR_MINOR" },
+      ],
+      onFilter: (value, row) => String(row.kind || "").toUpperCase() === String(value || "").toUpperCase(),
+      sorter: (a, b) => String(a.kind || "").localeCompare(String(b.kind || "")),
     },
     {
       title: "Combination",
@@ -3492,6 +3877,7 @@ export function DesignStudioPage() {
           .replaceAll("Major/Minor - ", "")
           .replaceAll("Major - ", "")
           .replaceAll("Minor - ", ""),
+      sorter: (a, b) => String(a.label || "").localeCompare(String(b.label || "")),
     },
     {
       title: "Overall Status",
@@ -3504,6 +3890,12 @@ export function DesignStudioPage() {
           <Tag color={row.consistency_status === "INCONSISTENT" ? "red" : "green"}>{row.consistency_status || "CONSISTENT"}</Tag>
         </Space>
       ),
+      filters: [
+        { text: "PASS", value: "PASS" },
+        { text: "FAIL", value: "FAIL" },
+      ],
+      onFilter: (value, row) => String(row.status || "").toUpperCase() === String(value || "").toUpperCase(),
+      sorter: (a, b) => String(a.status || "").localeCompare(String(b.status || "")),
     },
     {
       title: (
@@ -3516,26 +3908,58 @@ export function DesignStudioPage() {
       key: "validation_pf",
       width: 128,
       render: (_, row) => `${row.validation_pass_count ?? 0}/${row.validation_fail_count ?? 0}`,
+      sorter: (a, b) => Number(a.validation_fail_count || 0) - Number(b.validation_fail_count || 0),
     },
     {
       title: "Program Design Rules (Consistent/Inconsistent)",
       key: "consistency_ci",
       width: 200,
       render: (_, row) => `${row.consistency_pass_count ?? 0}/${row.consistency_fail_count ?? 0}`,
+      sorter: (a, b) => Number(a.consistency_fail_count || 0) - Number(b.consistency_fail_count || 0),
+      filters: [
+        { text: "Consistent", value: "CONSISTENT" },
+        { text: "Inconsistent", value: "INCONSISTENT" },
+      ],
+      onFilter: (value, row) => String(row.consistency_status || "").toUpperCase() === String(value || "").toUpperCase(),
     },
     {
       title: <span style={{ whiteSpace: "normal", lineHeight: 1.15 }}>Min Credits</span>,
       dataIndex: "min_required_credits",
       key: "min_required_credits",
       width: 90,
+      sorter: (a, b) => Number(a.min_required_credits || 0) - Number(b.min_required_credits || 0),
     },
     {
       title: "Mandatory Courses",
       dataIndex: "mandatory_course_count",
       key: "mandatory_course_count",
       width: 118,
+      sorter: (a, b) => Number(a.mandatory_course_count || 0) - Number(b.mandatory_course_count || 0),
     },
   ];
+  const normalizeFeasibilityLabel = (label) =>
+    String(label || "")
+      .replaceAll("Double Major - ", "")
+      .replaceAll("Double Minor - ", "")
+      .replaceAll("Major/Minor - ", "")
+      .replaceAll("Major - ", "")
+      .replaceAll("Minor - ", "")
+      .trim();
+  const feasibilityRowsFiltered = useMemo(() => {
+    const rows = feasibilityQ.data?.rows || [];
+    const q = String(feasibilitySearch || "").trim().toLowerCase();
+    return rows.filter((r) => {
+      if (q) {
+        const label = normalizeFeasibilityLabel(r.label).toLowerCase();
+        if (!label.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [feasibilityQ.data, feasibilitySearch]);
+  const feasibilitySearchOptions = useMemo(() => {
+    const labels = Array.from(new Set((feasibilityQ.data?.rows || []).map((r) => normalizeFeasibilityLabel(r.label)).filter(Boolean))).sort();
+    return labels.map((v) => ({ value: v, label: v }));
+  }, [feasibilityQ.data]);
   const selectedChecklistFeasibility = useMemo(() => {
     const selected = checklistProgramIds || [];
     if (!selected.length) return null;
@@ -3556,6 +3980,7 @@ export function DesignStudioPage() {
   }, [checklistQ.data]);
   const isSimplifiedCanvas = canvasViewMode === "SIMPLIFIED";
   const isVerboseCanvas = canvasViewMode === "VERBOSE";
+  const showCourseTitleHover = courseTitleHoverEnabled || isVerboseCanvas;
   const sectionTitleStyle = { fontSize: 14, margin: 0 };
   const categorySelectOptions = useMemo(() => {
     const typed = String(ruleFormDomainSearch || "").trim();
@@ -3598,6 +4023,10 @@ export function DesignStudioPage() {
                 { value: "VERBOSE", label: "Verbose" },
               ]}
             />
+            <Space size={6}>
+              <Typography.Text type="secondary">Hover short titles</Typography.Text>
+              <Switch checked={showCourseTitleHover} onChange={setCourseTitleHoverEnabled} disabled={isVerboseCanvas} />
+            </Space>
           </Space>
           <Space>
             <Typography.Text type="secondary">Version Lifecycle</Typography.Text>
@@ -3698,7 +4127,7 @@ export function DesignStudioPage() {
                 {periodCourses.map((course) => (
                   <Tooltip
                     key={course.plan_item_id}
-                    title={`${course.course_number} | ${course.title} | ${aspectLabel(course)}${course.major_program_name ? ` | ${course.major_program_name}` : ""}`}
+                    title={showCourseTitleHover ? (course.title || "No short title") : null}
                   >
                     {isSimplifiedCanvas ? (
                       <div
@@ -3723,7 +4152,7 @@ export function DesignStudioPage() {
                         style={{ marginBottom: 8, cursor: "grab" }}
                       >
 		                    <Space direction="vertical" style={{ width: "100%" }}>
-		                      <Typography.Text strong>{course.course_number}</Typography.Text>
+			                      <Typography.Text strong>{course.course_number}</Typography.Text>
 		                      <Space style={{ width: "100%", justifyContent: "flex-end" }} wrap>
 		                        {canvasTimingByCourse[course.course_id] ? (
 		                          (() => {
@@ -3797,9 +4226,11 @@ export function DesignStudioPage() {
             </Typography.Text>
           </Space>
           <Typography.Title level={5} style={sectionTitleStyle}>Program Design Rules</Typography.Title>
-          <div style={{ overflowX: "auto" }}>{renderChecklist(checklistRequirementsTree || [])}</div>
+          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "44vh", paddingRight: 4 }}>
+            {renderChecklist(checklistRequirementsTree || [])}
+          </div>
           <Typography.Title level={5} style={sectionTitleStyle}>Validation Rules</Typography.Title>
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "34vh", paddingRight: 4 }}>
             {renderValidationLineItems(checklistValidationItems, "No validation findings for current course of study.")}
           </div>
         </Space>
@@ -3813,25 +4244,37 @@ export function DesignStudioPage() {
               {`${feasibilityQ.data?.row_count ?? 0} combinations evaluated`}
             </Typography.Text>
           </Space>
+          <AutoComplete
+            allowClear
+            style={{ width: 360 }}
+            options={feasibilitySearchOptions}
+            placeholder="Search combination (select or type)"
+            value={feasibilitySearch}
+            onSearch={setFeasibilitySearch}
+            onChange={setFeasibilitySearch}
+            filterOption={(inputValue, option) =>
+              String(option?.value || "").toLowerCase().includes(String(inputValue || "").toLowerCase())
+            }
+          />
           <Table
             size="small"
             rowKey={(r) => `${r.kind}:${r.label}`}
             loading={feasibilityQ.isLoading}
             columns={feasibilityColumns}
-            dataSource={feasibilityQ.data?.rows || []}
+            dataSource={feasibilityRowsFiltered}
             pagination={{ pageSize: 25, showSizeChanger: false }}
             scroll={{ x: 980, y: 420 }}
             expandable={{
               expandedRowRender: (row) => (
                 <Space direction="vertical" style={{ width: "100%" }}>
                   <Typography.Title level={5} style={sectionTitleStyle}>Program Design Rules</Typography.Title>
-                  <div style={{ overflowX: "auto" }}>
+                  <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "30vh", paddingRight: 4 }}>
                     {row.program_design_consistency_tree?.length
                       ? renderConsistencyTree(row.program_design_consistency_tree)
                       : <Typography.Text type="secondary">None</Typography.Text>}
                   </div>
                   <Typography.Title level={5} style={sectionTitleStyle}>Validation Rules</Typography.Title>
-                  <div style={{ overflowX: "auto" }}>
+                  <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "24vh", paddingRight: 4 }}>
                     {renderValidationLineItems(row.validation_items || [], "No validation line items.")}
                   </div>
                 </Space>
@@ -4486,16 +4929,18 @@ export function DesignStudioPage() {
               Add Node
             </Button>
           </div>
-          <Tree
-            treeData={integratedTreeData}
-            draggable
-            blockNode
-            onDrop={handleTreeDrop}
-            onSelect={handleRequirementTreeSelect}
-            expandedKeys={treeExpandedKeys}
-            onExpand={setTreeExpandedKeys}
-            selectedKeys={selectedRuleNodeId ? [selectedRuleNodeId] : []}
-          />
+          <ScrollPane maxHeight="68vh">
+            <Tree
+              treeData={integratedTreeData}
+              draggable
+              blockNode
+              onDrop={handleTreeDrop}
+              onSelect={handleRequirementTreeSelect}
+              expandedKeys={treeExpandedKeys}
+              onExpand={setTreeExpandedKeys}
+              selectedKeys={selectedRuleNodeId ? [selectedRuleNodeId] : []}
+            />
+          </ScrollPane>
         </Space>
       </Card>
       <Card title="Validation Rules">
@@ -4525,14 +4970,16 @@ export function DesignStudioPage() {
               Add Rule
             </Button>
           </div>
-          <Tree
-            treeData={validationTreeData}
-            blockNode
-            draggable
-            onDrop={handleValidationTreeDrop}
-            expandedKeys={validationTreeExpandedKeys}
-            onExpand={setValidationTreeExpandedKeys}
-          />
+          <ScrollPane maxHeight="68vh">
+            <Tree
+              treeData={validationTreeData}
+              blockNode
+              draggable
+              onDrop={handleValidationTreeDrop}
+              expandedKeys={validationTreeExpandedKeys}
+              onExpand={setValidationTreeExpandedKeys}
+            />
+          </ScrollPane>
         </Space>
       </Card>
       <Modal
@@ -4646,16 +5093,62 @@ export function DesignStudioPage() {
         </Space>
       </Modal>
       <Card title="Prerequisite Graph">
+        <Space wrap={false} style={{ marginBottom: 10, width: "100%" }}>
+          <AutoComplete
+            allowClear
+            options={prereqFromOptions}
+            style={{ width: 360 }}
+            placeholder="From course (select or type)"
+            value={prereqFromQuery}
+            onSearch={setPrereqFromQuery}
+            onChange={setPrereqFromQuery}
+            filterOption={(inputValue, option) =>
+              String(option?.value || "").toLowerCase().includes(String(inputValue || "").toLowerCase())
+            }
+          />
+          <AutoComplete
+            allowClear
+            options={prereqToOptions}
+            style={{ width: 360 }}
+            placeholder="To course (select or type)"
+            value={prereqToQuery}
+            onSearch={setPrereqToQuery}
+            onChange={setPrereqToQuery}
+            filterOption={(inputValue, option) =>
+              String(option?.value || "").toLowerCase().includes(String(inputValue || "").toLowerCase())
+            }
+          />
+        </Space>
         <Table
           size="small"
           pagination={{ pageSize: 8 }}
           rowKey="id"
-          dataSource={prereqGraphQ.data?.edges || []}
+          dataSource={prereqEdgesFiltered}
           columns={[
-            { title: "From", dataIndex: "from", render: (v) => nodeLabel[v] || v },
-            { title: "To", dataIndex: "to", render: (v) => nodeLabel[v] || v },
-            { title: "Type", dataIndex: "relationship_type" },
-            { title: "Enforcement", dataIndex: "enforcement" }
+            {
+              title: "From",
+              dataIndex: "from_label",
+              sorter: (a, b) => String(a.from_label || "").localeCompare(String(b.from_label || "")),
+              render: (v) => renderCourseCodeWithHover(v),
+            },
+            {
+              title: "To",
+              dataIndex: "to_label",
+              sorter: (a, b) => String(a.to_label || "").localeCompare(String(b.to_label || "")),
+              render: (v) => renderCourseCodeWithHover(v),
+            },
+            {
+              title: "Type",
+              dataIndex: "relationship_type",
+              render: (v) => formatPrereqType(v),
+              filters: [
+                { text: "Prerequisite", value: "PREREQUISITE" },
+                { text: "Corequisite", value: "COREQUISITE" },
+              ],
+              onFilter: (value, row) => String(row.relationship_type || "").toUpperCase() === String(value || "").toUpperCase(),
+            },
+            { title: "Rule", dataIndex: "group_display" },
+            { title: "Enforcement", dataIndex: "enforcement", render: (v) => formatEnforcement(v) },
           ]}
         />
       </Card>
@@ -4682,28 +5175,113 @@ export function DesignStudioPage() {
       </Card>
       <Card title="Course Detail Editor">
         <Space direction="vertical" style={{ width: "100%" }}>
-          <Select
-            style={{ width: 360 }}
-            placeholder="Select course"
-            value={selectedCourseId}
-            onChange={setSelectedCourseId}
-            options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
-          />
+          <Space>
+            <AutoComplete
+              allowClear
+              style={{ width: 420 }}
+              placeholder="Select course (dropdown or type to search)"
+              value={courseSearchValue}
+              options={courseAutoOptions}
+              onChange={setCourseSearchValue}
+              onSelect={(_, option) => {
+                setSelectedCourseId(option.courseId);
+                setCourseSearchValue(option.value);
+              }}
+              filterOption={(inputValue, option) =>
+                String(option?.value || "").toLowerCase().includes(String(inputValue || "").toLowerCase())
+              }
+            />
+            <Button type="primary" onClick={() => setNewCourseModalOpen(true)}>New Course</Button>
+          </Space>
           <Tabs
             items={[
               {
                 key: "general",
-                label: "General",
-                children: <pre>{JSON.stringify(courseDetailQ.data?.general, null, 2)}</pre>
+                label: "Overview",
+                children: (
+                  <Space direction="vertical" style={{ width: "100%" }}>
+                    <div>
+                      <Typography.Text type="secondary">Course Number</Typography.Text>
+                      <Input
+                        value={courseGeneralForm.course_number}
+                        onChange={(e) =>
+                          setCourseGeneralForm((s) => ({ ...s, course_number: e.target.value }))
+                        }
+                        placeholder="e.g., Astro 310"
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Short Title</Typography.Text>
+                      <Input
+                        value={courseGeneralForm.title}
+                        onChange={(e) =>
+                          setCourseGeneralForm((s) => ({ ...s, title: e.target.value }))
+                        }
+                        placeholder="e.g., Space Systems Design"
+                      />
+                    </div>
+                    <Button type="primary" loading={courseSaveBusy} onClick={saveCourseDetail}>
+                      Save Course Fields
+                    </Button>
+                  </Space>
+                )
               },
               {
                 key: "scheduling",
-                label: "Scheduling",
-                children: <pre>{JSON.stringify(courseDetailQ.data?.scheduling, null, 2)}</pre>
+                label: "Scheduling & Offering",
+                children: (
+                  <Space direction="vertical" style={{ width: "100%" }}>
+                    <div>
+                      <Typography.Text type="secondary">Credit Hours</Typography.Text>
+                      <Input
+                        value={courseSchedulingForm.credit_hours}
+                        onChange={(e) =>
+                          setCourseSchedulingForm((s) => ({ ...s, credit_hours: e.target.value }))
+                        }
+                        placeholder="e.g., 3"
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Fixed Period (Optional)</Typography.Text>
+                      <Select
+                        allowClear
+                        style={{ width: "100%" }}
+                        value={courseSchedulingForm.designated_semester}
+                        onChange={(v) =>
+                          setCourseSchedulingForm((s) => ({ ...s, designated_semester: v ?? null }))
+                        }
+                        options={semesterOptions}
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Offered Periods JSON (Optional)</Typography.Text>
+                      <Input
+                        value={courseSchedulingForm.offered_periods_json}
+                        onChange={(e) =>
+                          setCourseSchedulingForm((s) => ({ ...s, offered_periods_json: e.target.value }))
+                        }
+                        placeholder='e.g., {"offered":[1,2,3]}'
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Minimum Section Size</Typography.Text>
+                      <Input
+                        value={courseSchedulingForm.min_section_size}
+                        onChange={(e) =>
+                          setCourseSchedulingForm((s) => ({ ...s, min_section_size: e.target.value }))
+                        }
+                        placeholder="e.g., 6"
+                      />
+                    </div>
+                    <Button type="primary" loading={courseSaveBusy} onClick={saveCourseDetail}>
+                      Save Scheduling Fields
+                    </Button>
+                  </Space>
+                )
               },
               {
                 key: "buckets",
-                label: "Buckets",
+                label: "Accreditation Buckets",
                 children: (
                   <Space direction="vertical" style={{ width: "100%" }}>
                     <Space wrap>
@@ -4769,8 +5347,8 @@ export function DesignStudioPage() {
                         value={newPrereqType}
                         onChange={setNewPrereqType}
                         options={[
-                          { value: "PREREQUISITE", label: "PREREQUISITE" },
-                          { value: "COREQUISITE", label: "COREQUISITE" }
+                          { value: "PREREQUISITE", label: "Prerequisite" },
+                          { value: "COREQUISITE", label: "Corequisite" }
                         ]}
                       />
                       <Select
@@ -4778,19 +5356,115 @@ export function DesignStudioPage() {
                         value={newPrereqEnforcement}
                         onChange={setNewPrereqEnforcement}
                         options={[
-                          { value: "HARD", label: "HARD" },
-                          { value: "SOFT", label: "SOFT" }
+                          { value: "HARD", label: "Hard" },
+                          { value: "SOFT", label: "Soft" }
                         ]}
                       />
                       <Button onClick={addPrerequisite}>Add Link</Button>
                     </Space>
-                    <pre>{JSON.stringify(courseDetailQ.data?.prerequisites, null, 2)}</pre>
+                    <Table
+                      size="small"
+                      pagination={false}
+                      rowKey="id"
+                      dataSource={courseDetailQ.data?.prerequisites || []}
+                      columns={[
+                        {
+                          title: "Required Course",
+                          render: (_, row) => (
+                            <Select
+                              showSearch
+                              optionFilterProp="label"
+                              style={{ width: 300 }}
+                              value={prereqEdits[row.id]?.required_course_id || row.required_course_id}
+                              onChange={(v) =>
+                                setPrereqEdits((s) => ({
+                                  ...s,
+                                  [row.id]: {
+                                    ...(s[row.id] || {}),
+                                    required_course_id: v,
+                                    relationship_type: s[row.id]?.relationship_type || row.relationship_type || "PREREQUISITE",
+                                    enforcement: s[row.id]?.enforcement || row.enforcement || "HARD",
+                                  },
+                                }))
+                              }
+                              options={(coursesQ.data || [])
+                                .filter((c) => c.id !== selectedCourseId)
+                                .map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
+                            />
+                          ),
+                        },
+                        {
+                          title: "Relationship",
+                          render: (_, row) => (
+                            <Select
+                              style={{ width: 150 }}
+                              value={prereqEdits[row.id]?.relationship_type || row.relationship_type || "PREREQUISITE"}
+                              onChange={(v) =>
+                                setPrereqEdits((s) => ({
+                                  ...s,
+                                  [row.id]: {
+                                    ...(s[row.id] || {}),
+                                    required_course_id: s[row.id]?.required_course_id || row.required_course_id,
+                                    relationship_type: v,
+                                    enforcement: s[row.id]?.enforcement || row.enforcement || "HARD",
+                                  },
+                                }))
+                              }
+                              options={[
+                                { value: "PREREQUISITE", label: "Prerequisite" },
+                                { value: "COREQUISITE", label: "Corequisite" },
+                              ]}
+                            />
+                          ),
+                        },
+                        {
+                          title: "Enforcement",
+                          render: (_, row) => (
+                            <Select
+                              style={{ width: 120 }}
+                              value={prereqEdits[row.id]?.enforcement || row.enforcement || "HARD"}
+                              onChange={(v) =>
+                                setPrereqEdits((s) => ({
+                                  ...s,
+                                  [row.id]: {
+                                    ...(s[row.id] || {}),
+                                    required_course_id: s[row.id]?.required_course_id || row.required_course_id,
+                                    relationship_type: s[row.id]?.relationship_type || row.relationship_type || "PREREQUISITE",
+                                    enforcement: v,
+                                  },
+                                }))
+                              }
+                              options={[
+                                { value: "HARD", label: "Hard" },
+                                { value: "SOFT", label: "Soft" },
+                              ]}
+                            />
+                          ),
+                        },
+                        {
+                          title: "Group",
+                          render: (_, row) =>
+                            row.prerequisite_group_key
+                              ? `${row.group_label || "Group"} (${row.group_min_required || 1}+ required)`
+                              : "All Required",
+                        },
+                        {
+                          title: "Action",
+                          render: (_, row) => (
+                            <Space>
+                              <Button size="small" onClick={() => savePrerequisiteRow(row)}>Save</Button>
+                              <Button size="small" danger onClick={() => deletePrerequisiteRow(row.id)}>Delete</Button>
+                            </Space>
+                          ),
+                        },
+                      ]}
+                    />
                   </Space>
                 )
               },
               {
                 key: "requirements",
-                label: "Requirements",
+                label: "Requirement Links",
                 children: (
                   <Space direction="vertical" style={{ width: "100%" }}>
                     <Space wrap>
@@ -4799,11 +5473,32 @@ export function DesignStudioPage() {
                         placeholder="Requirement to link"
                         value={linkRequirementId}
                         onChange={setLinkRequirementId}
-                        options={(requirementsTreeQ.data?.tree || []).map((r) => ({ value: r.id, label: r.name }))}
+                        showSearch
+                        optionFilterProp="label"
+                        options={requirementLinkOptions}
                       />
                       <Button onClick={linkRequirementToCourse}>Link Requirement</Button>
                     </Space>
-                    <pre>{JSON.stringify(courseFulfillmentQ.data, null, 2)}</pre>
+                    <Table
+                      size="small"
+                      pagination={false}
+                      rowKey="id"
+                      dataSource={courseDetailQ.data?.requirements || []}
+                      columns={[
+                        { title: "Requirement", dataIndex: "requirement_name", render: (v) => v || "-" },
+                        { title: "Primary", dataIndex: "is_primary", render: (v) => (v ? "Yes" : "No") },
+                        {
+                          title: "Timing Rule",
+                          render: (_, row) => {
+                            if (row.required_semester != null) return `${periodShortLabel(row.required_semester)} fixed`;
+                            const parts = [];
+                            if (row.required_semester_min != null) parts.push(`>= ${periodShortLabel(row.required_semester_min)}`);
+                            if (row.required_semester_max != null) parts.push(`<= ${periodShortLabel(row.required_semester_max)}`);
+                            return parts.length ? parts.join(", ") : "None";
+                          },
+                        },
+                      ]}
+                    />
                   </Space>
                 )
               },
@@ -4842,14 +5537,46 @@ export function DesignStudioPage() {
                       />
                       <Button onClick={addSubstitution}>Add Substitution</Button>
                     </Space>
-                    <pre>{JSON.stringify(substitutionsQ.data, null, 2)}</pre>
+                    <Table
+                      size="small"
+                      pagination={false}
+                      rowKey="id"
+                      dataSource={substitutionsQ.data || []}
+                      columns={[
+                        {
+                          title: "Original Course",
+                          dataIndex: "original_course_id",
+                          render: (v) => courseLabelById[v] || v,
+                        },
+                        {
+                          title: "Substitute Course",
+                          dataIndex: "substitute_course_id",
+                          render: (v) => courseLabelById[v] || v,
+                        },
+                        { title: "Bidirectional", dataIndex: "is_bidirectional", render: (v) => (v ? "Yes" : "No") },
+                        { title: "Approval", dataIndex: "requires_approval", render: (v) => (v ? "Required" : "Not required") },
+                      ]}
+                    />
                   </Space>
                 )
               },
               {
                 key: "resources",
-                label: "Resources",
-                children: <pre>{JSON.stringify(courseDetailQ.data?.resources, null, 2)}</pre>
+                label: "Sections/Resources",
+                children: (
+                  <Table
+                    size="small"
+                    pagination={false}
+                    rowKey="id"
+                    dataSource={courseDetailQ.data?.resources || []}
+                    columns={[
+                      { title: "Semester", dataIndex: "semester_label" },
+                      { title: "Max Enrollment", dataIndex: "max_enrollment" },
+                      { title: "Instructor", dataIndex: "instructor_id", render: (v) => v || "-" },
+                      { title: "Classroom", dataIndex: "classroom_id", render: (v) => v || "-" },
+                    ]}
+                  />
+                )
               },
               {
                 key: "history",
@@ -4864,6 +5591,62 @@ export function DesignStudioPage() {
               }
             ]}
           />
+          <Modal
+            title="Create New Course"
+            open={newCourseModalOpen}
+            onCancel={() => setNewCourseModalOpen(false)}
+            onOk={createCourseFromEditor}
+            okText="Create Course"
+            confirmLoading={newCourseBusy}
+          >
+            <Space direction="vertical" style={{ width: "100%" }}>
+              <div>
+                <Typography.Text type="secondary">Course Number</Typography.Text>
+                <Input
+                  value={newCourseForm.course_number}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, course_number: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Short Title</Typography.Text>
+                <Input
+                  value={newCourseForm.title}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, title: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Credit Hours</Typography.Text>
+                <Input
+                  value={newCourseForm.credit_hours}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, credit_hours: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Fixed Period (Optional)</Typography.Text>
+                <Select
+                  allowClear
+                  style={{ width: "100%" }}
+                  value={newCourseForm.designated_semester}
+                  onChange={(v) => setNewCourseForm((s) => ({ ...s, designated_semester: v ?? null }))}
+                  options={semesterOptions}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Offered Periods JSON (Optional)</Typography.Text>
+                <Input
+                  value={newCourseForm.offered_periods_json}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, offered_periods_json: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Minimum Section Size</Typography.Text>
+                <Input
+                  value={newCourseForm.min_section_size}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, min_section_size: e.target.value }))}
+                />
+              </div>
+            </Space>
+          </Modal>
         </Space>
       </Card>
       <Card title="Collaboration: Comments">

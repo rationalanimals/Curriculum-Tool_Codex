@@ -22,6 +22,10 @@ action,course_id,course_number,current_title,current_credit_hours,new_title,new_
 ,1387fe8f-a0f6-48ec-99a7-041214285ea4,Civ Engr 377,Sem hrs: 0 third summer period,3.0,,,,,
 ,9c02f2f2-5b67-48e2-87f8-021c4483f57b,Civ Engr 474,Sem hrs: 3 spring,3.0,,,,,
 ,e38f3ffa-9ea5-47bc-84c2-00db15506cc7,Cyber Sci 334,Sem hrs: 3 fall,3.0,,,,,
+UPDATE,a9b8f6fa-a084-4a54-9b8c-9734351a9a31,ECE 321,Sem hrs: 3 spring,3.0,Electronics I,,,,auto-batch3: title suggestion from COI line patterns
+UPDATE,a58a5c13-a6fa-4101-981a-d392d2458480,ECE 332,Sem hrs: 3 spring,3.0,Differential Equations with Circuit Applications II,,,,auto-batch3: title suggestion from COI line patterns
+UPDATE,1d08e5a2-e431-44e3-9064-0f41a73b4394,ECE 382,Sem hrs: 3 spring,3.0,Embedded Computer Systems I,,,,auto-batch3: title suggestion from COI line patterns
+UPDATE,18c6019f-d7cb-4cf6-bb57-a3209db1d637,ECE 447,Sem hrs: 3 spring,3.0,Communications Systems,,,,auto-batch3: title suggestion from COI line patterns
 ,40c68e90-5e40-40b4-81b5-7aa54e6abdce,Econ 365,Sem hrs: 3 spring,3.0,,,,,
 ,2501acdc-a588-4205-ac5f-84fde113e0a9,Econ 465,Sem hrs: 3 spring,3.0,,,,,
 ,5187d80c-c92f-48c5-b78c-8aeb44b272d8,English 211,"Introduces students to literature, an art form requiring deliberative method of reading that addresses questions of meaning in the context of",3.0,,,,,
@@ -54,6 +58,7 @@ action,course_id,course_number,current_title,current_credit_hours,new_title,new_
 ,1190436d-f001-47aa-8cb2-1f1a691098a5,German 365,Sem hrs: 3 spring of even years,3.0,,,,,
 ,8d6281bf-de0a-4e86-a854-4737b5d4bd48,Ldrshp 200,Sem hrs,3.0,,,,,
 ,13244e39-8a28-4df3-857f-dca53ea5c440,Ldrshp 300,Sem hrs,3.0,,,,,
+UPDATE,0e78b3fb-d857-4aff-b3bb-356d4ff621f1,MSS 298,Sem hrs: 3 spring,3.0,Research Methods,,,,auto-batch3: title suggestion from COI line patterns
 ,f028b4bc-6dad-4667-82b3-ea6309e26cc1,Math 141,Sem hrs: 3 fall or spring,3.0,,,,,
 ,f12efd97-dd2e-4763-8d1b-28edd8466606,Math 142,Sem hrs: 3 fall or spring,3.0,,,,,
 ,456ddba1-469b-4c3a-8d73-3963c6e66968,Math 243,Sem hrs: 3 fall,3.0,,,,,

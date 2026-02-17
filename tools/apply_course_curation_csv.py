@@ -3,12 +3,13 @@ from __future__ import annotations
 import csv
 import sqlite3
 import uuid
+import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = ROOT / "backend" / "cmt.db"
-INPUT_CSV = ROOT / "docs" / "course_curation_updates_template.csv"
+DEFAULT_INPUT_CSV = ROOT / "docs" / "course_curation_updates_template.csv"
 
 
 def norm_num(raw: str) -> str:
@@ -20,8 +21,11 @@ def parse_numbers(raw: str) -> list[str]:
 
 
 def main() -> None:
-    if not INPUT_CSV.exists():
-        raise SystemExit(f"Missing input CSV: {INPUT_CSV}")
+    input_csv = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_INPUT_CSV
+    if not input_csv.is_absolute():
+        input_csv = ROOT / input_csv
+    if not input_csv.exists():
+        raise SystemExit(f"Missing input CSV: {input_csv}")
 
     con = sqlite3.connect(DB_PATH)
     con.row_factory = sqlite3.Row
@@ -43,7 +47,7 @@ def main() -> None:
     prereq_deleted = 0
     skipped = 0
 
-    with INPUT_CSV.open("r", encoding="utf-8-sig", newline="") as f:
+    with input_csv.open("r", encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             action = str(row.get("action") or "").strip().upper()
@@ -134,7 +138,7 @@ def main() -> None:
             "prerequisites_deleted": prereq_deleted,
             "skipped_rows": skipped,
             "version_id": version_id,
-            "source_csv": str(INPUT_CSV),
+            "source_csv": str(input_csv),
         }
     )
 

@@ -70,10 +70,10 @@
     "Spanish": 2,
     "Sys": 17
   },
-  "anomaly_count": 97,
+  "anomaly_count": 84,
   "anomaly_counts": {
-    "title_contains_metadata_not_short_title": 60,
-    "title_too_long_for_short_title": 13,
+    "title_contains_metadata_not_short_title": 51,
+    "title_too_long_for_short_title": 9,
     "prereq_or_coreq_text_in_title_but_no_structured_rows": 2,
     "placeholder_course": 22
   },
@@ -121,12 +121,6 @@
       "title": "A cadet may typically earn credit for a maximum of 6 courses while abroad and may request authorization from the DFLCP Director to receive cr"
     },
     {
-      "type": "title_too_long_for_short_title",
-      "course_id": "ecb6ecbe-1997-4ae1-b6ef-68a53c0325ac",
-      "course_number": "Armnshp 201",
-      "title": "Early enrollment and superior performance in Aviation-100, Armnshp251 and/or Armnshp 201 are highly desired and normally contribute to select"
-    },
-    {
       "type": "title_contains_metadata_not_short_title",
       "course_id": "91efb631-3aac-4018-82c7-b4935f54650e",
       "course_number": "Astr Engr 310",
@@ -143,12 +137,6 @@
       "course_id": "9adc62a8-20b9-4e6c-8ce9-e39a7034820b",
       "course_number": "Astr Engr 321",
       "title": "The course focuses on applying numerical and analytical techniques to solve realistic Air and Space Force problems in astrodynamics and space"
-    },
-    {
-      "type": "title_too_long_for_short_title",
-      "course_id": "8dfc7750-68e3-4014-90fe-1fb560ddd162",
-      "course_number": "Aviation 100",
-      "title": "Enrollment is based on program requirements, will vary by semester, and is orchestrated by the HQ USAFA/A3O Operations Career Field Manager \u2013"
     },
     {
       "type": "title_too_long_for_short_title",
@@ -173,12 +161,6 @@
       "course_id": "07a5976e-2614-4c0e-af8d-a0e91d589fbc",
       "course_number": "Biology 363",
       "title": "Sem hrs: 3 fall or spring"
-    },
-    {
-      "type": "title_too_long_for_short_title",
-      "course_id": "912eefae-a32d-4f5b-a8bf-f0c8bcb46537",
-      "course_number": "Chem 100",
-      "title": "Topics will include solutions, kinetics, equilibrium, acid/base chemistry, thermodynamics, electrochemistry, and special topics such as nucle"
     },
     {
       "type": "title_too_long_for_short_title",
@@ -242,30 +224,6 @@
     },
     {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "a9b8f6fa-a084-4a54-9b8c-9734351a9a31",
-      "course_number": "ECE 321",
-      "title": "Sem hrs: 3 spring"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
-      "course_id": "a58a5c13-a6fa-4101-981a-d392d2458480",
-      "course_number": "ECE 332",
-      "title": "Sem hrs: 3 spring"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
-      "course_id": "1d08e5a2-e431-44e3-9064-0f41a73b4394",
-      "course_number": "ECE 382",
-      "title": "Sem hrs: 3 spring"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
-      "course_id": "18c6019f-d7cb-4cf6-bb57-a3209db1d637",
-      "course_number": "ECE 447",
-      "title": "Sem hrs: 3 spring"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
       "course_id": "40c68e90-5e40-40b4-81b5-7aa54e6abdce",
       "course_number": "Econ 365",
       "title": "Sem hrs: 3 spring"
@@ -275,12 +233,6 @@
       "course_id": "2501acdc-a588-4205-ac5f-84fde113e0a9",
       "course_number": "Econ 465",
       "title": "Sem hrs: 3 spring"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
-      "course_id": "a356356a-ae24-4a22-88cd-7dd00ea88cfd",
-      "course_number": "English 111",
-      "title": "Sem hrs: 3 fall or spring"
     },
     {
       "type": "title_too_long_for_short_title",
@@ -299,12 +251,6 @@
       "course_id": "42923a1d-a0dd-4d52-9793-b6b09ae846ea",
       "course_number": "Engr 346",
       "title": "Sem hrs: 3 spring of even-numbered years"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
-      "course_id": "6cce0a7b-be86-4314-a2f0-c49108fc4539",
-      "course_number": "FYE 101",
-      "title": "Sem hrs: 1 spring"
     },
     {
       "type": "title_contains_metadata_not_short_title",
@@ -458,12 +404,6 @@
     },
     {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "95b8aab4-6e22-482b-85fb-1c4e73062768",
-      "course_number": "History 100",
-      "title": "Sem hrs: 3 spring of even- numbered years"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
       "course_id": "8d6281bf-de0a-4e86-a854-4737b5d4bd48",
       "course_number": "Ldrshp 200",
       "title": "Sem hrs"
@@ -473,12 +413,6 @@
       "course_id": "13244e39-8a28-4df3-857f-dca53ea5c440",
       "course_number": "Ldrshp 300",
       "title": "Sem hrs"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
-      "course_id": "0e78b3fb-d857-4aff-b3bb-356d4ff621f1",
-      "course_number": "MSS 298",
-      "title": "Sem hrs: 3 spring"
     },
     {
       "type": "title_contains_metadata_not_short_title",
@@ -572,12 +506,6 @@
     },
     {
       "type": "title_contains_metadata_not_short_title",
-      "course_id": "f75ed274-a2f8-4d2a-890e-d9223171d027",
-      "course_number": "Physics 110",
-      "title": "Sem hrs: 3 fall or spring"
-    },
-    {
-      "type": "title_contains_metadata_not_short_title",
       "course_id": "4bb8ed01-3438-4265-b907-0ff95e6b5b1d",
       "course_number": "Physics 215",
       "title": "Coreq: Math 346 or department approval"
@@ -617,12 +545,6 @@
       "course_id": "2b9a3f4b-3366-481b-aaa8-e8afb8f004a2",
       "course_number": "Physics 490",
       "title": "Sem hrs: 0 fall or spring"
-    },
-    {
-      "type": "title_too_long_for_short_title",
-      "course_id": "cc4bccd6-cbf2-4880-8177-f39d49b83c78",
-      "course_number": "Pol Sci 211",
-      "title": "This course introduces students to the study of politics and government and examines the basic theoretical, structural, and procedural choice"
     },
     {
       "type": "title_contains_metadata_not_short_title",

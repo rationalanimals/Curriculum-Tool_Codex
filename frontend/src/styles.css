@@ -53,39 +53,35 @@ pre {
 }
 
 .studio-scroll-shell {
-  position: relative;
   border: 1px solid #f0f0f0;
   border-radius: 6px;
   background: #fff;
 }
 
 .studio-scroll-viewport {
-  overflow-y: auto;
-  overflow-x: auto;
-  padding: 2px 14px 2px 2px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  overflow: auto;
+  padding: 2px;
 }
 
-.studio-scroll-viewport::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+.studio-scroll-viewport .ant-tree {
+  min-width: max-content;
 }
 
-.studio-scroll-track {
-  position: absolute;
-  top: 4px;
-  right: 3px;
-  bottom: 4px;
-  width: 8px;
+/* Unified gray scrollbar styling across sections (including Ant table bodies). */
+* {
+  scrollbar-color: #bfbfbf #f2f2f2;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
   background: #f2f2f2;
-  border-radius: 8px;
-  pointer-events: none;
 }
 
-.studio-scroll-thumb {
-  width: 100%;
+*::-webkit-scrollbar-thumb {
   background: #bfbfbf;
   border-radius: 8px;
-  transition: opacity 120ms ease;
 }

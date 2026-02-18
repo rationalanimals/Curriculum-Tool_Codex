@@ -155,64 +155,21 @@ function withDot(code) {
   return t.endsWith(".") ? t : `${t}.`;
 }
 
+function formatRequirementName(name, logicType, pickN) {
+  const raw = String(name || "");
+  const logic = String(logicType || "").toUpperCase();
+  const n = Number(pickN || 0);
+  if (n > 0 && ((logic === "PICK_N" || logic === "ANY_N") || /\bPick\s*N\b/i.test(raw))) {
+    return raw.replace(/\bPick\s*N\b/i, `Pick ${n}`);
+  }
+  return raw;
+}
+
 function ScrollPane({ maxHeight = 560, children }) {
-  const viewportRef = useRef(null);
-  const [thumb, setThumb] = useState({ top: 0, height: 28, visible: false });
-
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return undefined;
-    let raf = null;
-    const update = () => {
-      const vh = el.clientHeight || 1;
-      const ch = el.scrollHeight || 1;
-      const st = el.scrollTop || 0;
-      if (ch <= vh + 1) {
-        setThumb({ top: 0, height: Math.max(vh - 8, 20), visible: false });
-        return;
-      }
-      const trackHeight = Math.max(vh - 8, 20);
-      const h = Math.max(28, Math.floor((vh / ch) * trackHeight));
-      const maxTop = Math.max(trackHeight - h, 0);
-      const denom = Math.max(ch - vh, 1);
-      const top = Math.floor((st / denom) * maxTop);
-      setThumb({ top, height: h, visible: true });
-    };
-    const schedule = () => {
-      if (raf != null) return;
-      raf = requestAnimationFrame(() => {
-        raf = null;
-        update();
-      });
-    };
-    update();
-    el.addEventListener("scroll", schedule, { passive: true });
-    const ro = new ResizeObserver(schedule);
-    ro.observe(el);
-    if (el.firstElementChild) ro.observe(el.firstElementChild);
-    window.addEventListener("resize", schedule);
-    return () => {
-      el.removeEventListener("scroll", schedule);
-      ro.disconnect();
-      window.removeEventListener("resize", schedule);
-      if (raf != null) cancelAnimationFrame(raf);
-    };
-  }, [children, maxHeight]);
-
   return (
     <div className="studio-scroll-shell" style={{ maxHeight }}>
-      <div ref={viewportRef} className="studio-scroll-viewport" style={{ maxHeight }}>
+      <div className="studio-scroll-viewport" style={{ maxHeight }}>
         {children}
-      </div>
-      <div className="studio-scroll-track" aria-hidden="true" style={{ opacity: thumb.visible ? 1 : 0 }}>
-        <div
-          className="studio-scroll-thumb"
-          style={{
-            transform: `translateY(${thumb.top}px)`,
-            height: `${thumb.height}px`,
-            opacity: thumb.visible ? 1 : 0.35,
-          }}
-        />
       </div>
     </div>
   );
@@ -220,6 +177,7 @@ function ScrollPane({ maxHeight = 560, children }) {
 
 export function DesignStudioPage() {
   const qc = useQueryClient();
+  const treeExpandInitVersionRef = useRef(null);
   const [commentText, setCommentText] = useState("");
   const [changeTitle, setChangeTitle] = useState("");
   const [selectedVersionId, setSelectedVersionId] = useState();
@@ -1093,6 +1051,24 @@ export function DesignStudioPage() {
     if (!linkId || !selectedVersion?.id) return;
     await authed(`/requirements/baskets/${linkId}`, { method: "DELETE" });
     await Promise.all([
+      qc.invalidateQueries({ queryKey: ["baskets", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+    ]);
+  }
+
+  async function deleteRequirementBasket(linkId, basketId) {
+    if (!selectedVersion?.id) return;
+    if (basketId) {
+      await authed(`/baskets/${basketId}`, { method: "DELETE" });
+    } else if (linkId) {
+      await authed(`/requirements/baskets/${linkId}`, { method: "DELETE" });
+    } else {
+      return;
+    }
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["baskets", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
@@ -2108,12 +2084,15 @@ export function DesignStudioPage() {
       return;
     }
     const optionalCoreReqs = (requirementsListQ.data || [])
-      .filter(
-        (r) =>
-          !r.program_id &&
-          String(r.category || "").toUpperCase() === "CORE" &&
-          ["PICK_N", "ANY_ONE", "ONE_OF", "ANY_N"].includes(String(r.logic_type || "").toUpperCase())
-      )
+      .filter((r) => {
+        if (r.program_id) return false;
+        if (String(r.category || "").toUpperCase() !== "CORE") return false;
+        const logic = String(r.logic_type || "").toUpperCase();
+        if (["PICK_N", "ANY_ONE", "ONE_OF", "ANY_N"].includes(logic)) return true;
+        // Also allow core requirements that contain substitution groups so majors
+        // can pin a specific variant even when the source core rule is not Pick/Any.
+        return (coreRuleChoiceOptionsByReq[r.id] || []).some((o) => (o.group_course_ids || []).length > 1);
+      })
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
     const rows = [];
     for (const req of optionalCoreReqs) {
@@ -2122,7 +2101,7 @@ export function DesignStudioPage() {
       for (let i = 0; i < slotCount; i += 1) {
         rows.push({
           requirement_id: req.id,
-          requirement_name: req.name,
+          requirement_name: formatRequirementName(req.name, req.logic_type, req.pick_n),
           slot_index: i,
           slot_total: slotCount,
           primary_course_id: undefined,
@@ -2607,7 +2586,7 @@ export function DesignStudioPage() {
     const treeData = (requirementsTreeQ.data?.tree || []).map(function mapNode(n) {
       return {
         key: n.id,
-        title: `${n.node_code ? `${withDot(n.node_code)} ` : ""}${n.name} (${n.logic_type})`,
+        title: `${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n)} (${n.logic_type})`,
         children: (n.children || []).map(mapNode)
       };
     });
@@ -2747,7 +2726,7 @@ export function DesignStudioPage() {
         if (category === "MINOR") prefixParts.push(`Minor${n.program_name ? ` - ${n.program_name}` : ""}`);
         if (category === "PE") prefixParts.push("PE");
         const prefix = prefixParts.filter(Boolean).join(" | ");
-        out.push({ value: n.id, label: `${prefix} | ${n.name}` });
+        out.push({ value: n.id, label: `${prefix} | ${formatRequirementName(n.name, n.logic_type, n.pick_n)}` });
         walk(n.children || []);
       }
     }
@@ -3088,7 +3067,7 @@ export function DesignStudioPage() {
         key: n.id,
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
-            <span>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${n.name}`}</span>
+            <span>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n)}`}</span>
             <Space size={4} className="tree-node-actions">
               {canAddSubNode ? (
                 <Button
@@ -3170,10 +3149,10 @@ export function DesignStudioPage() {
                 danger
                 onClick={(e) => {
                   e.stopPropagation();
-                  unlinkRequirementBasket(b.id);
+                  deleteRequirementBasket(b.id, b.basket_id);
                 }}
               >
-                Unlink
+                Delete
               </Button>
             </Space>
           </div>
@@ -3269,7 +3248,13 @@ export function DesignStudioPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
               <Space>
                 <span>
-                  {`${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${g.name || `Core Rule ${idx + 1}`}: `}
+                  {`${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${
+                    formatRequirementName(
+                      g.name || `Core Rule ${idx + 1}`,
+                      requirementById[g.source_requirement_id]?.logic_type,
+                      requirementById[g.source_requirement_id]?.pick_n
+                    )
+                  }: `}
                   {renderCourseCodeSeries(g.course_numbers || [])}
                 </span>
                 {formatSemesterConstraint(g) ? <Tag>{formatSemesterConstraint(g)}</Tag> : null}
@@ -3331,7 +3316,7 @@ export function DesignStudioPage() {
       return reqNode;
     }
     return filteredTree.map(mapNode);
-  }, [filteredTree, requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, courseMapById, courseIdByNumber, validationRulesQ.data]);
+  }, [filteredTree, requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, courseMapById, courseIdByNumber, requirementById, validationRulesQ.data]);
   const coreRequirementTimingByCourse = useMemo(() => {
     const out = {};
     for (const row of requirementFulfillmentVersionQ.data || []) {
@@ -3445,6 +3430,22 @@ export function DesignStudioPage() {
       coursesByReq[f.requirement_id] = coursesByReq[f.requirement_id] || [];
       coursesByReq[f.requirement_id].push(f.course_id);
     }
+    const walkReqTree = (nodes) => {
+      for (const n of nodes || []) {
+        const rid = n?.id || n?.requirement_id;
+        if (rid) {
+          for (const b of n.baskets || []) {
+            for (const c of b.courses || []) {
+              if (!c?.course_id) continue;
+              coursesByReq[rid] = coursesByReq[rid] || [];
+              coursesByReq[rid].push(c.course_id);
+            }
+          }
+        }
+        walkReqTree(n.children || []);
+      }
+    };
+    walkReqTree(requirementsTreeQ.data?.tree || []);
     const subsByReq = {};
     for (const s of requirementSubstitutionsVersionQ.data || []) {
       subsByReq[s.requirement_id] = subsByReq[s.requirement_id] || [];
@@ -3492,7 +3493,7 @@ export function DesignStudioPage() {
       byReq[reqId] = groups.sort((a, b) => a.label.localeCompare(b.label));
     }
     return byReq;
-  }, [requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, courseMapById]);
+  }, [requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, requirementsTreeQ.data, courseMapById]);
   const coreRuleRepresentativeByReqCourse = useMemo(() => {
     const out = {};
     for (const [reqId, options] of Object.entries(coreRuleChoiceOptionsByReq || {})) {
@@ -3730,9 +3731,14 @@ export function DesignStudioPage() {
   }, [selectedRuleNodeId, requirementNodeMap]);
 
   useEffect(() => {
-    // Default to expanded requirements so linked course leaves are visible under each node.
-    setTreeExpandedKeys(allRequirementKeys);
-  }, [allRequirementKeys]);
+    const vid = selectedVersion?.id || null;
+    if (!vid) return;
+    if (treeExpandInitVersionRef.current === vid) return;
+    if (!(filteredTree || []).length) return;
+    treeExpandInitVersionRef.current = vid;
+    // Initialize once per version; do not auto-expand on local tree mutations.
+    setTreeExpandedKeys((filteredTree || []).map((n) => n.id));
+  }, [selectedVersion?.id, filteredTree]);
 
   useEffect(() => {
     if (!selectedVersion?.id) return;
@@ -3769,10 +3775,17 @@ export function DesignStudioPage() {
                 </Tag>
               </span>
               {String(r.requirement_id || "").startsWith("core-rule:")
-                ? <Typography.Text>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${r.name} ${r.satisfied_units}/${r.required_units}`}</Typography.Text>
+                ? (
+                  <>
+                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${formatRequirementName(r.name, r.logic_type, r.pick_n)}`}</Typography.Text>
+                    <Typography.Text type="secondary">
+                      {r.satisfied_units}/{r.required_units}
+                    </Typography.Text>
+                  </>
+                )
                 : (
                   <>
-                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${r.name}`}</Typography.Text>
+                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${formatRequirementName(r.name, r.logic_type, r.pick_n)}`}</Typography.Text>
                     <Typography.Text type="secondary">
                       {r.satisfied_units}/{r.required_units}
                     </Typography.Text>
@@ -3828,7 +3841,7 @@ export function DesignStudioPage() {
                   {n.status === "INCONSISTENT" ? "Inconsistent" : "Consistent"}
                 </Tag>
               </span>
-              <Typography.Text>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${n.name || ""}`}</Typography.Text>
+              <Typography.Text>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n)}`}</Typography.Text>
               {n.message ? <Typography.Text type="danger">{n.message}</Typography.Text> : null}
             </Space>
             {n.children?.length ? <div>{renderConsistencyTree(n.children, level + 1)}</div> : null}
@@ -3960,6 +3973,25 @@ export function DesignStudioPage() {
     const labels = Array.from(new Set((feasibilityQ.data?.rows || []).map((r) => normalizeFeasibilityLabel(r.label)).filter(Boolean))).sort();
     return labels.map((v) => ({ value: v, label: v }));
   }, [feasibilityQ.data]);
+  const checklistProgramOptions = useMemo(() => {
+    const roots = requirementsTreeQ.data?.tree || [];
+    const rootProgramIds = new Set(
+      roots
+        .map((r) => r?.program_id)
+        .filter(Boolean)
+    );
+    return (programsQ.data || [])
+      .filter((p) => rootProgramIds.has(p.id))
+      .map((p) => ({
+        value: p.id,
+        label: `${String(p.program_type || "").toUpperCase() === "MINOR" ? "Minor" : "Major"} - ${p.name}`,
+      }))
+      .sort((a, b) => String(a.label).localeCompare(String(b.label)));
+  }, [programsQ.data, requirementsTreeQ.data]);
+  useEffect(() => {
+    const allowed = new Set((checklistProgramOptions || []).map((o) => o.value));
+    setChecklistProgramIds((prev) => (prev || []).filter((id) => allowed.has(id)));
+  }, [checklistProgramOptions]);
   const selectedChecklistFeasibility = useMemo(() => {
     const selected = checklistProgramIds || [];
     if (!selected.length) return null;
@@ -4203,10 +4235,7 @@ export function DesignStudioPage() {
             placeholder="Select major/minor programs to evaluate with core requirements"
             value={checklistProgramIds}
             onChange={setChecklistProgramIds}
-            options={(programsQ.data || []).map((p) => ({
-              value: p.id,
-              label: `${String(p.program_type || "").toUpperCase() === "MINOR" ? "Minor" : "Major"} - ${p.name}`,
-            }))}
+            options={checklistProgramOptions}
           />
           <Typography.Text type="secondary">
             Program Designer rules are checked first. Validation rule line items are listed separately below.
@@ -4932,6 +4961,7 @@ export function DesignStudioPage() {
           <ScrollPane maxHeight="68vh">
             <Tree
               treeData={integratedTreeData}
+              motion={null}
               draggable
               blockNode
               onDrop={handleTreeDrop}
@@ -4973,6 +5003,7 @@ export function DesignStudioPage() {
           <ScrollPane maxHeight="68vh">
             <Tree
               treeData={validationTreeData}
+              motion={null}
               blockNode
               draggable
               onDrop={handleValidationTreeDrop}

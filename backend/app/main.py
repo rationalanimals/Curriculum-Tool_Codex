@@ -4577,10 +4577,13 @@ def design_checklist(
     for r in reqs:
         child_map.setdefault(r.parent_requirement_id, []).append(r)
 
+    root_reqs_by_program_id: dict[str, Requirement] = {}
     target_reqs = []
     for r in reqs:
         if r.parent_requirement_id is not None:
             continue
+        if r.program_id:
+            root_reqs_by_program_id[r.program_id] = r
         if r.program_id is None and include_core:
             target_reqs.append(r)
         elif r.program_id in selected_program_ids:
@@ -4731,23 +4734,40 @@ def design_checklist(
         child_pass_count = sum(1 for c in child_results if c["is_satisfied"])
         unit_required = len(link_course_ids) + len(child_results)
         unit_satisfied = matched_count + child_pass_count
+        # Option-aware counters used for PICK_N/ANY_N/OPTION_SLOT/ANY_ONE logic:
+        # baskets contribute by matched options (e.g., 2/3), while regular child
+        # requirements contribute one satisfied option when met.
+        option_required = len(link_course_ids)
+        option_satisfied = matched_count
+        for c in child_results:
+            is_basket = str(c.get("requirement_id") or "").startswith("basket:")
+            if is_basket:
+                option_required += int(c.get("direct_course_count") or 0)
+                option_satisfied += int(c.get("matched_direct_course_count") or 0)
+            else:
+                option_required += 1
+                option_satisfied += 1 if c.get("is_satisfied") else 0
 
         logic = (req.logic_type or "ALL_REQUIRED").upper()
         if logic == "OPTION_SLOT":
             needed = max(1, int(req.option_slot_capacity or req.pick_n or 1))
-            is_satisfied = unit_satisfied >= needed
+            is_satisfied = option_satisfied >= needed
             required_units = needed
+            shown_satisfied_units = option_satisfied
         elif logic in {"PICK_N", "ANY_N"}:
             needed = req.pick_n or 1
-            is_satisfied = unit_satisfied >= needed
+            is_satisfied = option_satisfied >= needed
             required_units = needed
+            shown_satisfied_units = option_satisfied
         elif logic in {"ANY_ONE", "ONE_OF"}:
-            is_satisfied = unit_satisfied >= 1
+            is_satisfied = option_satisfied >= 1
             required_units = 1
+            shown_satisfied_units = option_satisfied
         else:
             # ALL_REQUIRED default
             is_satisfied = unit_satisfied >= unit_required if unit_required > 0 else True
             required_units = unit_required
+            shown_satisfied_units = unit_satisfied
 
         return {
             "requirement_id": req.id,
@@ -4759,7 +4779,7 @@ def design_checklist(
             "is_satisfied": is_satisfied,
             "matched_direct_course_count": matched_count,
             "direct_course_count": len(link_course_ids),
-            "satisfied_units": unit_satisfied,
+            "satisfied_units": shown_satisfied_units,
             "required_units": required_units,
             "fixed_semester_violations": fixed_semester_violations,
             "children": child_results,
@@ -4876,8 +4896,13 @@ def design_checklist(
                 }
             )
         top_satisfied = all(c["is_satisfied"] for c in children) if children else True
-        parent_code = next((node_code_map.get(r.id) for r in target_reqs if r.program_id == target_program.id), None)
-        core_rule_code = f"{parent_code}.C1" if parent_code else "R1.C1"
+        parent_req = root_reqs_by_program_id.get(target_program.id)
+        parent_code = node_code_map.get(parent_req.id) if parent_req else None
+        if not parent_code:
+            # Ignore stale/orphan pathway rules when the program is not represented
+            # in Program Designer roots for this version.
+            continue
+        core_rule_code = f"{parent_code}.C1"
         for idx, child in enumerate(children):
             child["node_code"] = f"{core_rule_code}.R{idx + 1}"
         rule_nodes.append(
@@ -4999,9 +5024,12 @@ def design_checklist(
 @app.get("/design/feasibility/{version_id}")
 def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
     programs = db.scalars(select(AcademicProgram).where(AcademicProgram.version_id == version_id).order_by(AcademicProgram.name.asc())).all()
-    majors = [p for p in programs if (p.program_type or "").upper() == "MAJOR"]
-    minors = [p for p in programs if (p.program_type or "").upper() == "MINOR"]
     reqs = db.scalars(select(Requirement).where(Requirement.version_id == version_id).order_by(Requirement.sort_order.asc())).all()
+    # Key feasibility combos to programs that are actually present in Program Design Rules
+    # (top-level requirement nodes), avoiding duplicate/legacy program variants.
+    program_ids_in_designer = {r.program_id for r in reqs if r.parent_requirement_id is None and r.program_id}
+    majors = [p for p in programs if (p.program_type or "").upper() == "MAJOR" and p.id in program_ids_in_designer]
+    minors = [p for p in programs if (p.program_type or "").upper() == "MINOR" and p.id in program_ids_in_designer]
     req_by_id = {r.id: r for r in reqs}
     program_by_id = {p.id: p for p in programs}
     node_code_map = build_program_designer_code_map(reqs, program_by_id)
@@ -5134,6 +5162,8 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     "course_ids": [link.course_id],
                     "mandatory_courses": {link.course_id},
                     "min_credit_lb": credit,
+                    "available_count": 1,
+                    "credit_candidates": [credit],
                 }
             )
         for bl in baskets_by_req.get(req_id, []):
@@ -5151,6 +5181,7 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     "min_credit_lb": basket_min_credit,
                     "min_count": needed,
                     "available_count": len(basket_course_ids),
+                    "credit_candidates": credit_candidates,
                 }
             )
         for child_req, child_eval in zip(children, child_results):
@@ -5161,34 +5192,42 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
                     "course_ids": list(child_eval["all_courses"]),
                     "mandatory_courses": set(child_eval["mandatory_courses"]),
                     "min_credit_lb": float(child_eval["min_credit_lb"]),
+                    "available_count": 1,
+                    "credit_candidates": [float(child_eval["min_credit_lb"])],
                 }
             )
             issues.extend(child_eval["issues"])
             constraints.extend(child_eval["constraints"])
             mandatory_courses |= set(child_eval["always_mandatory_courses"])
         logic = (req.logic_type or "ALL_REQUIRED").upper()
-        available = len(units)
+        available = sum(max(0, int(u.get("available_count") or 0)) for u in units)
+        credit_pool: list[float] = []
+        for u in units:
+            candidates = [float(x) for x in (u.get("credit_candidates") or [])]
+            if candidates:
+                credit_pool.extend(candidates)
+            else:
+                credit_pool.append(float(u.get("min_credit_lb") or 0.0))
+        credit_pool.sort()
         if logic == "OPTION_SLOT":
             needed = max(1, int(req.option_slot_capacity or req.pick_n or 1))
-            if available < needed:
+            if available < needed or len(credit_pool) < needed:
                 own_issues.append(f"Requires {needed} options but only {available} defined.")
             else:
-                choice_units = sorted(units, key=lambda u: float(u["min_credit_lb"]))[:needed]
-                min_credit_lb += sum(float(u["min_credit_lb"]) for u in choice_units)
+                min_credit_lb += sum(credit_pool[:needed])
             constraints.append(f"{req.name}: option slot requires {needed} choice(s) of {available}.")
         elif logic in {"PICK_N", "ANY_N"}:
             needed = max(1, int(req.pick_n or 1))
-            if available < needed:
+            if available < needed or len(credit_pool) < needed:
                 own_issues.append(f"Requires {needed} options but only {available} defined.")
             else:
-                choice_units = sorted(units, key=lambda u: float(u["min_credit_lb"]))[:needed]
-                min_credit_lb += sum(float(u["min_credit_lb"]) for u in choice_units)
+                min_credit_lb += sum(credit_pool[:needed])
             constraints.append(f"{req.name}: choose {needed} of {available}.")
         elif logic in {"ANY_ONE", "ONE_OF"}:
-            if available < 1:
+            if available < 1 or len(credit_pool) < 1:
                 own_issues.append("Requires one option but none defined.")
             else:
-                min_credit_lb += min(float(u["min_credit_lb"]) for u in units)
+                min_credit_lb += credit_pool[0]
             constraints.append(f"{req.name}: choose 1 of {available}.")
         else:
             if not units:
@@ -5215,6 +5254,8 @@ def design_feasibility(version_id: str, db: Session = Depends(get_db), _: User =
             "requirement_id": req.id,
             "node_code": node_code_map.get(req.id, ""),
             "name": req.name,
+            "logic_type": req.logic_type,
+            "pick_n": req.pick_n,
             "status": node_status,
             "message": " | ".join(own_issues) if own_issues else "",
             "children": child_consistency_nodes,

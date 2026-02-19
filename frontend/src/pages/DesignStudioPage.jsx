@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AutoComplete, Button, Card, Input, List, Modal, Select, Space, Switch, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
+import { AutoComplete, Button, Card, Input, InputNumber, List, Modal, Select, Space, Switch, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
 
 const API = "http://127.0.0.1:8000";
 const DEFAULT_PERIOD_ROWS = [
@@ -33,6 +33,17 @@ const CANVAS_GRID = [
   [1, 2, 3, 4, 5],
   [null, null, null, null, 0],
 ];
+const VALIDATION_DOMAIN_ORDER = [
+  "Residency and Graduation",
+  "Non-Academic Graduation",
+  "Program/Major Pathway",
+  "Accreditation",
+  "Curriculum Integrity",
+  "Resources",
+  "General",
+  "Definitional",
+  "Cadet Performance",
+];
 const VALIDATION_RULE_JSON_GUIDE = [
   {
     title: "Category only",
@@ -52,12 +63,17 @@ const VALIDATION_RULE_JSON_GUIDE = [
   {
     title: "Residency minimum in-residence hours",
     description: "Minimum total in-residence credit hours required in the canvas plan.",
-    json: '{"domain":"Residency and Graduation","type":"RESIDENCY_MIN_HOURS","min_hours":125}',
+    json: '{"domain":"Residency and Graduation","type":"RESIDENCY_MIN_HOURS","min_hours":125,"applies_to":["COURSE_OF_STUDY","GLOBAL_VALIDATION"]}',
   },
   {
     title: "Residency minimum academic semesters",
     description: "Minimum number of loaded academic semesters required in the plan.",
-    json: '{"domain":"Residency and Graduation","type":"RESIDENCY_MIN_ACADEMIC_SEMESTERS","min_semesters":8}',
+    json: '{"domain":"Residency and Graduation","type":"RESIDENCY_MIN_ACADEMIC_SEMESTERS","min_semesters":8,"applies_to":["COURSE_OF_STUDY","GLOBAL_VALIDATION"]}',
+  },
+  {
+    title: "Rule scope (`applies_to`)",
+    description: "Optional context scope for a validation rule: COURSE_OF_STUDY, PROGRAM_FEASIBILITY, GLOBAL_VALIDATION.",
+    json: '{"domain":"General","applies_to":["COURSE_OF_STUDY"]}',
   },
   {
     title: "Semester credit upper bound",
@@ -135,6 +151,16 @@ const VALIDATION_RULE_JSON_GUIDE = [
     json: '{"domain":"Definitional","type":"DEF_UPPER_LEVEL_COURSE_NUMBER","min_level":300}',
   },
   {
+    title: "Non-Academic bucket minimum credits",
+    description: "Checks minimum credits for a tagged non-academic bucket.",
+    json: '{"domain":"Non-Academic Graduation","type":"BUCKET_MIN_CREDITS","bucket_code":"NONACAD_PE","min_credits":5}',
+  },
+  {
+    title: "Non-Academic bucket minimum courses",
+    description: "Checks minimum distinct tagged courses for a non-academic bucket.",
+    json: '{"domain":"Non-Academic Graduation","type":"BUCKET_MIN_COURSES","bucket_code":"NONACAD_LEADERSHIP","min_courses":4}',
+  },
+  {
     title: "Domain-local display order",
     description: "Optional ordering key used when dragging rules within a category.",
     json: '{"domain":"General","domain_order":1}',
@@ -155,14 +181,67 @@ function withDot(code) {
   return t.endsWith(".") ? t : `${t}.`;
 }
 
-function formatRequirementName(name, logicType, pickN) {
-  const raw = String(name || "");
+function formatRequirementName(name, logicType, pickN, optionTotal) {
+  let raw = String(name || "");
   const logic = String(logicType || "").toUpperCase();
   const n = Number(pickN || 0);
-  if (n > 0 && ((logic === "PICK_N" || logic === "ANY_N") || /\bPick\s*N\b/i.test(raw))) {
-    return raw.replace(/\bPick\s*N\b/i, `Pick ${n}`);
+  const total = Number(optionTotal || 0);
+  raw = raw.replace(/\bAny One\b/gi, "Pick 1");
+  const isTopProgramNode = /^\s*(Core|PE|Major\s*-|Minor\s*-)/i.test(raw);
+  if (isTopProgramNode && logic === "ALL_REQUIRED") {
+    return raw
+      .replace(/\s*:\s*All\s*Required(?:\s*\/\s*\d+)?$/i, "")
+      .replace(/\s*:\s*Pick\s*\d+(?:\s*\/\s*\d+)?$/i, "")
+      .trim();
+  }
+  const pickPattern = /\bPick\s*(?:N|\d+)(?:\s*\/\s*\d+)?\b/gi;
+  if (n > 0 && (logic === "PICK_N" || logic === "ANY_N" || pickPattern.test(raw))) {
+    const suffix = total > 0 ? `Pick ${n}/${total}` : `Pick ${n}`;
+    const base = raw
+      .replace(pickPattern, "")
+      .replace(/\s*:\s*$/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    return base ? `${base}: ${suffix}` : suffix;
+  }
+  if (logic === "ALL_REQUIRED" && total > 0) {
+    const allPattern = /\bAll\s*Required(?:\s*\/\s*\d+)?\b/gi;
+    if (allPattern.test(raw)) {
+      return raw.replace(allPattern, `All Required/${total}`);
+    }
+    return `${raw}: All Required/${total}`;
   }
   return raw;
+}
+
+const COURSE_OWNERSHIP_OPTIONS = [
+  { value: "DF", label: "DF (Dean of Faculty)" },
+  { value: "CW", label: "CW (Cadet Wing)" },
+  { value: "AD", label: "AD (Athletics)" },
+  { value: "TG", label: "TG (Airmanship)" },
+];
+
+const STATUS_TAG_STYLE_SHORT = {
+  minWidth: 48,
+  textAlign: "center",
+  fontFamily: "Menlo, Consolas, monospace",
+  fontSize: 12,
+  letterSpacing: 0.25,
+};
+
+const STATUS_TAG_STYLE_LONG = {
+  minWidth: 88,
+  textAlign: "center",
+  fontFamily: "Menlo, Consolas, monospace",
+  fontSize: 12,
+  letterSpacing: 0.25,
+};
+
+function normalizeStatusToken(raw, fallback = "PASS") {
+  const token = String(raw || "").trim().toUpperCase();
+  if (!token) return fallback;
+  if (token === "WARNING") return "WARN";
+  return token;
 }
 
 function ScrollPane({ maxHeight = 560, children }) {
@@ -184,6 +263,7 @@ export function DesignStudioPage() {
   const [datasetBundleName, setDatasetBundleName] = useState("");
   const [datasetModules, setDatasetModules] = useState(["ALL"]);
   const [selectedSavedDatasetId, setSelectedSavedDatasetId] = useState();
+  const [selectedSuggestedSequenceId, setSelectedSuggestedSequenceId] = useState();
   const datasetImportInputRef = useRef(null);
   const [canvasViewMode, setCanvasViewMode] = useState("STANDARD");
   const [courseTitleHoverEnabled, setCourseTitleHoverEnabled] = useState(false);
@@ -257,13 +337,19 @@ export function DesignStudioPage() {
     credit_hours: "3",
     designated_semester: null,
     offered_periods_json: "",
+    standing_requirement: "",
+    additional_requirements_text: "",
     min_section_size: "6",
+    ownership_code: "DF",
   });
   const [newCourseBucketCode, setNewCourseBucketCode] = useState("ABET_MATH_BASIC_SCI");
   const [newCourseBucketHours, setNewCourseBucketHours] = useState("");
   const [newPrereqId, setNewPrereqId] = useState();
   const [newPrereqType, setNewPrereqType] = useState("PREREQUISITE");
   const [newPrereqEnforcement, setNewPrereqEnforcement] = useState("HARD");
+  const [newPrereqGroupKey, setNewPrereqGroupKey] = useState("");
+  const [newPrereqGroupLabel, setNewPrereqGroupLabel] = useState("");
+  const [newPrereqGroupMinRequired, setNewPrereqGroupMinRequired] = useState("1");
   const [prereqEdits, setPrereqEdits] = useState({});
   const [substituteCourseId, setSubstituteCourseId] = useState();
   const [subBidirectional, setSubBidirectional] = useState(false);
@@ -276,12 +362,12 @@ export function DesignStudioPage() {
   const [transitionToCourse, setTransitionToCourse] = useState();
   const [newRuleName, setNewRuleName] = useState("");
   const [newRuleTier, setNewRuleTier] = useState(1);
-  const [newRuleSeverity, setNewRuleSeverity] = useState("WARNING");
+  const [newRuleSeverity, setNewRuleSeverity] = useState("FAIL");
   const [newRuleActive, setNewRuleActive] = useState("YES");
   const [newRuleConfig, setNewRuleConfig] = useState("{}");
   const [editRuleId, setEditRuleId] = useState();
   const [editRuleTier, setEditRuleTier] = useState(1);
-  const [editRuleSeverity, setEditRuleSeverity] = useState("WARNING");
+  const [editRuleSeverity, setEditRuleSeverity] = useState("FAIL");
   const [editRuleActive, setEditRuleActive] = useState("YES");
   const [editRuleConfig, setEditRuleConfig] = useState("{}");
   const [validationDomainFilter, setValidationDomainFilter] = useState("ALL");
@@ -290,7 +376,7 @@ export function DesignStudioPage() {
   const [ruleModalEditId, setRuleModalEditId] = useState();
   const [ruleFormName, setRuleFormName] = useState("");
   const [ruleFormTier, setRuleFormTier] = useState(1);
-  const [ruleFormSeverity, setRuleFormSeverity] = useState("WARNING");
+  const [ruleFormSeverity, setRuleFormSeverity] = useState("FAIL");
   const [ruleFormActive, setRuleFormActive] = useState("YES");
   const [ruleFormConfig, setRuleFormConfig] = useState("{}");
   const [ruleFormDomain, setRuleFormDomain] = useState("General");
@@ -307,7 +393,10 @@ export function DesignStudioPage() {
     credit_hours: "",
     designated_semester: null,
     offered_periods_json: "",
+    standing_requirement: "",
+    additional_requirements_text: "",
     min_section_size: "",
+    ownership_code: "DF",
   });
   const [courseSaveBusy, setCourseSaveBusy] = useState(false);
   const periodsQ = useQuery({ queryKey: ["period-metadata"], queryFn: () => authed("/meta/periods") });
@@ -388,6 +477,7 @@ export function DesignStudioPage() {
 
   useEffect(() => {
     setSelectedSavedDatasetId(undefined);
+    setSelectedSuggestedSequenceId(undefined);
   }, [selectedVersion?.id]);
 
   const canvasQ = useQuery({
@@ -399,6 +489,11 @@ export function DesignStudioPage() {
     queryKey: ["dataset-saved", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/design/datasets/${selectedVersion.id}/saved`)
+  });
+  const suggestedSequencesQ = useQuery({
+    queryKey: ["suggested-sequences", selectedVersion?.id],
+    enabled: !!selectedVersion?.id,
+    queryFn: () => authed(`/design/canvas/${selectedVersion.id}/suggested`)
   });
   const programsQ = useQuery({
     queryKey: ["programs", selectedVersion?.id],
@@ -551,7 +646,10 @@ export function DesignStudioPage() {
         credit_hours: "",
         designated_semester: null,
         offered_periods_json: "",
+        standing_requirement: "",
+        additional_requirements_text: "",
         min_section_size: "",
+        ownership_code: "DF",
       });
       return;
     }
@@ -563,7 +661,10 @@ export function DesignStudioPage() {
       credit_hours: scheduling?.credit_hours == null ? "" : String(scheduling.credit_hours),
       designated_semester: scheduling?.designated_semester ?? null,
       offered_periods_json: String(scheduling?.offered_periods_json || ""),
+      standing_requirement: String(scheduling?.standing_requirement || ""),
+      additional_requirements_text: String(scheduling?.additional_requirements_text || ""),
       min_section_size: scheduling?.min_section_size == null ? "" : String(scheduling.min_section_size),
+      ownership_code: String(scheduling?.ownership_code || general?.ownership_code || "DF"),
     });
   }, [courseDetailQ.data?.general, courseDetailQ.data?.scheduling, selectedCourseId]);
 
@@ -584,6 +685,9 @@ export function DesignStudioPage() {
         required_course_id: r.required_course_id,
         relationship_type: r.relationship_type || "PREREQUISITE",
         enforcement: r.enforcement || "HARD",
+        prerequisite_group_key: r.prerequisite_group_key || "",
+        group_label: r.group_label || "",
+        group_min_required: String(r.group_min_required || 1),
       };
     }
     setPrereqEdits(next);
@@ -723,6 +827,7 @@ export function DesignStudioPage() {
       qc.invalidateQueries({ queryKey: ["validation", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["dataset-saved", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["suggested-sequences", selectedVersion.id] }),
     ]);
   }
 
@@ -751,6 +856,22 @@ export function DesignStudioPage() {
       qc.invalidateQueries({ queryKey: ["validation", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["dataset-saved", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["suggested-sequences", selectedVersion.id] }),
+    ]);
+  }
+
+  async function loadSuggestedSequenceToCanvas() {
+    if (!selectedVersion?.id || !selectedSuggestedSequenceId) return;
+    await authed(
+      `/design/canvas/${selectedVersion.id}/suggested/${encodeURIComponent(selectedSuggestedSequenceId)}/load?replace_existing=true`,
+      { method: "POST" }
+    );
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["canvas", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["validation-dashboard", selectedVersion.id] }),
     ]);
   }
 
@@ -798,7 +919,7 @@ export function DesignStudioPage() {
     }
     function logicLabel(logic, pickN) {
       if (logic === "PICK_N") return `Pick ${pickN || 1}`;
-      if (logic === "ANY_ONE") return "Any One";
+      if (logic === "ANY_ONE") return "Pick 1";
       return "All Required";
     }
     function autoRequirementName() {
@@ -816,8 +937,8 @@ export function DesignStudioPage() {
       name: autoRequirementName(),
       program_id: resolvedProgramId,
       parent_requirement_id: rulesetParentId || null,
-      logic_type: rulesetLogic,
-      pick_n: rulesetLogic === "PICK_N" ? Number(rulesetPickN || 1) : null,
+      logic_type: rulesetLogic === "ANY_ONE" ? "PICK_N" : rulesetLogic,
+      pick_n: (rulesetLogic === "PICK_N" || rulesetLogic === "ANY_ONE") ? Number(rulesetPickN || 1) : null,
       sort_order: null,
       category: rulesetCategory,
       major_mode: rulesetCategory === "MAJOR" ? rulesetMajorMode : null,
@@ -1191,7 +1312,7 @@ export function DesignStudioPage() {
     function autoRequirementName() {
       function logicLabel(logic, pickN) {
         if (logic === "PICK_N") return `Pick ${pickN || 1}`;
-        if (logic === "ANY_ONE") return "Any One";
+        if (logic === "ANY_ONE") return "Pick 1";
         if (logic === "OPTION_SLOT") return `Option Slot (${Number(editReqOptionSlotCapacity || 1)})`;
         return "All Required";
       }
@@ -1222,8 +1343,8 @@ export function DesignStudioPage() {
       name: autoRequirementName(),
       program_id: resolvedProgramId,
       parent_requirement_id: effectiveParentId,
-      logic_type: editReqLogic,
-      pick_n: editReqLogic === "PICK_N" ? Number(editReqPickN || 1) : null,
+      logic_type: editReqLogic === "ANY_ONE" ? "PICK_N" : editReqLogic,
+      pick_n: (editReqLogic === "PICK_N" || editReqLogic === "ANY_ONE") ? Number(editReqPickN || 1) : null,
       option_slot_key: editReqLogic === "OPTION_SLOT" ? (editReqOptionSlotKey || "").trim() || null : null,
       option_slot_capacity: editReqLogic === "OPTION_SLOT" ? Number(editReqOptionSlotCapacity || 1) : null,
       sort_order: requirementNodeMap[selectedRuleNodeId]?.sort_order ?? 0,
@@ -1301,7 +1422,7 @@ export function DesignStudioPage() {
       function autoRequirementName() {
       function logicLabel(logic, pickN) {
         if (logic === "PICK_N") return `Pick ${pickN || 1}`;
-        if (logic === "ANY_ONE") return "Any One";
+        if (logic === "ANY_ONE") return "Pick 1";
         if (logic === "OPTION_SLOT") return `Option Slot (${Number(editReqOptionSlotCapacity || 1)})`;
         return "All Required";
       }
@@ -1400,8 +1521,8 @@ export function DesignStudioPage() {
         name: autoRequirementName(),
         program_id: resolvedProgramId,
         parent_requirement_id: editReqParentId || null,
-        logic_type: editReqLogic,
-        pick_n: editReqLogic === "PICK_N" ? Number(editReqPickN || 1) : null,
+        logic_type: editReqLogic === "ANY_ONE" ? "PICK_N" : editReqLogic,
+        pick_n: (editReqLogic === "PICK_N" || editReqLogic === "ANY_ONE") ? Number(editReqPickN || 1) : null,
         option_slot_key: editReqLogic === "OPTION_SLOT" ? (editReqOptionSlotKey || "").trim() || null : null,
         option_slot_capacity: editReqLogic === "OPTION_SLOT" ? Number(editReqOptionSlotCapacity || 1) : null,
         sort_order: null,
@@ -1588,7 +1709,10 @@ export function DesignStudioPage() {
           ? null
           : Number(courseSchedulingForm.designated_semester),
       offered_periods_json: String(courseSchedulingForm.offered_periods_json || "").trim() || null,
+      standing_requirement: String(courseSchedulingForm.standing_requirement || "").trim() || null,
+      additional_requirements_text: String(courseSchedulingForm.additional_requirements_text || "").trim() || null,
       min_section_size: Number(courseSchedulingForm.min_section_size || 0),
+      ownership_code: String(courseSchedulingForm.ownership_code || "DF"),
     };
     if (!payload.course_number || !payload.title || Number.isNaN(payload.credit_hours) || Number.isNaN(payload.min_section_size)) {
       window.alert("Please provide valid values for course number, title, credit hours, and minimum section size.");
@@ -1622,7 +1746,10 @@ export function DesignStudioPage() {
           ? null
           : Number(newCourseForm.designated_semester),
       offered_periods_json: String(newCourseForm.offered_periods_json || "").trim() || null,
+      standing_requirement: String(newCourseForm.standing_requirement || "").trim() || null,
+      additional_requirements_text: String(newCourseForm.additional_requirements_text || "").trim() || null,
       min_section_size: Number(newCourseForm.min_section_size || 0),
+      ownership_code: String(newCourseForm.ownership_code || "DF"),
     };
     if (!payload.course_number || !payload.title || Number.isNaN(payload.credit_hours) || Number.isNaN(payload.min_section_size)) {
       window.alert("Please provide valid values for course number, title, credit hours, and minimum section size.");
@@ -1642,7 +1769,10 @@ export function DesignStudioPage() {
         credit_hours: "3",
         designated_semester: null,
         offered_periods_json: "",
+        standing_requirement: "",
+        additional_requirements_text: "",
         min_section_size: "6",
+        ownership_code: "DF",
       });
       setSelectedCourseId(created.id);
       await Promise.all([
@@ -1656,6 +1786,8 @@ export function DesignStudioPage() {
 
   async function addPrerequisite() {
     if (!selectedCourseId || !newPrereqId) return;
+    const groupKey = String(newPrereqGroupKey || "").trim();
+    const groupMin = Number(newPrereqGroupMinRequired || 1);
     await authed("/prerequisites", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1663,10 +1795,16 @@ export function DesignStudioPage() {
         course_id: selectedCourseId,
         required_course_id: newPrereqId,
         relationship_type: newPrereqType,
-        enforcement: newPrereqEnforcement
+        enforcement: newPrereqEnforcement,
+        prerequisite_group_key: groupKey || null,
+        group_min_required: groupKey ? (Number.isFinite(groupMin) && groupMin > 0 ? Math.floor(groupMin) : 1) : null,
+        group_label: groupKey ? (String(newPrereqGroupLabel || "").trim() || null) : null,
       })
     });
     setNewPrereqId(undefined);
+    setNewPrereqGroupKey("");
+    setNewPrereqGroupLabel("");
+    setNewPrereqGroupMinRequired("1");
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
       qc.invalidateQueries({ queryKey: ["prereq-graph"] }),
@@ -1692,6 +1830,8 @@ export function DesignStudioPage() {
       window.alert("Required course is required.");
       return;
     }
+    const groupKey = String(draft.prerequisite_group_key || "").trim();
+    const groupMin = Number(draft.group_min_required || 1);
     await authed(`/prerequisites/${row.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -1700,9 +1840,9 @@ export function DesignStudioPage() {
         required_course_id: draft.required_course_id,
         relationship_type: draft.relationship_type || "PREREQUISITE",
         enforcement: draft.enforcement || "HARD",
-        prerequisite_group_key: row.prerequisite_group_key || null,
-        group_min_required: row.group_min_required || null,
-        group_label: row.group_label || null,
+        prerequisite_group_key: groupKey || null,
+        group_min_required: groupKey ? (Number.isFinite(groupMin) && groupMin > 0 ? Math.floor(groupMin) : 1) : null,
+        group_label: groupKey ? (String(draft.group_label || "").trim() || null) : null,
       }),
     });
     await Promise.all([
@@ -1831,7 +1971,7 @@ export function DesignStudioPage() {
     const r = (validationRulesQ.data || []).find((x) => x.id === ruleId);
     if (!r) return;
     setEditRuleTier(r.tier || 1);
-    setEditRuleSeverity(r.severity || "WARNING");
+    setEditRuleSeverity(String(r.severity || "FAIL").toUpperCase() === "WARNING" ? "WARN" : (r.severity || "FAIL"));
     setEditRuleActive(r.active ? "YES" : "NO");
     setEditRuleConfig(r.config_json || "{}");
   }
@@ -1990,7 +2130,7 @@ export function DesignStudioPage() {
     setRuleModalEditId(undefined);
     setRuleFormName("");
     setRuleFormTier(1);
-    setRuleFormSeverity("WARNING");
+    setRuleFormSeverity("FAIL");
     setRuleFormActive("YES");
     setRuleFormConfig("{}");
     setRuleFormDomain("General");
@@ -2002,7 +2142,7 @@ export function DesignStudioPage() {
     setRuleModalEditId(rule.id);
     setRuleFormName(rule.name || "");
     setRuleFormTier(Number(rule.tier || 1));
-    setRuleFormSeverity(rule.severity || "WARNING");
+    setRuleFormSeverity(String(rule.severity || "FAIL").toUpperCase() === "WARNING" ? "WARN" : (rule.severity || "FAIL"));
     setRuleFormActive(rule.active ? "YES" : "NO");
     setRuleFormConfig(rule.config_json || "{}");
     const cfg = parseRuleConfig(rule);
@@ -2586,7 +2726,7 @@ export function DesignStudioPage() {
     const treeData = (requirementsTreeQ.data?.tree || []).map(function mapNode(n) {
       return {
         key: n.id,
-        title: `${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n)} (${n.logic_type})`,
+        title: `${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n, requirementOptionTotal(n))} (${n.logic_type})`,
         children: (n.children || []).map(mapNode)
       };
     });
@@ -2606,8 +2746,11 @@ export function DesignStudioPage() {
     const n = requirementNodeMap[requirementId];
     const raw = requirementById[requirementId];
     if (!n && !raw) return;
-    const logicType = raw?.logic_type || n?.logic_type || "ALL_REQUIRED";
-    const pickN = raw?.pick_n ?? n?.pick_n;
+    const logicTypeRaw = raw?.logic_type || n?.logic_type || "ALL_REQUIRED";
+    const logicType = String(logicTypeRaw).toUpperCase() === "ANY_ONE" ? "PICK_N" : logicTypeRaw;
+    const pickN = (String(logicTypeRaw).toUpperCase() === "ANY_ONE")
+      ? 1
+      : (raw?.pick_n ?? n?.pick_n);
     const optionSlotKey = raw?.option_slot_key ?? n?.option_slot_key ?? "";
     const optionSlotCapacity = raw?.option_slot_capacity ?? n?.option_slot_capacity ?? 1;
     const fallbackProgramType = (programsQ.data || []).find((p) => p.id === (raw?.program_id || n?.program_id))?.program_type;
@@ -2726,7 +2869,7 @@ export function DesignStudioPage() {
         if (category === "MINOR") prefixParts.push(`Minor${n.program_name ? ` - ${n.program_name}` : ""}`);
         if (category === "PE") prefixParts.push("PE");
         const prefix = prefixParts.filter(Boolean).join(" | ");
-        out.push({ value: n.id, label: `${prefix} | ${formatRequirementName(n.name, n.logic_type, n.pick_n)}` });
+        out.push({ value: n.id, label: `${prefix} | ${formatRequirementName(n.name, n.logic_type, n.pick_n, requirementOptionTotal(n))}` });
         walk(n.children || []);
       }
     }
@@ -3067,7 +3210,7 @@ export function DesignStudioPage() {
         key: n.id,
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
-            <span>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n)}`}</span>
+            <span>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n, requirementOptionTotal(n))}`}</span>
             <Space size={4} className="tree-node-actions">
               {canAddSubNode ? (
                 <Button
@@ -3157,7 +3300,12 @@ export function DesignStudioPage() {
             </Space>
           </div>
         ),
-        children: (b.courses || []).map((bc) => ({
+        children: [...(b.courses || [])]
+          .sort((a, b2) =>
+            String(a?.course_number || a?.course_title || "")
+              .localeCompare(String(b2?.course_number || b2?.course_title || ""), undefined, { sensitivity: "base" })
+          )
+          .map((bc) => ({
           key: `basket-course:${b.id}:${bc.id}`,
           title: renderCourseCodeWithHover(bc.course_number || bc.course_title || "Missing course"),
           isLeaf: true,
@@ -3170,7 +3318,11 @@ export function DesignStudioPage() {
       const sourceCourses =
         (mappedByReq[n.id] && mappedByReq[n.id].length ? mappedByReq[n.id] : null) ||
         (n.courses && n.courses.length ? n.courses : []);
-      const courseLeaves = sourceCourses.map((c) => ({
+      const sortedSourceCourses = [...sourceCourses].sort((a, b) =>
+        String(a?.course_number || a?.course_title || "")
+          .localeCompare(String(b?.course_number || b?.course_title || ""), undefined, { sensitivity: "base" })
+      );
+      const courseLeaves = sortedSourceCourses.map((c) => ({
         key: `course:${c.id}`,
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
@@ -3529,6 +3681,24 @@ export function DesignStudioPage() {
       })
       .map((r) => ({ ...r, domain: inferValidationDomain(r) }));
   }, [validationRulesQ.data]);
+  const validationRuleMetaByCode = useMemo(() => {
+    const out = {};
+    for (const r of validationRulesWithDomain || []) {
+      const key = String(r.rule_code || "").trim();
+      if (!key) continue;
+      out[key] = { name: r.name || "", domain: r.domain || "General" };
+    }
+    return out;
+  }, [validationRulesWithDomain]);
+  const validationRuleMetaByName = useMemo(() => {
+    const out = {};
+    for (const r of validationRulesWithDomain || []) {
+      const key = String(r.name || "").trim();
+      if (!key) continue;
+      out[key] = { code: r.rule_code || "", domain: r.domain || "General" };
+    }
+    return out;
+  }, [validationRulesWithDomain]);
   const filteredValidationRules = useMemo(
     () =>
       validationDomainFilter === "ALL"
@@ -3769,15 +3939,15 @@ export function DesignStudioPage() {
         {(nodes || []).map((r) => (
           <div key={`${r.requirement_id}-${level}`} style={{ marginLeft: level * 14, padding: "2px 0" }}>
             <Space style={{ whiteSpace: "nowrap" }}>
-              <span style={{ display: "inline-block", width: 64 }}>
-                <Tag color={r.is_satisfied && !hasTimingIssue(r) ? "green" : "red"}>
-                  {r.is_satisfied && !hasTimingIssue(r) ? "Met" : "Open"}
+              <span style={{ display: "inline-block", width: 62 }}>
+                <Tag style={STATUS_TAG_STYLE_SHORT} color={r.is_satisfied && !hasTimingIssue(r) ? "green" : "red"}>
+                  {r.is_satisfied && !hasTimingIssue(r) ? "MET" : "OPEN"}
                 </Tag>
               </span>
               {String(r.requirement_id || "").startsWith("core-rule:")
                 ? (
                   <>
-                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${formatRequirementName(r.name, r.logic_type, r.pick_n)}`}</Typography.Text>
+                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${formatRequirementName(r.name, r.logic_type, r.pick_n, r.available_option_count || r.direct_course_count)}`}</Typography.Text>
                     <Typography.Text type="secondary">
                       {r.satisfied_units}/{r.required_units}
                     </Typography.Text>
@@ -3785,7 +3955,7 @@ export function DesignStudioPage() {
                 )
                 : (
                   <>
-                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${formatRequirementName(r.name, r.logic_type, r.pick_n)}`}</Typography.Text>
+                    <Typography.Text strong={level === 0}>{`${r.node_code ? `${withDot(r.node_code)} ` : ""}${formatRequirementName(r.name, r.logic_type, r.pick_n, r.available_option_count || r.direct_course_count)}`}</Typography.Text>
                     <Typography.Text type="secondary">
                       {r.satisfied_units}/{r.required_units}
                     </Typography.Text>
@@ -3802,7 +3972,9 @@ export function DesignStudioPage() {
     );
   }
   function validationColor(status) {
-    if (status === "FAIL") return "red";
+    const token = normalizeStatusToken(status, "PASS");
+    if (token === "FAIL") return "red";
+    if (token === "WARN") return "orange";
     return "green";
   }
   function formatPrereqType(v) {
@@ -3812,23 +3984,118 @@ export function DesignStudioPage() {
     return String(v || "").toUpperCase() === "SOFT" ? "Soft" : "Hard";
   }
   function renderValidationLineItems(items, emptyText = "None") {
-    const rows = items || [];
+    const rows = (items || []).map((it, idx) => {
+      const code = String(it?.rule_code || "").trim();
+      const name = String(it?.rule_name || "").trim();
+      const metaByCode = validationRuleMetaByCode[code];
+      const metaByName = validationRuleMetaByName[name];
+      const domain = String(
+        metaByCode?.domain ||
+        metaByName?.domain ||
+        inferValidationDomain({ name, config_json: "{}" }) ||
+        "General"
+      );
+      return { ...(it || {}), _idx: idx, _domain: domain };
+    });
     if (!rows.length) return <Typography.Text type="secondary">{emptyText}</Typography.Text>;
+    const grouped = {};
+    for (const row of rows) {
+      const key = row._domain || "General";
+      grouped[key] = grouped[key] || [];
+      grouped[key].push(row);
+    }
+    const domains = Object.keys(grouped).sort((a, b) => {
+      const ia = VALIDATION_DOMAIN_ORDER.indexOf(a);
+      const ib = VALIDATION_DOMAIN_ORDER.indexOf(b);
+      const va = ia >= 0 ? ia : 999;
+      const vb = ib >= 0 ? ib : 999;
+      if (va !== vb) return va - vb;
+      return String(a).localeCompare(String(b));
+    });
+    const bucketLabelByCode = {
+      NONACAD_PE: "Physical Education",
+      NONACAD_LEADERSHIP: "Leadership Sequence",
+      NONACAD_MIL_TRAINING: "Military Training",
+      NONACAD_AIRMANSHIP: "Airmanship",
+      NONACAD_ATHLETICS: "Athletics",
+      ABET_MATH_BASIC_SCI: "ABET Math/Basic Science",
+      ABET_ENGINEERING_TOPICS: "ABET Engineering Topics",
+    };
+    function friendlyRuleLabel(raw) {
+      const t = String(raw || "").trim();
+      return t
+        .replace(/^Non-Academic:\s*/i, "")
+        .replace(/^Program\/Major Pathway:\s*/i, "")
+        .replace(/^Program\/Major Pathway Definition:\s*/i, "")
+        .replace(/^ABET EAC:\s*/i, "ABET: ")
+        .replace(/\s+/g, " ");
+    }
+    function friendlyMessage(raw) {
+      const msg = String(raw || "").trim();
+      if (!msg) return "";
+      const creditsMatch = msg.match(/^([A-Z0-9_]+)\s+credits\s+([0-9]+(?:\.[0-9]+)?);\s+minimum\s+([0-9]+(?:\.[0-9]+)?)\.?$/i);
+      if (creditsMatch) {
+        const code = String(creditsMatch[1] || "").toUpperCase();
+        const actual = creditsMatch[2];
+        const min = creditsMatch[3];
+        const label = bucketLabelByCode[code] || code;
+        return `${label} credits ${actual}/${min}.`;
+      }
+      const coursesMatch = msg.match(/^([A-Z0-9_]+)\s+courses\s+([0-9]+(?:\.[0-9]+)?);\s+minimum\s+([0-9]+(?:\.[0-9]+)?)\.?$/i);
+      if (coursesMatch) {
+        const code = String(coursesMatch[1] || "").toUpperCase();
+        const actual = coursesMatch[2];
+        const min = coursesMatch[3];
+        const label = bucketLabelByCode[code] || code;
+        return `${label} courses ${actual}/${min}.`;
+      }
+      let out = msg;
+      for (const [code, label] of Object.entries(bucketLabelByCode)) {
+        out = out.replaceAll(code, label);
+      }
+      const trimmed = out.replace(/\s+/g, " ").trim().replace(/(?:\s*\.)+$/, "");
+      const normalized = trimmed.replace(/\.{2,}/g, ".");
+      return normalized ? `${normalized}.` : "";
+    }
     return (
-      <List
-        size="small"
-        dataSource={rows}
-        renderItem={(it) => (
-          <List.Item>
-            <Space style={{ whiteSpace: "nowrap" }}>
-              <Tag color={validationColor(it.status || "PASS")}>{it.status || "PASS"}</Tag>
-              <Typography.Text>{`${it.rule_code ? `${it.rule_code}. ` : ""}${it.rule_name || "Validation Rule"}`}</Typography.Text>
-              {it.message ? <Typography.Text type={String(it.status || "PASS").toUpperCase() === "FAIL" ? "danger" : "secondary"}>{it.message}</Typography.Text> : null}
-            </Space>
-          </List.Item>
-        )}
-      />
+      <Space direction="vertical" style={{ width: "100%" }}>
+        {domains.map((domain) => (
+          <div key={`validation-domain-${domain}`}>
+            <Typography.Text strong>{domain}</Typography.Text>
+            <List
+              size="small"
+              dataSource={grouped[domain]}
+              renderItem={(it) => (
+                <List.Item style={{ paddingLeft: 14 }}>
+                  <Space style={{ whiteSpace: "nowrap" }}>
+                    <Tag style={STATUS_TAG_STYLE_SHORT} color={validationColor(it.status || "PASS")}>{normalizeStatusToken(it.status || "PASS")}</Tag>
+                    <Typography.Text>{`${it.rule_code ? `${it.rule_code}. ` : ""}${friendlyRuleLabel(it.rule_name || "Validation Rule")}`}</Typography.Text>
+                    {it.message ? <Typography.Text type={normalizeStatusToken(it.status || "PASS") === "FAIL" ? "danger" : "secondary"}>{friendlyMessage(it.message)}</Typography.Text> : null}
+                  </Space>
+                </List.Item>
+              )}
+            />
+          </div>
+        ))}
+      </Space>
     );
+  }
+  function requirementOptionTotal(node) {
+    if (!node) return 0;
+    const mappedRows = (requirementFulfillmentVersionQ.data || []).filter((m) => m.requirement_id === node.id);
+    const directIds = new Set(
+      ((mappedRows.length ? mappedRows : (node.courses || [])) || [])
+        .map((c) => c?.course_id || c?.courseId)
+        .filter(Boolean)
+    );
+    const basketIds = new Set(
+      (node.baskets || [])
+        .flatMap((b) => (b.courses || []).map((c) => c?.course_id))
+        .filter(Boolean)
+    );
+    const total = new Set([...directIds, ...basketIds]).size;
+    if (total > 0) return total;
+    return Array.isArray(node.children) ? node.children.length : 0;
   }
   function renderConsistencyTree(nodes, level = 0) {
     return (
@@ -3836,12 +4103,12 @@ export function DesignStudioPage() {
         {(nodes || []).map((n, idx) => (
           <div key={`${n.requirement_id || n.node_code || idx}-${level}`} style={{ marginLeft: level * 14, padding: "2px 0" }}>
             <Space style={{ whiteSpace: "nowrap" }}>
-              <span style={{ display: "inline-block", width: 108 }}>
-                <Tag color={n.status === "INCONSISTENT" ? "red" : "green"}>
-                  {n.status === "INCONSISTENT" ? "Inconsistent" : "Consistent"}
+              <span style={{ display: "inline-block", width: 96 }}>
+                <Tag style={STATUS_TAG_STYLE_LONG} color={n.status === "INCONSISTENT" ? "red" : "green"}>
+                  {n.status === "INCONSISTENT" ? "INCONSISTENT" : "CONSISTENT"}
                 </Tag>
               </span>
-              <Typography.Text>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n)}`}</Typography.Text>
+              <Typography.Text>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n, n.available_option_count || n.direct_course_count)}`}</Typography.Text>
               {n.message ? <Typography.Text type="danger">{n.message}</Typography.Text> : null}
             </Space>
             {n.children?.length ? <div>{renderConsistencyTree(n.children, level + 1)}</div> : null}
@@ -3896,18 +4163,19 @@ export function DesignStudioPage() {
       title: "Overall Status",
       dataIndex: "overall_status",
       key: "overall_status",
-      width: 170,
+      width: 220,
       render: (_, row) => (
         <Space>
-          <Tag color={row.status === "FAIL" ? "red" : "green"}>{row.status || "PASS"}</Tag>
-          <Tag color={row.consistency_status === "INCONSISTENT" ? "red" : "green"}>{row.consistency_status || "CONSISTENT"}</Tag>
+          <Tag style={STATUS_TAG_STYLE_SHORT} color={validationColor(row.status || "PASS")}>{normalizeStatusToken(row.status || "PASS")}</Tag>
+          <Tag style={STATUS_TAG_STYLE_LONG} color={row.consistency_status === "INCONSISTENT" ? "red" : "green"}>{(row.consistency_status || "CONSISTENT").toUpperCase()}</Tag>
         </Space>
       ),
       filters: [
         { text: "PASS", value: "PASS" },
+        { text: "WARN", value: "WARN" },
         { text: "FAIL", value: "FAIL" },
       ],
-      onFilter: (value, row) => String(row.status || "").toUpperCase() === String(value || "").toUpperCase(),
+      onFilter: (value, row) => normalizeStatusToken(row.status || "") === String(value || "").toUpperCase(),
       sorter: (a, b) => String(a.status || "").localeCompare(String(b.status || "")),
     },
     {
@@ -3915,13 +4183,16 @@ export function DesignStudioPage() {
         <span style={{ whiteSpace: "normal", lineHeight: 1.15 }}>
           Validation Rules
           <br />
-          (Pass/Fail)
+          (Pass/Warn/Fail)
         </span>
       ),
       key: "validation_pf",
       width: 128,
-      render: (_, row) => `${row.validation_pass_count ?? 0}/${row.validation_fail_count ?? 0}`,
-      sorter: (a, b) => Number(a.validation_fail_count || 0) - Number(b.validation_fail_count || 0),
+      render: (_, row) => `${row.validation_pass_count ?? 0}/${row.validation_warn_count ?? 0}/${row.validation_fail_count ?? 0}`,
+      sorter: (a, b) => (
+        Number(a.validation_fail_count || 0) - Number(b.validation_fail_count || 0)
+        || Number(a.validation_warn_count || 0) - Number(b.validation_warn_count || 0)
+      ),
     },
     {
       title: "Program Design Rules (Consistent/Inconsistent)",
@@ -4127,6 +4398,30 @@ export function DesignStudioPage() {
               Load Dataset
             </Button>
           </Space>
+          <Space wrap>
+            <Typography.Text type="secondary">Suggested Major Sequences</Typography.Text>
+            <Select
+              showSearch
+              allowClear
+              style={{ width: 520 }}
+              placeholder="Select a COI suggested sequence"
+              value={selectedSuggestedSequenceId}
+              onChange={setSelectedSuggestedSequenceId}
+              optionFilterProp="label"
+              options={(suggestedSequencesQ.data?.rows || []).map((s) => ({
+                value: s.id,
+                label: `${s.name}${s.item_count ? ` (${s.item_count} items)` : ""}${s.options_note ? " [options noted]" : ""}`,
+              }))}
+            />
+            <Button
+              size="small"
+              type="primary"
+              onClick={loadSuggestedSequenceToCanvas}
+              disabled={!selectedVersion?.id || !selectedSuggestedSequenceId}
+            >
+              Load Suggested Sequence
+            </Button>
+          </Space>
         </Space>
       </Card>
       <div className="timeline-grid">
@@ -4242,7 +4537,7 @@ export function DesignStudioPage() {
           </Typography.Text>
           {selectedChecklistFeasibility?.status === "FAIL" ? (
             <Space>
-              <Tag color="red">Fail</Tag>
+              <Tag style={STATUS_TAG_STYLE_SHORT} color="red">FAIL</Tag>
               <Typography.Text type="danger">
                 Selected checklist programs are not a valid combination due to feasibility check failures.
               </Typography.Text>
@@ -4267,8 +4562,9 @@ export function DesignStudioPage() {
       <Card title="Program Feasibility">
         <Space direction="vertical" style={{ width: "100%" }}>
           <Space>
-            <Tag color="green">{`Pass ${feasibilityQ.data?.summary?.pass ?? 0}`}</Tag>
-            <Tag color="red">{`Fail ${feasibilityQ.data?.summary?.fail ?? 0}`}</Tag>
+            <Tag style={STATUS_TAG_STYLE_SHORT} color="green">{`PASS ${feasibilityQ.data?.summary?.pass ?? 0}`}</Tag>
+            <Tag style={STATUS_TAG_STYLE_SHORT} color="orange">{`WARN ${feasibilityQ.data?.summary?.warning ?? 0}`}</Tag>
+            <Tag style={STATUS_TAG_STYLE_SHORT} color="red">{`FAIL ${feasibilityQ.data?.summary?.fail ?? 0}`}</Tag>
             <Typography.Text type="secondary">
               {`${feasibilityQ.data?.row_count ?? 0} combinations evaluated`}
             </Typography.Text>
@@ -4448,7 +4744,6 @@ export function DesignStudioPage() {
               options={[
                 { value: "ALL_REQUIRED", label: "ALL_REQUIRED" },
                 { value: "PICK_N", label: "PICK_N" },
-                { value: "ANY_ONE", label: "ANY_ONE" },
                 { value: "OPTION_SLOT", label: "OPTION_SLOT" },
               ]}
             />
@@ -4716,7 +5011,7 @@ export function DesignStudioPage() {
       >
         <Space direction="vertical" style={{ width: "100%" }}>
           <Typography.Text type="secondary">
-            Define major-specific choices from Core Any One/Pick N nodes.
+            Define major-specific choices from Core Pick N nodes (including Pick 1).
           </Typography.Text>
           {coreRulesGroupedRows.map((group) => (
             <Card
@@ -4745,7 +5040,7 @@ export function DesignStudioPage() {
                   const existingTimingLabels = Array.from(new Set(existingTimingRows.map((x) => formatSemesterConstraint(x)).filter(Boolean)));
                   const hasExistingGroupTiming = existingTimingLabels.length > 0;
                   return (
-                    <Card key={`core-rule-row:${rowKey}`} size="small" title={row.slot_total > 1 ? `Pick ${row.slot_index + 1}/${row.slot_total}` : "Any One"}>
+                    <Card key={`core-rule-row:${rowKey}`} size="small" title={`Pick ${row.slot_index + 1}/${Math.max(1, row.slot_total || 1)}`}>
                       <Space direction="vertical" style={{ width: "100%" }}>
                         <Select
                           allowClear
@@ -5058,7 +5353,7 @@ export function DesignStudioPage() {
             value={ruleFormSeverity}
             onChange={setRuleFormSeverity}
             options={[
-              { value: "WARNING", label: "WARNING" },
+              { value: "WARN", label: "WARN" },
               { value: "FAIL", label: "FAIL" },
             ]}
           />
@@ -5295,6 +5590,38 @@ export function DesignStudioPage() {
                       />
                     </div>
                     <div>
+                      <Typography.Text type="secondary">Standing Requirement (Optional)</Typography.Text>
+                      <Input
+                        value={courseSchedulingForm.standing_requirement}
+                        onChange={(e) =>
+                          setCourseSchedulingForm((s) => ({ ...s, standing_requirement: e.target.value }))
+                        }
+                        placeholder="e.g., C2C standing"
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Additional Requirements (Optional)</Typography.Text>
+                      <Input.TextArea
+                        rows={2}
+                        value={courseSchedulingForm.additional_requirements_text}
+                        onChange={(e) =>
+                          setCourseSchedulingForm((s) => ({ ...s, additional_requirements_text: e.target.value }))
+                        }
+                        placeholder="e.g., Dept approval; restricted to major"
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Course Owner</Typography.Text>
+                      <Select
+                        style={{ width: "100%" }}
+                        value={courseSchedulingForm.ownership_code || "DF"}
+                        onChange={(v) =>
+                          setCourseSchedulingForm((s) => ({ ...s, ownership_code: v || "DF" }))
+                        }
+                        options={COURSE_OWNERSHIP_OPTIONS}
+                      />
+                    </div>
+                    <div>
                       <Typography.Text type="secondary">Minimum Section Size</Typography.Text>
                       <Input
                         value={courseSchedulingForm.min_section_size}
@@ -5391,6 +5718,25 @@ export function DesignStudioPage() {
                           { value: "SOFT", label: "Soft" }
                         ]}
                       />
+                      <Input
+                        style={{ width: 120 }}
+                        placeholder="Group key (optional)"
+                        value={newPrereqGroupKey}
+                        onChange={(e) => setNewPrereqGroupKey(e.target.value)}
+                      />
+                      <Input
+                        style={{ width: 150 }}
+                        placeholder="Group label"
+                        value={newPrereqGroupLabel}
+                        onChange={(e) => setNewPrereqGroupLabel(e.target.value)}
+                      />
+                      <InputNumber
+                        style={{ width: 110 }}
+                        min={1}
+                        value={Number(newPrereqGroupMinRequired || 1)}
+                        onChange={(v) => setNewPrereqGroupMinRequired(String(v || 1))}
+                        placeholder="Min in group"
+                      />
                       <Button onClick={addPrerequisite}>Add Link</Button>
                     </Space>
                     <Table
@@ -5474,10 +5820,67 @@ export function DesignStudioPage() {
                         },
                         {
                           title: "Group",
-                          render: (_, row) =>
-                            row.prerequisite_group_key
-                              ? `${row.group_label || "Group"} (${row.group_min_required || 1}+ required)`
-                              : "All Required",
+                          render: (_, row) => (
+                            <Space wrap>
+                              <Input
+                                style={{ width: 110 }}
+                                placeholder="Group key"
+                                value={prereqEdits[row.id]?.prerequisite_group_key ?? row.prerequisite_group_key ?? ""}
+                                onChange={(e) =>
+                                  setPrereqEdits((s) => ({
+                                    ...s,
+                                    [row.id]: {
+                                      ...(s[row.id] || {}),
+                                      required_course_id: s[row.id]?.required_course_id || row.required_course_id,
+                                      relationship_type: s[row.id]?.relationship_type || row.relationship_type || "PREREQUISITE",
+                                      enforcement: s[row.id]?.enforcement || row.enforcement || "HARD",
+                                      prerequisite_group_key: e.target.value,
+                                      group_label: s[row.id]?.group_label ?? row.group_label ?? "",
+                                      group_min_required: s[row.id]?.group_min_required ?? String(row.group_min_required || 1),
+                                    },
+                                  }))
+                                }
+                              />
+                              <Input
+                                style={{ width: 130 }}
+                                placeholder="Label"
+                                value={prereqEdits[row.id]?.group_label ?? row.group_label ?? ""}
+                                onChange={(e) =>
+                                  setPrereqEdits((s) => ({
+                                    ...s,
+                                    [row.id]: {
+                                      ...(s[row.id] || {}),
+                                      required_course_id: s[row.id]?.required_course_id || row.required_course_id,
+                                      relationship_type: s[row.id]?.relationship_type || row.relationship_type || "PREREQUISITE",
+                                      enforcement: s[row.id]?.enforcement || row.enforcement || "HARD",
+                                      prerequisite_group_key: s[row.id]?.prerequisite_group_key ?? row.prerequisite_group_key ?? "",
+                                      group_label: e.target.value,
+                                      group_min_required: s[row.id]?.group_min_required ?? String(row.group_min_required || 1),
+                                    },
+                                  }))
+                                }
+                              />
+                              <InputNumber
+                                style={{ width: 90 }}
+                                min={1}
+                                value={Number(prereqEdits[row.id]?.group_min_required ?? row.group_min_required ?? 1)}
+                                onChange={(v) =>
+                                  setPrereqEdits((s) => ({
+                                    ...s,
+                                    [row.id]: {
+                                      ...(s[row.id] || {}),
+                                      required_course_id: s[row.id]?.required_course_id || row.required_course_id,
+                                      relationship_type: s[row.id]?.relationship_type || row.relationship_type || "PREREQUISITE",
+                                      enforcement: s[row.id]?.enforcement || row.enforcement || "HARD",
+                                      prerequisite_group_key: s[row.id]?.prerequisite_group_key ?? row.prerequisite_group_key ?? "",
+                                      group_label: s[row.id]?.group_label ?? row.group_label ?? "",
+                                      group_min_required: String(v || 1),
+                                    },
+                                  }))
+                                }
+                              />
+                            </Space>
+                          ),
                         },
                         {
                           title: "Action",
@@ -5667,6 +6070,30 @@ export function DesignStudioPage() {
                 <Input
                   value={newCourseForm.offered_periods_json}
                   onChange={(e) => setNewCourseForm((s) => ({ ...s, offered_periods_json: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Standing Requirement (Optional)</Typography.Text>
+                <Input
+                  value={newCourseForm.standing_requirement}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, standing_requirement: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Additional Requirements (Optional)</Typography.Text>
+                <Input.TextArea
+                  rows={2}
+                  value={newCourseForm.additional_requirements_text}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, additional_requirements_text: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Course Owner</Typography.Text>
+                <Select
+                  style={{ width: "100%" }}
+                  value={newCourseForm.ownership_code || "DF"}
+                  onChange={(v) => setNewCourseForm((s) => ({ ...s, ownership_code: v || "DF" }))}
+                  options={COURSE_OWNERSHIP_OPTIONS}
                 />
               </div>
               <div>

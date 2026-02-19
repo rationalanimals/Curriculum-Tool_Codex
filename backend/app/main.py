@@ -74,6 +74,7 @@ class Course(Base):
     course_number: Mapped[str] = mapped_column(String, index=True)
     title: Mapped[str] = mapped_column(String)
     credit_hours: Mapped[float] = mapped_column(Float, default=3.0)
+    period_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     designated_semester: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     offered_periods_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     standing_requirement: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -394,6 +395,7 @@ class CourseIn(BaseModel):
     course_number: str
     title: str
     credit_hours: float = 3.0
+    period_count: Optional[int] = Field(default=None, ge=0)
     designated_semester: Optional[int] = None
     offered_periods_json: Optional[str] = None
     standing_requirement: Optional[str] = None
@@ -1717,6 +1719,8 @@ def ensure_runtime_migrations() -> None:
         course_col_names = {c[1] for c in course_cols}
         if "offered_periods_json" not in course_col_names:
             conn.execute(text("ALTER TABLE courses ADD COLUMN offered_periods_json TEXT"))
+        if "period_count" not in course_col_names:
+            conn.execute(text("ALTER TABLE courses ADD COLUMN period_count INTEGER"))
         if "standing_requirement" not in course_col_names:
             conn.execute(text("ALTER TABLE courses ADD COLUMN standing_requirement TEXT"))
         if "additional_requirements_text" not in course_col_names:
@@ -3247,12 +3251,27 @@ def detailed_diff(from_id: str, to_id: str, db: Session = Depends(get_db), _: Us
     for num in sorted(set(from_courses) & set(to_courses)):
         left = from_courses[num]
         right = to_courses[num]
-        if left.title != right.title or left.credit_hours != right.credit_hours or left.designated_semester != right.designated_semester:
+        if (
+            left.title != right.title
+            or left.credit_hours != right.credit_hours
+            or left.period_count != right.period_count
+            or left.designated_semester != right.designated_semester
+        ):
             changed.append(
                 {
                     "course_number": num,
-                    "from": {"title": left.title, "credit_hours": left.credit_hours, "designated_semester": left.designated_semester},
-                    "to": {"title": right.title, "credit_hours": right.credit_hours, "designated_semester": right.designated_semester},
+                    "from": {
+                        "title": left.title,
+                        "credit_hours": left.credit_hours,
+                        "period_count": left.period_count,
+                        "designated_semester": left.designated_semester,
+                    },
+                    "to": {
+                        "title": right.title,
+                        "credit_hours": right.credit_hours,
+                        "period_count": right.period_count,
+                        "designated_semester": right.designated_semester,
+                    },
                 }
             )
 
@@ -4267,9 +4286,27 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
         if basket_ids
         else []
     )
+    course_ids: set[str] = set()
+    for link in links:
+        if link.course_id:
+            course_ids.add(link.course_id)
+    for item in basket_items:
+        if item.course_id:
+            course_ids.add(item.course_id)
+    for row in basket_subs:
+        if row.primary_course_id:
+            course_ids.add(row.primary_course_id)
+        if row.substitute_course_id:
+            course_ids.add(row.substitute_course_id)
+    course_by_id = (
+        {c.id: c for c in db.scalars(select(Course).where(Course.id.in_(list(course_ids)))).all()}
+        if course_ids
+        else {}
+    )
+
     items_by_basket: dict[str, list[dict]] = {}
     for item in basket_items:
-        course = db.get(Course, item.course_id)
+        course = course_by_id.get(item.course_id)
         items_by_basket.setdefault(item.basket_id, []).append(
             {
                 "id": item.id,
@@ -4281,8 +4318,8 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
         )
     subs_by_basket: dict[str, list[dict]] = {}
     for row in basket_subs:
-        primary = db.get(Course, row.primary_course_id)
-        sub = db.get(Course, row.substitute_course_id)
+        primary = course_by_id.get(row.primary_course_id)
+        sub = course_by_id.get(row.substitute_course_id)
         subs_by_basket.setdefault(row.basket_id, []).append(
             {
                 "id": row.id,
@@ -4314,7 +4351,7 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
         )
     links_by_req: dict[str, list[dict]] = {}
     for link in links:
-        course = db.get(Course, link.course_id)
+        course = course_by_id.get(link.course_id)
         links_by_req.setdefault(link.requirement_id, []).append(
             {
                 "id": link.id,
@@ -4333,7 +4370,7 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
     def build(parent: Optional[str]):
         nodes = []
         for req in by_parent.get(parent, []):
-            program = db.get(AcademicProgram, req.program_id) if req.program_id else None
+            program = program_by_id.get(req.program_id) if req.program_id else None
             nodes.append(
                 {
                     "id": req.id,
@@ -4620,6 +4657,7 @@ def design_course_detail(course_id: str, db: Session = Depends(get_db), _: User 
             "standing_requirement": course.standing_requirement,
             "additional_requirements_text": course.additional_requirements_text,
             "credit_hours": course.credit_hours,
+            "period_count": course.period_count,
             "min_section_size": course.min_section_size,
             "ownership_code": normalize_ownership_code(course.ownership_code) or infer_course_ownership(course.course_number),
         },
@@ -5831,6 +5869,19 @@ def design_checklist(
     course_by_id = {c.id: c for c in courses}
     course_num_by_id = {c.id: c.course_number for c in courses}
     course_id_by_number = {normalize_course_number(c.course_number): c.id for c in courses}
+    placeholder_course_ids = {
+        c.id
+        for c in courses
+        if normalize_course_number(c.course_number).startswith("GENR ")
+        or normalize_course_number(c.course_number) in {"PHY ED OPTION", "SMRACAD 700"}
+        or "placeholder" in str(c.title or "").lower()
+    }
+    pe_course_ids = {
+        c.id
+        for c in courses
+        if normalize_course_number(c.course_number).startswith("PHY ED ")
+        or normalize_course_number(c.course_number).startswith("PE ")
+    }
     planned_credit_hours = 0.0
     for item in canvas_items:
         c = course_by_id.get(item.course_id)
@@ -5921,6 +5972,37 @@ def design_checklist(
         out_credits = sum(float(course_by_id[cid].credit_hours or 0.0) for cid in out_courses if cid in course_by_id)
         return out_courses, out_credits
 
+    def placeholder_candidate_course_ids(requirement_id: str, linked_course_id: str) -> set[str]:
+        """
+        Resolve generic placeholder links to concrete candidate course IDs.
+        - Phy Ed Option => any PE course in version.
+        - GENR placeholders => concrete courses in same requirement subtree.
+        """
+        if linked_course_id not in placeholder_course_ids:
+            return {linked_course_id}
+        course = course_by_id.get(linked_course_id)
+        if not course:
+            return {linked_course_id}
+        norm = normalize_course_number(course.course_number)
+        if norm.startswith("PHY ED OPTION"):
+            return set(pe_course_ids) if pe_course_ids else {linked_course_id}
+        if norm.startswith("GENR "):
+            candidates = {
+                cid for cid in collect_requirement_course_ids(requirement_id)
+                if cid not in placeholder_course_ids
+            }
+            return candidates or {linked_course_id}
+        return {linked_course_id}
+
+    def sem_ok(sem: int, required_semester: Optional[int], required_semester_min: Optional[int], required_semester_max: Optional[int]) -> bool:
+        if required_semester is not None and sem != required_semester:
+            return False
+        if required_semester_min is not None and sem < required_semester_min:
+            return False
+        if required_semester_max is not None and sem > required_semester_max:
+            return False
+        return True
+
     def evaluate(req_id: str) -> dict:
         req = req_by_id[req_id]
         children = child_map.get(req_id, [])
@@ -5929,7 +6011,11 @@ def design_checklist(
         for bl in baskets_by_req.get(req_id, []):
             basket_course_ids = list(dict.fromkeys(basket_course_ids_by_basket.get(bl.basket_id, [])))
             needed = max(1, int(bl.min_count or 1))
-            matched = [cid for cid in basket_course_ids if cid in planned_course_ids]
+            matched = []
+            for cid in basket_course_ids:
+                candidates = placeholder_candidate_course_ids(req_id, cid)
+                if any(x in planned_course_ids for x in candidates):
+                    matched.append(cid)
             sat = len(matched) >= needed and len(basket_course_ids) >= needed
             basket_results.append(
                 {
@@ -5961,28 +6047,27 @@ def design_checklist(
             required_semester_min = link.required_semester_min
             required_semester_max = link.required_semester_max
             substitutes = req_subs.get(cid, set())
-            primary_planned = cid in planned_course_ids
+            primary_candidates = placeholder_candidate_course_ids(req_id, cid)
+            primary_planned_ids = [x for x in primary_candidates if x in planned_course_ids]
             planned_substitutes = [s for s in substitutes if s in planned_course_ids]
             has_constraints = required_semester is not None or required_semester_min is not None or required_semester_max is not None
             if not has_constraints:
-                if primary_planned or planned_substitutes:
+                if primary_planned_ids or planned_substitutes:
                     matched_course_ids.append(cid)
                 continue
-            def semester_ok(sem: int) -> bool:
-                if required_semester is not None and sem != required_semester:
-                    return False
-                if required_semester_min is not None and sem < required_semester_min:
-                    return False
-                if required_semester_max is not None and sem > required_semester_max:
-                    return False
-                return True
-            primary_ok = primary_planned and any(semester_ok(s) for s in planned_course_semesters.get(cid, set()))
-            substitute_ok = any(any(semester_ok(s) for s in planned_course_semesters.get(sub_id, set())) for sub_id in planned_substitutes)
+            primary_ok = any(
+                any(sem_ok(s, required_semester, required_semester_min, required_semester_max) for s in planned_course_semesters.get(pid, set()))
+                for pid in primary_planned_ids
+            )
+            substitute_ok = any(
+                any(sem_ok(s, required_semester, required_semester_min, required_semester_max) for s in planned_course_semesters.get(sub_id, set()))
+                for sub_id in planned_substitutes
+            )
             if primary_ok or substitute_ok:
                 matched_course_ids.append(cid)
                 continue
-            if primary_planned or planned_substitutes:
-                option_ids = [cid, *planned_substitutes]
+            if primary_planned_ids or planned_substitutes:
+                option_ids = [*primary_planned_ids, *planned_substitutes]
                 option_nums = [course_num_by_id.get(x, x) for x in option_ids]
                 parts = []
                 if required_semester is not None:

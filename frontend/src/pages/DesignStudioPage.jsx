@@ -4,6 +4,7 @@ import { AutoComplete, Button, Card, Input, InputNumber, List, Modal, Select, Sp
 import { formatRequirementName, normalizeStatusToken, withDot } from "./designStudioUtils";
 import {
   isFullChoiceGroupSelection,
+  resolveCourseIdFromToken,
   normalizeCoreRuleCourseNumbers,
 } from "./coreRulesUtils";
 import { buildCoreRuleRequirementMeta, buildInitialCoreRuleRows } from "./coreRulesBuilderUtils";
@@ -47,6 +48,10 @@ const CANVAS_GRID = [
   [6, 7, 8, 9, 10],
   [1, 2, 3, 4, 5],
   [null, null, null, null, 0],
+];
+const CANVAS_GRID_SEMESTERS_ONLY = [
+  [1, 6, 11, 16],
+  [2, 7, 12, 17],
 ];
 const VALIDATION_DOMAIN_ORDER = [
   "Residency and Graduation",
@@ -232,10 +237,15 @@ function ScrollPane({ maxHeight = 560, children }) {
     </div>
   );
 }
+function stopTreeActionMouseDown(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
 
 export function DesignStudioPage() {
   const qc = useQueryClient();
   const treeExpandInitVersionRef = useRef(null);
+  const validationExpandInitVersionRef = useRef(null);
   const [commentText, setCommentText] = useState("");
   const [changeTitle, setChangeTitle] = useState("");
   const [selectedVersionId, setSelectedVersionId] = useState();
@@ -244,8 +254,8 @@ export function DesignStudioPage() {
   const [selectedSavedDatasetId, setSelectedSavedDatasetId] = useState();
   const [selectedSuggestedSequenceId, setSelectedSuggestedSequenceId] = useState();
   const datasetImportInputRef = useRef(null);
-  const [canvasViewMode, setCanvasViewMode] = useState("STANDARD");
-  const [courseTitleHoverEnabled, setCourseTitleHoverEnabled] = useState(false);
+  const [canvasViewMode, setCanvasViewMode] = useState("SIMPLIFIED");
+  const [courseTitleHoverEnabled, setCourseTitleHoverEnabled] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addSemester, setAddSemester] = useState();
   const [addCourseId, setAddCourseId] = useState();
@@ -267,6 +277,8 @@ export function DesignStudioPage() {
   const [rulesetCoreTrack, setRulesetCoreTrack] = useState("");
   const [rulesetFilter, setRulesetFilter] = useState("ALL");
   const [canvasFilter, setCanvasFilter] = useState("ALL");
+  const [showCanvasBlock, setShowCanvasBlock] = useState(false);
+  const [hideSummerPeriods, setHideSummerPeriods] = useState(true);
   const [selectedRuleNodeId, setSelectedRuleNodeId] = useState();
   const [editReqName, setEditReqName] = useState("");
   const [editReqLogic, setEditReqLogic] = useState("ALL_REQUIRED");
@@ -312,10 +324,12 @@ export function DesignStudioPage() {
   const [courseSearchValue, setCourseSearchValue] = useState("");
   const [newCourseModalOpen, setNewCourseModalOpen] = useState(false);
   const [newCourseBusy, setNewCourseBusy] = useState(false);
+  const [courseDeleteBusy, setCourseDeleteBusy] = useState(false);
   const [newCourseForm, setNewCourseForm] = useState({
     course_number: "",
     title: "",
     credit_hours: "3",
+    period_count: "",
     designated_semester: null,
     offered_periods_json: "",
     standing_requirement: "",
@@ -353,6 +367,8 @@ export function DesignStudioPage() {
   const [editRuleConfig, setEditRuleConfig] = useState("{}");
   const [validationDomainFilter, setValidationDomainFilter] = useState("ALL");
   const [validationTreeExpandedKeys, setValidationTreeExpandedKeys] = useState([]);
+  const [checklistLoaded, setChecklistLoaded] = useState(false);
+  const [feasibilityLoaded, setFeasibilityLoaded] = useState(false);
   const [ruleModalOpen, setRuleModalOpen] = useState(false);
   const [ruleModalEditId, setRuleModalEditId] = useState();
   const [ruleFormName, setRuleFormName] = useState("");
@@ -372,6 +388,7 @@ export function DesignStudioPage() {
   });
   const [courseSchedulingForm, setCourseSchedulingForm] = useState({
     credit_hours: "",
+    period_count: "",
     designated_semester: null,
     offered_periods_json: "",
     standing_requirement: "",
@@ -440,6 +457,9 @@ export function DesignStudioPage() {
   function normalizeCourseNumber(value) {
     return String(value || "").toUpperCase().replace(/\s+/g, " ").trim();
   }
+  function normalizeCourseNumberForSave(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
   const versionsQ = useQuery({ queryKey: ["versions"], queryFn: () => authed("/versions") });
   const selectedVersion = useMemo(() => {
     const versions = versionsQ.data || [];
@@ -459,6 +479,8 @@ export function DesignStudioPage() {
   useEffect(() => {
     setSelectedSavedDatasetId(undefined);
     setSelectedSuggestedSequenceId(undefined);
+    setChecklistLoaded(false);
+    setFeasibilityLoaded(false);
   }, [selectedVersion?.id]);
 
   const canvasQ = useQuery({
@@ -498,7 +520,10 @@ export function DesignStudioPage() {
   const requirementsTreeQ = useQuery({
     queryKey: ["requirements-tree", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
-    queryFn: () => authed(`/design/requirements/tree/${selectedVersion.id}`)
+    queryFn: () => authed(`/design/requirements/tree/${selectedVersion.id}`),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const commentsQ = useQuery({
     queryKey: ["comments", selectedVersion?.id],
@@ -581,16 +606,20 @@ export function DesignStudioPage() {
   });
   const checklistQ = useQuery({
     queryKey: ["design-checklist", selectedVersion?.id, checklistProgramIds],
-    enabled: !!selectedVersion?.id,
+    enabled: !!selectedVersion?.id && checklistLoaded,
     queryFn: () =>
       authed(
         `/design/checklist/${selectedVersion.id}?program_ids=${encodeURIComponent((checklistProgramIds || []).join(","))}&include_core=true`
-      )
+      ),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const feasibilityQ = useQuery({
     queryKey: ["design-feasibility", selectedVersion?.id],
-    enabled: !!selectedVersion?.id,
-    queryFn: () => authed(`/design/feasibility/${selectedVersion.id}`)
+    enabled: !!selectedVersion?.id && feasibilityLoaded,
+    queryFn: () => authed(`/design/feasibility/${selectedVersion.id}`),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const requirementsListQ = useQuery({
     queryKey: ["requirements-list", selectedVersion?.id],
@@ -601,6 +630,9 @@ export function DesignStudioPage() {
     queryKey: ["requirement-fulfillment-version", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/requirements/fulfillment/version/${selectedVersion.id}`),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const requirementSubstitutionsQ = useQuery({
     queryKey: ["requirement-substitutions", reqCourseRequirementId],
@@ -611,16 +643,25 @@ export function DesignStudioPage() {
     queryKey: ["requirement-substitutions-version", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/requirements/substitutions/version/${selectedVersion.id}`),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const basketsQ = useQuery({
     queryKey: ["baskets", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/baskets?version_id=${selectedVersion.id}`),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const basketSubstitutionsVersionQ = useQuery({
     queryKey: ["basket-substitutions-version", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/baskets/substitutions/version/${selectedVersion.id}`),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   useEffect(() => {
@@ -630,6 +671,7 @@ export function DesignStudioPage() {
       setCourseGeneralForm({ course_number: "", title: "" });
       setCourseSchedulingForm({
         credit_hours: "",
+        period_count: "",
         designated_semester: null,
         offered_periods_json: "",
         standing_requirement: "",
@@ -645,6 +687,7 @@ export function DesignStudioPage() {
     });
     setCourseSchedulingForm({
       credit_hours: scheduling?.credit_hours == null ? "" : String(scheduling.credit_hours),
+      period_count: scheduling?.period_count == null ? "" : String(scheduling.period_count),
       designated_semester: scheduling?.designated_semester ?? null,
       offered_periods_json: String(scheduling?.offered_periods_json || ""),
       standing_requirement: String(scheduling?.standing_requirement || ""),
@@ -1817,9 +1860,13 @@ export function DesignStudioPage() {
     if (!selectedCourseId || !courseDetailQ.data?.general?.version_id) return;
     const payload = {
       version_id: courseDetailQ.data.general.version_id,
-      course_number: normalizeCourseNumber(courseGeneralForm.course_number),
+      course_number: normalizeCourseNumberForSave(courseGeneralForm.course_number),
       title: String(courseGeneralForm.title || "").trim(),
       credit_hours: Number(courseSchedulingForm.credit_hours || 0),
+      period_count:
+        courseSchedulingForm.period_count == null || String(courseSchedulingForm.period_count).trim() === ""
+          ? null
+          : Number(courseSchedulingForm.period_count),
       designated_semester:
         courseSchedulingForm.designated_semester == null || courseSchedulingForm.designated_semester === ""
           ? null
@@ -1830,8 +1877,14 @@ export function DesignStudioPage() {
       min_section_size: Number(courseSchedulingForm.min_section_size || 0),
       ownership_code: String(courseSchedulingForm.ownership_code || "DF"),
     };
-    if (!payload.course_number || !payload.title || Number.isNaN(payload.credit_hours) || Number.isNaN(payload.min_section_size)) {
-      window.alert("Please provide valid values for course number, title, credit hours, and minimum section size.");
+    if (
+      !payload.course_number
+      || !payload.title
+      || Number.isNaN(payload.credit_hours)
+      || Number.isNaN(payload.min_section_size)
+      || (payload.period_count != null && Number.isNaN(payload.period_count))
+    ) {
+      window.alert("Please provide valid values for course number, title, credit hours, period count, and minimum section size.");
       return;
     }
     setCourseSaveBusy(true);
@@ -1854,9 +1907,13 @@ export function DesignStudioPage() {
     if (!selectedVersion?.id) return;
     const payload = {
       version_id: selectedVersion.id,
-      course_number: normalizeCourseNumber(newCourseForm.course_number),
+      course_number: normalizeCourseNumberForSave(newCourseForm.course_number),
       title: String(newCourseForm.title || "").trim(),
       credit_hours: Number(newCourseForm.credit_hours || 0),
+      period_count:
+        newCourseForm.period_count == null || String(newCourseForm.period_count).trim() === ""
+          ? null
+          : Number(newCourseForm.period_count),
       designated_semester:
         newCourseForm.designated_semester == null || newCourseForm.designated_semester === ""
           ? null
@@ -1867,8 +1924,14 @@ export function DesignStudioPage() {
       min_section_size: Number(newCourseForm.min_section_size || 0),
       ownership_code: String(newCourseForm.ownership_code || "DF"),
     };
-    if (!payload.course_number || !payload.title || Number.isNaN(payload.credit_hours) || Number.isNaN(payload.min_section_size)) {
-      window.alert("Please provide valid values for course number, title, credit hours, and minimum section size.");
+    if (
+      !payload.course_number
+      || !payload.title
+      || Number.isNaN(payload.credit_hours)
+      || Number.isNaN(payload.min_section_size)
+      || (payload.period_count != null && Number.isNaN(payload.period_count))
+    ) {
+      window.alert("Please provide valid values for course number, title, credit hours, period count, and minimum section size.");
       return;
     }
     setNewCourseBusy(true);
@@ -1883,6 +1946,7 @@ export function DesignStudioPage() {
         course_number: "",
         title: "",
         credit_hours: "3",
+        period_count: "",
         designated_semester: null,
         offered_periods_json: "",
         standing_requirement: "",
@@ -2302,7 +2366,9 @@ export function DesignStudioPage() {
       const groups = cfg.required_core_groups || [];
       const usedSlotsByReq = {};
       for (const g of groups) {
-        const selected = Array.from(new Set((g.course_numbers || []).map(resolveCourseIdFromToken).filter(Boolean)));
+        const selected = Array.from(new Set((g.course_numbers || [])
+          .map((token) => resolveCourseIdFromToken(token, coreRuleNormalizeDeps))
+          .filter(Boolean)));
         if (!selected.length) continue;
         let reqId = g.source_requirement_id || g.requirement_id || null;
         let slotIndex = Number(g.slot_index || 0);
@@ -2381,6 +2447,28 @@ export function DesignStudioPage() {
     setCoreRulesReqMeta(reqMeta);
     setCoreRulesRows(rows);
     setCoreRulesModalOpen(true);
+  }
+
+  async function deleteSelectedCourse() {
+    if (!selectedCourseId) return;
+    const selected = (coursesQ.data || []).find((c) => c.id === selectedCourseId);
+    const label = selected ? `${selected.course_number} - ${selected.title}` : "selected course";
+    if (!window.confirm(`Delete course: ${label}? This cannot be undone.`)) return;
+    setCourseDeleteBusy(true);
+    try {
+      await authed(`/courses/${selectedCourseId}`, { method: "DELETE" });
+      setSelectedCourseId(undefined);
+      setCourseSearchValue("");
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["courses", selectedVersion?.id] }),
+        qc.invalidateQueries({ queryKey: ["course-detail", selectedCourseId] }),
+        qc.invalidateQueries({ queryKey: ["course-buckets", selectedCourseId] }),
+        qc.invalidateQueries({ queryKey: ["course-fulfillment", selectedCourseId] }),
+        qc.invalidateQueries({ queryKey: ["substitutions", selectedCourseId] }),
+      ]);
+    } finally {
+      setCourseDeleteBusy(false);
+    }
   }
 
   async function saveCoreRulesBuilder() {
@@ -2890,10 +2978,26 @@ export function DesignStudioPage() {
     }
     return map;
   }, [coursesQ.data]);
+  const courseTitleById = useMemo(() => {
+    const map = {};
+    for (const c of coursesQ.data || []) {
+      if (c.id) map[c.id] = String(c.title || "");
+    }
+    return map;
+  }, [coursesQ.data]);
+  function resolveCourseShortTitle(courseId, courseNumber, fallbackTitle) {
+    const direct = String(fallbackTitle || "").trim();
+    if (direct) return direct;
+    if (courseId && courseTitleById[courseId]) return courseTitleById[courseId];
+    const code = String(courseNumber || "").trim();
+    if (code && courseTitleByNumber[normalizeCourseNumber(code)]) return courseTitleByNumber[normalizeCourseNumber(code)];
+    if (code && courseTitleById[code]) return courseTitleById[code];
+    return "";
+  }
   function renderCourseCodeWithHover(courseNumber) {
     const code = String(courseNumber || "").trim();
     if (!code) return <span>Missing course</span>;
-    const title = courseTitleByNumber[normalizeCourseNumber(code)];
+    const title = resolveCourseShortTitle(undefined, code, "");
     const enabled = courseTitleHoverEnabled || canvasViewMode === "VERBOSE";
     if (!enabled || !title) return <span>{code}</span>;
     return (
@@ -3207,8 +3311,10 @@ export function DesignStudioPage() {
   }, [requirementNodeMap, rulesetFilter]);
   const filteredTree = useMemo(() => {
     const selectedFilter = rulesetFilter || "ALL";
+    if (selectedFilter === "ALL") {
+      return requirementsTreeQ.data?.tree || [];
+    }
     function includeNode(n) {
-      if (selectedFilter === "ALL") return true;
       if (selectedFilter === "CORE_ALL") return !n.program_id && (n.category || "").toUpperCase() === "CORE";
       if (selectedFilter.startsWith("CORE_TRACK:")) return (n.category || "").toUpperCase() === "CORE" && (n.track_name || "") === selectedFilter.replace("CORE_TRACK:", "");
       if (selectedFilter === "MAJOR_ALL") return n.program_type === "MAJOR" || (n.category || "").toUpperCase() === "MAJOR";
@@ -3228,11 +3334,11 @@ export function DesignStudioPage() {
     return (requirementsTreeQ.data?.tree || []).map(filterNode).filter(Boolean);
   }, [requirementsTreeQ.data, rulesetFilter]);
 
-  const integratedTreeData = useMemo(() => {
-    const mappedByReq = {};
+  const mappedByReq = useMemo(() => {
+    const out = {};
     for (const m of requirementFulfillmentVersionQ.data || []) {
-      mappedByReq[m.requirement_id] = mappedByReq[m.requirement_id] || [];
-      mappedByReq[m.requirement_id].push({
+      out[m.requirement_id] = out[m.requirement_id] || [];
+      out[m.requirement_id].push({
         id: m.id,
         course_id: m.course_id,
         course_number: m.course_number,
@@ -3242,18 +3348,24 @@ export function DesignStudioPage() {
         required_semester_max: m.required_semester_max,
       });
     }
-    const substitutionMap = {};
+    return out;
+  }, [requirementFulfillmentVersionQ.data]);
+  const substitutionMap = useMemo(() => {
+    const out = {};
     for (const s of requirementSubstitutionsVersionQ.data || []) {
       const req = s.requirement_id;
-      if (!substitutionMap[req]) substitutionMap[req] = {};
-      if (!substitutionMap[req][s.primary_course_id]) substitutionMap[req][s.primary_course_id] = new Set();
-      substitutionMap[req][s.primary_course_id].add(s.substitute_course_id);
+      if (!out[req]) out[req] = {};
+      if (!out[req][s.primary_course_id]) out[req][s.primary_course_id] = new Set();
+      out[req][s.primary_course_id].add(s.substitute_course_id);
       if (s.is_bidirectional) {
-        if (!substitutionMap[req][s.substitute_course_id]) substitutionMap[req][s.substitute_course_id] = new Set();
-        substitutionMap[req][s.substitute_course_id].add(s.primary_course_id);
+        if (!out[req][s.substitute_course_id]) out[req][s.substitute_course_id] = new Set();
+        out[req][s.substitute_course_id].add(s.primary_course_id);
       }
     }
-    const coreRulesByProgram = {};
+    return out;
+  }, [requirementSubstitutionsVersionQ.data]);
+  const coreRulesByProgram = useMemo(() => {
+    const out = {};
     for (const r of validationRulesQ.data || []) {
       let cfg = {};
       try {
@@ -3265,17 +3377,33 @@ export function DesignStudioPage() {
       if (!["MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"].includes(t)) continue;
       const pid = cfg.program_id || null;
       const pname = String(cfg.program_name || "");
-      if (pid) coreRulesByProgram[`id:${pid}`] = { rule: r, groups: cfg.required_core_groups || [] };
-      if (pname) coreRulesByProgram[`name:${pname.toLowerCase()}`] = { rule: r, groups: cfg.required_core_groups || [] };
+      if (pid) out[`id:${pid}`] = { rule: r, groups: cfg.required_core_groups || [] };
+      if (pname) out[`name:${pname.toLowerCase()}`] = { rule: r, groups: cfg.required_core_groups || [] };
     }
+    return out;
+  }, [validationRulesQ.data]);
+  const coreRuleNormalizeDeps = useMemo(
+    () => ({
+      courseMapById,
+      courseIdByNumber,
+      courseIdByNormalizedNumber,
+      normalizeCourseNumber,
+    }),
+    [courseMapById, courseIdByNumber, courseIdByNormalizedNumber]
+  );
+  const integratedTreeData = useMemo(() => {
+    const expandedSet = new Set((treeExpandedKeys || []).map((k) => String(k)));
     function mapNode(n) {
+      const isExpanded = expandedSet.has(String(n.id));
       const canAddSubNode = !n.parent_requirement_id;
       const isProgramNode = ["MAJOR", "MINOR"].includes(String(n.category || "").toUpperCase());
+      const reqLabel = `${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n, requirementOptionTotal(n))}`;
+      const showActions = isExpanded || selectedRuleNodeId === n.id;
       const reqNode = {
         key: n.id,
-        title: (
+        title: showActions ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
-            <span>{`${n.node_code ? `${withDot(n.node_code)} ` : ""}${formatRequirementName(n.name, n.logic_type, n.pick_n, requirementOptionTotal(n))}`}</span>
+            <span>{reqLabel}</span>
             <Space size={4} className="tree-node-actions">
               {canAddSubNode ? (
                 <Button
@@ -3303,6 +3431,7 @@ export function DesignStudioPage() {
                 <Button
                   size="small"
                   type="primary"
+                  onMouseDown={stopTreeActionMouseDown}
                   onClick={(e) => {
                     e.stopPropagation();
                     openCoreRulesBuilder(n.program_id, n.program_name);
@@ -3332,12 +3461,72 @@ export function DesignStudioPage() {
               </Button>
             </Space>
           </div>
-        ),
+        ) : <span>{reqLabel}</span>,
         children: [],
       };
+      const coreRulesKey = n.program_id
+        ? `id:${n.program_id}`
+        : n.program_name
+          ? `name:${String(n.program_name).toLowerCase()}`
+          : null;
+      const coreRuleEntry = coreRulesKey ? coreRulesByProgram[coreRulesKey] : null;
+      if (!isExpanded) {
+        const childReqCount = (n.children || []).length;
+        const basketCount = (n.baskets || []).length;
+        const sourceCoursesCollapsed =
+          (mappedByReq[n.id] && mappedByReq[n.id].length ? mappedByReq[n.id] : null) ||
+          (n.courses && n.courses.length ? n.courses : []);
+        const courseCount = (sourceCoursesCollapsed || []).length;
+        const coreGroupCount = (isProgramNode && !n.parent_requirement_id && coreRuleEntry)
+          ? (coreRuleEntry.groups || []).length
+          : 0;
+        const placeholderChildren = [];
+        if (coreGroupCount > 0) {
+          placeholderChildren.push({
+            key: `summary:core-rules:${n.id}`,
+            title: <span style={{ color: "#999" }}>Core Rules ({coreGroupCount})</span>,
+            isLeaf: true,
+            selectable: false,
+            disableCheckbox: true,
+            draggable: false,
+          });
+        }
+        if (basketCount > 0) {
+          placeholderChildren.push({
+            key: `summary:baskets:${n.id}`,
+            title: <span style={{ color: "#999" }}>Baskets ({basketCount})</span>,
+            isLeaf: true,
+            selectable: false,
+            disableCheckbox: true,
+            draggable: false,
+          });
+        }
+        if (courseCount > 0) {
+          placeholderChildren.push({
+            key: `summary:courses:${n.id}`,
+            title: <span style={{ color: "#999" }}>Courses ({courseCount})</span>,
+            isLeaf: true,
+            selectable: false,
+            disableCheckbox: true,
+            draggable: false,
+          });
+        }
+        if (childReqCount > 0) {
+          placeholderChildren.push({
+            key: `summary:children:${n.id}`,
+            title: <span style={{ color: "#999" }}>Sub Nodes ({childReqCount})</span>,
+            isLeaf: true,
+            selectable: false,
+            disableCheckbox: true,
+            draggable: false,
+          });
+        }
+        reqNode.children = placeholderChildren;
+        return reqNode;
+      }
       const childReqs = (n.children || []).map(mapNode);
-      const basketLeaves = (n.baskets || []).map((b) => ({
-        key: `basket:${b.id}`,
+      const basketLeaves = (n.baskets || []).map((b, bIdx) => ({
+        key: `basket:${n.id}:${b.id || b.basket_id || bIdx}`,
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
             <span>{`${b.basket_name || "Basket"} (${b.min_count || 1}/${(b.courses || []).length})`}</span>
@@ -3378,8 +3567,8 @@ export function DesignStudioPage() {
             basketSubRows,
             fallbackReqSubRows,
             courseMapById,
-          }).map((row) => ({
-            key: row.key,
+          }).map((row, rowIdx) => ({
+            key: `basket-row:${n.id}:${b.id || b.basket_id || bIdx}:${row.key || rowIdx}`,
             title: renderCourseCodeSeries(row.titleParts || []),
             isLeaf: true,
             selectable: false,
@@ -3396,8 +3585,8 @@ export function DesignStudioPage() {
         String(a?.course_number || a?.course_title || "")
           .localeCompare(String(b?.course_number || b?.course_title || ""), undefined, { sensitivity: "base" })
       );
-      const courseLeaves = sortedSourceCourses.map((c) => ({
-        key: `course:${c.id}`,
+      const courseLeaves = sortedSourceCourses.map((c, cIdx) => ({
+        key: `course:${n.id}:${c.id || c.course_id || c.course_number || cIdx}`,
         title: (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
             <span>
@@ -3460,16 +3649,10 @@ export function DesignStudioPage() {
         disableCheckbox: true,
         selectable: false,
       }));
-      const coreRulesKey = n.program_id
-        ? `id:${n.program_id}`
-        : n.program_name
-          ? `name:${String(n.program_name).toLowerCase()}`
-          : null;
-      const coreRuleEntry = coreRulesKey ? coreRulesByProgram[coreRulesKey] : null;
       let coreRuleNode = null;
       if (isProgramNode && !n.parent_requirement_id && coreRuleEntry) {
         const groupLeaves = (coreRuleEntry.groups || []).map((g, idx) => ({
-          key: `core-rule-group:${n.id}:${idx}`,
+          key: `core-rule-group:${n.id}:${g.source_requirement_id || "req"}:${idx}`,
           title: (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
               <Space>
@@ -3488,7 +3671,7 @@ export function DesignStudioPage() {
                     const slotLabel = showChoice ? ` - Choice ${Number(g.slot_index) + 1}` : "";
                     return `${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${srcName}${slotLabel}: `;
                   })()}
-                  {renderCourseCodeSeries(normalizeCoreRuleCourseNumbers(g.course_numbers || [], coreRuleHelperDeps))}
+                  {renderCourseCodeSeries(normalizeCoreRuleCourseNumbers(g.course_numbers || [], coreRuleNormalizeDeps))}
                 </span>
                 {formatSemesterConstraint(g) ? <Tag>{formatSemesterConstraint(g)}</Tag> : null}
               </Space>
@@ -3517,6 +3700,7 @@ export function DesignStudioPage() {
               <Space className="tree-node-actions">
                 <Button
                   size="small"
+                  onMouseDown={stopTreeActionMouseDown}
                   onClick={(e) => {
                     e.stopPropagation();
                     openCoreRulesBuilder(n.program_id, n.program_name);
@@ -3550,7 +3734,7 @@ export function DesignStudioPage() {
       return reqNode;
     }
     return filteredTree.map(mapNode);
-  }, [filteredTree, requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, courseMapById, courseIdByNumber, requirementById, validationRulesQ.data, treeExpandedKeys]);
+  }, [filteredTree, mappedByReq, substitutionMap, coreRulesByProgram, coreRuleNormalizeDeps, courseMapById, courseIdByNumber, requirementById, selectedRuleNodeId, treeExpandedKeys]);
   const coreRequirementTimingByCourse = useMemo(() => {
     const out = {};
     for (const row of requirementFulfillmentVersionQ.data || []) {
@@ -4016,10 +4200,9 @@ export function DesignStudioPage() {
     const vid = selectedVersion?.id || null;
     if (!vid) return;
     if (treeExpandInitVersionRef.current === vid) return;
-    if (!(filteredTree || []).length) return;
     treeExpandInitVersionRef.current = vid;
-    // Initialize once per version; do not auto-expand on local tree mutations.
-    setTreeExpandedKeys((filteredTree || []).map((n) => n.id));
+    // Initialize once per version in collapsed state to keep first render light.
+    setTreeExpandedKeys([]);
   }, [selectedVersion?.id, filteredTree]);
 
   useEffect(() => {
@@ -4031,8 +4214,12 @@ export function DesignStudioPage() {
     qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] });
   }, [requirementsTreeQ.dataUpdatedAt, validationRulesQ.dataUpdatedAt, selectedVersion?.id]);
   useEffect(() => {
-    setValidationTreeExpandedKeys(validationTopKeys);
-  }, [validationTopKeys]);
+    const vid = selectedVersion?.id || null;
+    if (!vid) return;
+    if (validationExpandInitVersionRef.current === vid) return;
+    validationExpandInitVersionRef.current = vid;
+    setValidationTreeExpandedKeys([]);
+  }, [selectedVersion?.id]);
 
   const isReqEditMode = !!selectedRuleNodeId;
   const isSubNodeCreate = !isReqEditMode && reqScopeLocked && !!editReqParentId;
@@ -4192,15 +4379,6 @@ export function DesignStudioPage() {
       </Space>
     );
   }
-  const coreRuleHelperDeps = useMemo(
-    () => ({
-      courseMapById,
-      courseIdByNumber,
-      courseIdByNormalizedNumber,
-      normalizeCourseNumber,
-    }),
-    [courseMapById, courseIdByNumber, courseIdByNormalizedNumber]
-  );
   function requirementOptionTotal(node) {
     if (!node) return 0;
     const mappedRows = (requirementFulfillmentVersionQ.data || []).filter((m) => m.requirement_id === node.id);
@@ -4421,7 +4599,7 @@ export function DesignStudioPage() {
           <Typography.Text>
             Selected version: <b>{selectedVersion?.name || "None"}</b>
           </Typography.Text>
-          <Space>
+          <Space wrap style={{ width: "100%" }}>
             <Select
               style={{ width: 320 }}
               placeholder="Curriculum version"
@@ -4447,7 +4625,7 @@ export function DesignStudioPage() {
                 { value: "VERBOSE", label: "Verbose" },
               ]}
             />
-            <Space size={6}>
+            <Space size={6} style={{ whiteSpace: "nowrap" }}>
               <Typography.Text type="secondary">Hover short titles</Typography.Text>
               <Switch checked={showCourseTitleHover} onChange={setCourseTitleHoverEnabled} disabled={isVerboseCanvas} />
             </Space>
@@ -4545,8 +4723,20 @@ export function DesignStudioPage() {
           </Space>
         </Space>
       </Card>
-      <div className="timeline-grid">
-        {CANVAS_GRID.flatMap((row, rowIdx) =>
+      <Space style={{ width: "100%", justifyContent: "flex-end" }} wrap>
+        <Button size="small" onClick={() => setHideSummerPeriods((v) => !v)}>
+          {hideSummerPeriods ? "Show Summers" : "Hide Summers"}
+        </Button>
+        <Button size="small" onClick={() => setShowCanvasBlock((v) => !v)}>
+          {showCanvasBlock ? "Hide Canvas" : "Show Canvas"}
+        </Button>
+      </Space>
+      {showCanvasBlock ? (
+      <div
+        className="timeline-grid"
+        style={{ gridTemplateColumns: `repeat(${hideSummerPeriods ? 4 : 5}, minmax(0, 1fr))` }}
+      >
+        {(hideSummerPeriods ? CANVAS_GRID_SEMESTERS_ONLY : CANVAS_GRID).flatMap((row, rowIdx) =>
           row.map((periodIdx, colIdx) => {
             if (periodIdx == null) {
               return <div key={`blank-${rowIdx}-${colIdx}`} className="timeline-blank-cell" />;
@@ -4575,7 +4765,11 @@ export function DesignStudioPage() {
                 {periodCourses.map((course) => (
                   <Tooltip
                     key={course.plan_item_id}
-                    title={showCourseTitleHover ? (course.title || "No short title") : null}
+                    title={
+                      showCourseTitleHover
+                        ? (resolveCourseShortTitle(course.course_id, course.course_number, course.title) || "No short title")
+                        : null
+                    }
                   >
                     {isSimplifiedCanvas ? (
                       <div
@@ -4627,7 +4821,9 @@ export function DesignStudioPage() {
 		                      </Space>
                         {isVerboseCanvas && (
                           <Space>
-                            <Typography.Text type="secondary">{course.title}</Typography.Text>
+                            <Typography.Text type="secondary">
+                              {resolveCourseShortTitle(course.course_id, course.course_number, course.title) || "No short title"}
+                            </Typography.Text>
                             <Tag color="blue">{aspectLabel(course)}</Tag>
                             {course.major_program_name && <Tag color="geekblue">{course.major_program_name}</Tag>}
                           </Space>
@@ -4642,8 +4838,21 @@ export function DesignStudioPage() {
           })
         )}
       </div>
+      ) : null}
       <Card title="Course of Study Feasibility (Core + Selected Majors And Minors)">
         <Space direction="vertical" style={{ width: "100%" }}>
+          <Space>
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => {
+                setChecklistLoaded(true);
+                checklistQ.refetch();
+              }}
+            >
+              {checklistLoaded ? "Refresh Course of Study Feasibility" : "Load Course of Study Feasibility"}
+            </Button>
+          </Space>
           <Select
             mode="multiple"
             allowClear
@@ -4653,9 +4862,9 @@ export function DesignStudioPage() {
             onChange={setChecklistProgramIds}
             options={checklistProgramOptions}
           />
-          <Typography.Text type="secondary">
-            Program Designer rules are checked first. Validation rule line items are listed separately below.
-          </Typography.Text>
+          {checklistLoaded && checklistQ.isLoading ? <Typography.Text type="secondary">Loading...</Typography.Text> : null}
+          {!checklistLoaded ? null : (
+            <>
           {selectedChecklistFeasibility?.status === "FAIL" ? (
             <Space>
               <Tag style={STATUS_TAG_STYLE_SHORT} color="red">FAIL</Tag>
@@ -4678,10 +4887,27 @@ export function DesignStudioPage() {
           <div style={{ overflowX: "auto", overflowY: "auto", maxHeight: "34vh", paddingRight: 4 }}>
             {renderValidationLineItems(checklistValidationItems, "No validation findings for current course of study.")}
           </div>
+            </>
+          )}
         </Space>
       </Card>
       <Card title="Program Feasibility">
         <Space direction="vertical" style={{ width: "100%" }}>
+          <Space>
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => {
+                setFeasibilityLoaded(true);
+                feasibilityQ.refetch();
+              }}
+            >
+              {feasibilityLoaded ? "Refresh Program Feasibility" : "Load Program Feasibility"}
+            </Button>
+          </Space>
+          {feasibilityLoaded && feasibilityQ.isLoading ? <Typography.Text type="secondary">Loading...</Typography.Text> : null}
+          {!feasibilityLoaded ? null : (
+            <>
           <Space>
             <Tag style={STATUS_TAG_STYLE_SHORT} color="green">{`PASS ${feasibilityQ.data?.summary?.pass ?? 0}`}</Tag>
             <Tag style={STATUS_TAG_STYLE_SHORT} color="orange">{`WARN ${feasibilityQ.data?.summary?.warning ?? 0}`}</Tag>
@@ -4727,6 +4953,8 @@ export function DesignStudioPage() {
               ),
             }}
           />
+            </>
+          )}
         </Space>
       </Card>
       <Modal
@@ -5531,11 +5759,8 @@ export function DesignStudioPage() {
       </Modal>
       <Card title="Program Design Rules (Core, Majors, and Minors)">
         <Space direction="vertical" style={{ width: "100%" }}>
-          <Typography.Text type="secondary">
-            Define reusable core/major/minor requirement nodes and map courses directly to each node.
-          </Typography.Text>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <Space>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <Space wrap>
               <Select
                 showSearch
                 optionFilterProp="label"
@@ -5554,12 +5779,13 @@ export function DesignStudioPage() {
                 Collapse All
               </Button>
             </Space>
-            <Button type="primary" size="small" onClick={openNewRequirementEditor}>
+            <Button type="primary" size="small" onClick={openNewRequirementEditor} style={{ marginLeft: "auto" }}>
               Add Node
             </Button>
           </div>
           <ScrollPane maxHeight="68vh">
             <Tree
+              className="program-design-tree"
               treeData={integratedTreeData}
               motion={null}
               draggable
@@ -5575,11 +5801,8 @@ export function DesignStudioPage() {
       </Card>
       <Card title="Validation Rules">
         <Space direction="vertical" style={{ width: "100%" }}>
-          <Typography.Text type="secondary">
-            Define validation rules and categories used by Program Feasibility and Course of Study Feasibility.
-          </Typography.Text>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <Space>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <Space wrap>
               <Select
                 style={{ width: 280 }}
                 value={validationDomainFilter}
@@ -5596,7 +5819,7 @@ export function DesignStudioPage() {
                 Collapse All
               </Button>
             </Space>
-            <Button type="primary" size="small" onClick={openCreateRuleModal}>
+            <Button type="primary" size="small" onClick={openCreateRuleModal} style={{ marginLeft: "auto" }}>
               Add Rule
             </Button>
           </div>
@@ -5724,11 +5947,11 @@ export function DesignStudioPage() {
         </Space>
       </Modal>
       <Card title="Prerequisite Graph">
-        <Space wrap={false} style={{ marginBottom: 10, width: "100%" }}>
+        <Space wrap style={{ marginBottom: 10, width: "100%" }}>
           <AutoComplete
             allowClear
             options={prereqFromOptions}
-            style={{ width: 360 }}
+            style={{ width: 360, minWidth: 260, flex: 1 }}
             placeholder="From course (select or type)"
             value={prereqFromQuery}
             onSearch={setPrereqFromQuery}
@@ -5740,7 +5963,7 @@ export function DesignStudioPage() {
           <AutoComplete
             allowClear
             options={prereqToOptions}
-            style={{ width: 360 }}
+            style={{ width: 360, minWidth: 260, flex: 1 }}
             placeholder="To course (select or type)"
             value={prereqToQuery}
             onSearch={setPrereqToQuery}
@@ -5851,9 +6074,14 @@ export function DesignStudioPage() {
                         placeholder="e.g., Space Systems Design"
                       />
                     </div>
-                    <Button type="primary" loading={courseSaveBusy} onClick={saveCourseDetail}>
-                      Save Course Fields
-                    </Button>
+                    <Space>
+                      <Button type="primary" loading={courseSaveBusy} onClick={saveCourseDetail}>
+                        Save Course Fields
+                      </Button>
+                      <Button danger loading={courseDeleteBusy} onClick={deleteSelectedCourse} disabled={!selectedCourseId}>
+                        Delete Course
+                      </Button>
+                    </Space>
                   </Space>
                 )
               },
@@ -5870,6 +6098,16 @@ export function DesignStudioPage() {
                           setCourseSchedulingForm((s) => ({ ...s, credit_hours: e.target.value }))
                         }
                         placeholder="e.g., 3"
+                      />
+                    </div>
+                    <div>
+                      <Typography.Text type="secondary">Periods (from COI X(Y), Optional)</Typography.Text>
+                      <Input
+                        value={courseSchedulingForm.period_count}
+                        onChange={(e) =>
+                          setCourseSchedulingForm((s) => ({ ...s, period_count: e.target.value }))
+                        }
+                        placeholder="e.g., 2"
                       />
                     </div>
                     <div>
@@ -6358,6 +6596,13 @@ export function DesignStudioPage() {
                 <Input
                   value={newCourseForm.credit_hours}
                   onChange={(e) => setNewCourseForm((s) => ({ ...s, credit_hours: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Typography.Text type="secondary">Periods (from COI X(Y), Optional)</Typography.Text>
+                <Input
+                  value={newCourseForm.period_count}
+                  onChange={(e) => setNewCourseForm((s) => ({ ...s, period_count: e.target.value }))}
                 />
               </div>
               <div>

@@ -34,7 +34,7 @@ MANDATORY_MAIN = [
     "Aero Engr 241",
     "Astr Engr 321",
     "Math 346",
-    "Division Engr 341",
+    "Engr 341",
     "Engr 342",
     "Astr Engr 331",
     "Astr Engr 332",

@@ -23,19 +23,21 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
+
 
 def find_map(db, version_id: str) -> dict[str, str]:
     return {normalize_course_number(c.course_number): c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
 
 
 def opt_ids(course_map: dict[str, str], numbers: list[str]) -> list[str]:
-    out, seen = [], set()
-    for n in numbers:
-        cid = course_map.get(normalize_course_number(n))
-        if cid and cid not in seen:
-            seen.add(cid)
-            out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        course_map,
+        numbers,
+        normalize_course_number,
+        label="minors batch2 course refs",
+    )
 
 
 def ensure_minor(db, version_id: str, name: str) -> AcademicProgram:
@@ -273,4 +275,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

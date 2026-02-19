@@ -25,6 +25,8 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
 PROGRAM_NAME = "Geospatial Science"
 PROGRAM_TYPE = "MAJOR"
 PROGRAM_DIVISION = "SOCIAL_SCIENCES"
@@ -48,13 +50,12 @@ def find_course_ids_by_number(db, version_id: str) -> dict[str, str]:
 
 
 def optional_course_ids(course_map: dict[str, str], numbers: list[str]) -> list[str]:
-    out, seen = [], set()
-    for n in numbers:
-        cid = course_map.get(normalize_course_number(n))
-        if cid and cid not in seen:
-            seen.add(cid)
-            out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        course_map,
+        numbers,
+        normalize_course_number,
+        label="populate_geospatial_science_major_from_coi course refs",
+    )
 
 
 def ensure_program(db, version_id: str) -> AcademicProgram:

@@ -25,6 +25,8 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
 PROGRAM_NAME = "Meteorology"
 PROGRAM_TYPE = "MAJOR"
 PROGRAM_DIVISION = "BASIC_SCIENCES_AND_MATH"
@@ -38,13 +40,12 @@ def find_map(db, version_id: str) -> dict[str, str]:
 
 
 def opt_ids(m: dict[str, str], nums: list[str]) -> list[str]:
-    out, seen = [], set()
-    for n in nums:
-        cid = m.get(normalize_course_number(n))
-        if cid and cid not in seen:
-            seen.add(cid)
-            out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        m,
+        nums,
+        normalize_course_number,
+        label="populate_meteorology_major_from_coi course refs",
+    )
 
 
 def ensure_program(db, version_id: str) -> AcademicProgram:

@@ -26,6 +26,8 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
 
 PROGRAM_NAME = "Foreign Area Studies"
 PROGRAM_TYPE = "MAJOR"
@@ -50,7 +52,7 @@ FAS_ELECTIVES = [
     "English 303", "English 308", "English 350",
     "Philos 391", "Philos 392", "Philos 393", "Philos 401",
     "Mgt 498",
-    "Creative Art 330", "Creative Art 335",
+    "Creat Art 330", "Creat Art 335",
     "Soc Sci 444",
 ]
 
@@ -61,16 +63,12 @@ def find_course_ids_by_number(db, version_id: str) -> dict[str, str]:
 
 
 def optional_course_ids(course_id_by_num: dict[str, str], numbers: list[str]) -> list[str]:
-    seen = set()
-    out: list[str] = []
-    for n in numbers:
-        key = normalize_course_number(n)
-        cid = course_id_by_num.get(key)
-        if not cid or cid in seen:
-            continue
-        seen.add(cid)
-        out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        course_id_by_num,
+        numbers,
+        normalize_course_number,
+        label="populate_foreign_area_studies_major_from_coi course refs",
+    )
 
 
 def ensure_program(db, version_id: str) -> AcademicProgram:

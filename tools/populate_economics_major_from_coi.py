@@ -25,6 +25,8 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
 
 PROGRAM_NAME = "Economics"
 PROGRAM_TYPE = "MAJOR"
@@ -107,16 +109,12 @@ def require_course_ids(course_id_by_num: dict[str, str], numbers: list[str]) -> 
 
 
 def optional_course_ids(course_id_by_num: dict[str, str], numbers: list[str]) -> list[str]:
-    seen = set()
-    out: list[str] = []
-    for n in numbers:
-        key = normalize_course_number(n)
-        cid = course_id_by_num.get(key)
-        if not cid or cid in seen:
-            continue
-        seen.add(cid)
-        out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        course_id_by_num,
+        numbers,
+        normalize_course_number,
+        label="populate_economics_major_from_coi course refs",
+    )
 
 
 def ensure_program(db, version_id: str) -> AcademicProgram:

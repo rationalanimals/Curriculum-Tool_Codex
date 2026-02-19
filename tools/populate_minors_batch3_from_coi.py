@@ -23,19 +23,21 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
+
 
 def find_map(db, version_id: str) -> dict[str, str]:
     return {normalize_course_number(c.course_number): c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
 
 
 def opt_ids(course_map: dict[str, str], numbers: list[str]) -> list[str]:
-    out, seen = [], set()
-    for n in numbers:
-        cid = course_map.get(normalize_course_number(n))
-        if cid and cid not in seen:
-            seen.add(cid)
-            out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        course_map,
+        numbers,
+        normalize_course_number,
+        label="minors batch3 course refs",
+    )
 
 
 def ensure_minor(db, version_id: str, name: str) -> AcademicProgram:
@@ -231,7 +233,7 @@ def populate_sustainability_minor(db, version_id: str, cmap: dict[str, str]) -> 
     attach(db, env_b.id, b_eb, min_count=1)
     env_d = mk_req(db, version_id=version_id, parent_requirement_id=env.id, program_id=p.id, name="Track - Environmental Depth Track: Any One", logic_type="ANY_ONE", pick_n=None, sort_order=1, category="MINOR", major_mode="TRACK", track_name="Environmental Depth Track")
     env_tracks = {
-        "Track - Ecology: All Required": ["Bio 380B", "Bio 481"],
+        "Track - Ecology: All Required": ["Biology 380", "Biology 481"],
         "Track - Climate: All Required": ["Meteor 320", "Meteor 352"],
         "Track - Environmental Geography: All Required": ["Geo 382P", "Geo 366"],
         "Track - Geomorphology: All Required": ["Geo 351", "Geo 353"],
@@ -281,4 +283,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -25,6 +25,8 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
 
 PROGRAM_NAME = "Data Science"
 PROGRAM_TYPE = "MAJOR"

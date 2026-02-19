@@ -24,19 +24,21 @@ from app.main import (  # noqa: E402
     select,
 )
 
+from populate_ref_utils import resolve_course_ids_strict  # noqa: E402
+
+
 
 def find_map(db, version_id: str) -> dict[str, str]:
     return {normalize_course_number(c.course_number): c.id for c in db.scalars(select(Course).where(Course.version_id == version_id)).all()}
 
 
 def opt_ids(course_map: dict[str, str], numbers: list[str]) -> list[str]:
-    out, seen = [], set()
-    for n in numbers:
-        cid = course_map.get(normalize_course_number(n))
-        if cid and cid not in seen:
-            seen.add(cid)
-            out.append(cid)
-    return out
+    return resolve_course_ids_strict(
+        course_map,
+        numbers,
+        normalize_course_number,
+        label="minors batch1 course refs",
+    )
 
 
 def ensure_minor(db, version_id: str, name: str) -> AcademicProgram:
@@ -182,8 +184,8 @@ def populate_aerospace_materials_minor(db, version_id: str, cmap: dict[str, str]
     )
     tracks = {
         "Track - Structural Materials: Pick N": ["Aero Engr 482", "Astr Engr 351", "Chem 465", "Civ Engr 373", "Civ Engr 474", "Mech Engr 350", "Mech Engr 440", "Mech Engr 445", "Mech Engr 450"],
-        "Track - Functional Materials: Pick N": ["Chem 440", "Chem 465", "ECE 321", "ECE 322", "ECE 373", "Mech Engr 440", "Physics 473", "Phys 473"],
-        "Track - Computational Materials & Informatics: Pick N": ["Chem 440", "Chem 465", "Comp Sci 362", "Comp Sci 471", "Math 346", "Math 378", "Physics 473", "Phys 473"],
+        "Track - Functional Materials: Pick N": ["Chem 440", "Chem 465", "ECE 321", "ECE 322", "ECE 373", "Mech Engr 440", "Physics 473", "Physics 473"],
+        "Track - Computational Materials & Informatics: Pick N": ["Chem 440", "Chem 465", "Comp Sci 362", "Comp Sci 471", "Math 346", "Math 378", "Physics 473", "Physics 473"],
     }
     sort = 0
     for nm, arr in tracks.items():
@@ -217,7 +219,7 @@ def populate_aerospace_materials_minor(db, version_id: str, cmap: dict[str, str]
         major_mode="TRACK",
         track_name="Humanities/Social Science Choice",
     )
-    hum_ids = opt_ids(cmap, ["English 375", "Philos 330", "History 321", "Creat Art 315", "Creative Art 315", "Mgt 478", "MSS 302", "Pol Sci 445"])
+    hum_ids = opt_ids(cmap, ["English 375", "Philos 330", "History 321", "Creat Art 315", "Creat Art 315", "Mgt 478", "MSS 302", "Pol Sci 445"])
     b_hum = mk_basket(db, version_id=version_id, name=f"{name} - Humanities", description="COI humanities/social science choice", course_ids=hum_ids)
     attach(db, hum.id, b_hum, min_count=1)
 
@@ -347,4 +349,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -7,6 +7,7 @@ import {
   normalizeCoreRuleCourseNumbers,
 } from "./coreRulesUtils";
 import { buildCoreRuleRequirementMeta, buildInitialCoreRuleRows } from "./coreRulesBuilderUtils";
+import { buildCoreRuleGroupsFromRows, getCoreRuleSelectedIds } from "./coreRulesSaveUtils";
 import {
   buildSubstituteGroupsFromRows,
   computeBasketValidationErrors,
@@ -2458,15 +2459,8 @@ export function DesignStudioPage() {
         return;
       }
       if (!r.primary_course_id) continue;
-      const groupIds =
-        (coreRuleChoiceOptionsByReq[r.requirement_id] || []).find((o) => o.value === r.primary_course_id)?.group_course_ids || [];
-      const explicitSelected = groupIds.length > 1
-        ? Array.from(new Set((r.substitute_course_ids || []).filter(Boolean))).filter((id) => groupIds.includes(id))
-        : [];
+      const { selectedIds: selectedForConflict } = getCoreRuleSelectedIds(r, coreRuleChoiceOptionsByReq);
       const timingFields = timingFieldsFromRules(coreRuleTimingRules(r));
-      const selectedForConflict = explicitSelected.length
-        ? explicitSelected
-        : (groupIds.length > 1 ? groupIds : (r.primary_course_id ? [r.primary_course_id] : groupIds));
       const conflictCid = hasTimingConflictWithExisting(selectedForConflict, timingFields);
       if (conflictCid) {
         const cnum = courseMapById[conflictCid]?.course_number || "course";
@@ -2497,40 +2491,7 @@ export function DesignStudioPage() {
       window.alert(validationErrors[0]);
       return;
     }
-    const groups = (coreRulesRows || [])
-      .filter((r) => r.primary_course_id)
-      .map((r) => {
-        const groupIds =
-          (coreRuleChoiceOptionsByReq[r.requirement_id] || []).find((o) => o.value === r.primary_course_id)?.group_course_ids || [];
-        const explicitSelected = groupIds.length > 1
-          ? Array.from(new Set((r.substitute_course_ids || []).filter(Boolean))).filter((id) => groupIds.includes(id))
-          : [];
-        const ids = explicitSelected.length
-          ? explicitSelected
-          : (groupIds.length > 1 ? groupIds : (r.primary_course_id ? [r.primary_course_id] : []));
-        const seen = new Set();
-        const nums = ids
-          .filter((id) => {
-            if (!id || seen.has(id)) return false;
-            seen.add(id);
-            return true;
-          })
-          .map((id) => courseMapById[id]?.course_number)
-          .filter(Boolean);
-        return {
-          name: Number(r.slot_total || 1) > 1
-            ? `${r.requirement_name} - Choice ${Number(r.slot_index || 0) + 1}`
-            : `${r.requirement_name}`,
-          min_count: 1,
-          course_numbers: nums,
-          source_requirement_id: r.requirement_id,
-          slot_index: r.slot_index,
-          required_semester: r.required_semester || null,
-          required_semester_min: r.required_semester_min || null,
-          required_semester_max: r.required_semester_max || null,
-        };
-      })
-      .filter((g) => (g.course_numbers || []).length);
+    const groups = buildCoreRuleGroupsFromRows(coreRulesRows, coreRuleChoiceOptionsByReq, courseMapById);
     const payload = {
       name: `Program Pathway - ${coreRulesProgramName}`,
       tier: 2,

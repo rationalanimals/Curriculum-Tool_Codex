@@ -171,7 +171,16 @@ async function authed(path, opts = {}) {
   const token = localStorage.getItem("session_token") || "";
   const withToken = `${path}${path.includes("?") ? "&" : "?"}session_token=${encodeURIComponent(token)}`;
   const r = await fetch(`${API}${withToken}`, opts);
-  if (!r.ok) throw new Error("Request failed");
+  if (!r.ok) {
+    let detail = "";
+    try {
+      const payload = await r.json();
+      detail = payload?.detail ? `: ${payload.detail}` : "";
+    } catch {
+      detail = "";
+    }
+    throw new Error(`Request failed (${r.status})${detail}`);
+  }
   return r.json();
 }
 
@@ -318,12 +327,14 @@ export function DesignStudioPage() {
   const [basketDescription, setBasketDescription] = useState("");
   const [basketMinCount, setBasketMinCount] = useState("1");
   const [basketCourseIds, setBasketCourseIds] = useState([]);
+  const [basketSubGroupRows, setBasketSubGroupRows] = useState([]);
   const [treeExpandedKeys, setTreeExpandedKeys] = useState([]);
   const [reqEditorOpen, setReqEditorOpen] = useState(false);
   const [coreRulesModalOpen, setCoreRulesModalOpen] = useState(false);
   const [coreRulesProgramId, setCoreRulesProgramId] = useState();
   const [coreRulesProgramName, setCoreRulesProgramName] = useState("");
   const [coreRulesRows, setCoreRulesRows] = useState([]);
+  const [coreRulesReqMeta, setCoreRulesReqMeta] = useState([]);
   const [compareFrom, setCompareFrom] = useState();
   const [compareTo, setCompareTo] = useState();
   const [selectedCadetId, setSelectedCadetId] = useState();
@@ -635,6 +646,11 @@ export function DesignStudioPage() {
     queryKey: ["baskets", selectedVersion?.id],
     enabled: !!selectedVersion?.id,
     queryFn: () => authed(`/baskets?version_id=${selectedVersion.id}`),
+  });
+  const basketSubstitutionsVersionQ = useQuery({
+    queryKey: ["basket-substitutions-version", selectedVersion?.id],
+    enabled: !!selectedVersion?.id,
+    queryFn: () => authed(`/baskets/substitutions/version/${selectedVersion.id}`),
   });
 
   useEffect(() => {
@@ -1055,6 +1071,54 @@ export function DesignStudioPage() {
     setBasketDescription("");
     setBasketMinCount("1");
     setBasketCourseIds([]);
+    setBasketSubGroupRows([]);
+  }
+
+  function deriveBasketSubstituteRows(basketId, courseIds, requirementId) {
+    const bId = basketId || "";
+    const reqId = requirementId || "";
+    const idSet = new Set((courseIds || []).filter(Boolean));
+    if (!idSet.size) return [];
+    const basketRows = (basketSubstitutionsVersionQ.data || []).filter(
+      (s) => s.basket_id === bId && idSet.has(s.primary_course_id) && idSet.has(s.substitute_course_id)
+    );
+    const reqRows = (requirementSubstitutionsVersionQ.data || []).filter(
+      (s) => s.requirement_id === reqId && idSet.has(s.primary_course_id) && idSet.has(s.substitute_course_id)
+    );
+    const rows = basketRows.length ? basketRows : reqRows;
+    if (!rows.length) return [];
+    const adj = {};
+    for (const s of rows) {
+      if (!adj[s.primary_course_id]) adj[s.primary_course_id] = new Set();
+      if (!adj[s.substitute_course_id]) adj[s.substitute_course_id] = new Set();
+      adj[s.primary_course_id].add(s.substitute_course_id);
+      adj[s.substitute_course_id].add(s.primary_course_id);
+    }
+    const seen = new Set();
+    const out = [];
+    const allIds = Array.from(idSet);
+    for (const cid of allIds) {
+      if (seen.has(cid) || !adj[cid] || !adj[cid].size) continue;
+      const q = [cid];
+      const comp = [];
+      seen.add(cid);
+      while (q.length) {
+        const cur = q.shift();
+        comp.push(cur);
+        for (const nxt of Array.from(adj[cur] || [])) {
+          if (seen.has(nxt)) continue;
+          seen.add(nxt);
+          q.push(nxt);
+        }
+      }
+      if (comp.length <= 1) continue;
+      const sorted = [...comp].sort((a, b) =>
+        String(courseMapById[a]?.course_number || courseMapById[a]?.title || a)
+          .localeCompare(String(courseMapById[b]?.course_number || courseMapById[b]?.title || b))
+      );
+      out.push({ primary_course_id: sorted[0], substitute_course_ids: sorted.slice(1) });
+    }
+    return out;
   }
 
   function openRequirementBasketModal(requirementId, basketLink) {
@@ -1074,9 +1138,35 @@ export function DesignStudioPage() {
       setBasketCourseIds((basketLink.courses || []).map((x) => x.course_id).filter(Boolean));
       const b = (basketsQ.data || []).find((x) => x.id === basketLink.basket_id);
       setBasketDescription(b?.description || "");
+      const ids = (basketLink.courses || []).map((x) => x.course_id).filter(Boolean);
+      setBasketSubGroupRows(deriveBasketSubstituteRows(basketLink.basket_id, ids, requirementId));
     }
     setReqCourseModalOpen(true);
   }
+
+  useEffect(() => {
+    if (!reqCourseModalOpen || reqLinkKind !== "BASKET") return;
+    if (!basketSelectedId) return;
+    const ids = Array.from(new Set((basketCourseIds || []).filter(Boolean)));
+    setBasketSubGroupRows((prev) => {
+      if (prev.length) {
+        return prev
+          .map((r) => {
+            const primary = ids.includes(r.primary_course_id) ? r.primary_course_id : undefined;
+            const subs = Array.from(new Set((r.substitute_course_ids || []).filter((x) => x && x !== primary && ids.includes(x))));
+            return { primary_course_id: primary, substitute_course_ids: subs };
+          })
+          .filter((r) => r.primary_course_id && (r.substitute_course_ids || []).length);
+      }
+      return deriveBasketSubstituteRows(basketSelectedId, ids, basketRequirementId);
+    });
+  }, [
+    reqCourseModalOpen,
+    reqLinkKind,
+    basketSelectedId,
+    basketCourseIds,
+    basketSubstitutionsVersionQ.data,
+  ]);
 
   async function saveRequirementBasketModal() {
     if (!selectedVersion?.id || !basketRequirementId) return;
@@ -1157,14 +1247,110 @@ export function DesignStudioPage() {
       });
     }
 
+    const allBasketSubs = (basketSubstitutionsVersionQ.data || []).filter((s) => s.basket_id === targetBasketId);
+    const allReqSubs = (requirementSubstitutionsVersionQ.data || []).filter((s) => s.requirement_id === basketRequirementId);
+    const desiredCourseSet = new Set(desiredCourseIds);
+    const relevantExistingSource = allBasketSubs.length ? allBasketSubs : allReqSubs;
+    const relevantExisting = relevantExistingSource.filter(
+      (s) => desiredCourseSet.has(s.primary_course_id) && desiredCourseSet.has(s.substitute_course_id)
+    );
+    const normalizePair = (a, b) => [a, b].sort().join("|");
+    const existingByNorm = {};
+    for (const row of relevantExisting) {
+      const key = normalizePair(row.primary_course_id, row.substitute_course_id);
+      if (!existingByNorm[key]) existingByNorm[key] = [];
+      existingByNorm[key].push(row);
+    }
+    const desiredRows = (basketSubGroupRows || [])
+      .map((r) => ({
+        primary_course_id: r.primary_course_id,
+        substitute_course_ids: Array.from(
+          new Set((r.substitute_course_ids || []).filter((id) => id && id !== r.primary_course_id && desiredCourseSet.has(id)))
+        ),
+      }))
+      .filter((r) => r.primary_course_id && desiredCourseSet.has(r.primary_course_id));
+    const desiredNorm = new Set();
+    for (const row of desiredRows) {
+      for (const sid of row.substitute_course_ids || []) {
+        desiredNorm.add(normalizePair(row.primary_course_id, sid));
+      }
+    }
+    const useBasketScoped = allBasketSubs.length > 0 || !!targetBasketId;
+    const createPath = useBasketScoped ? "/baskets/substitutions" : "/requirements/substitutions";
+    const deletePath = (id) => (useBasketScoped ? `/baskets/substitutions/${id}` : `/requirements/substitutions/${id}`);
+    try {
+      for (const [key, rows] of Object.entries(existingByNorm)) {
+        if (desiredNorm.has(key)) continue;
+        for (const row of rows) {
+          await authed(deletePath(row.id), { method: "DELETE" });
+        }
+      }
+      for (const row of desiredRows) {
+        for (const sid of row.substitute_course_ids || []) {
+          const key = normalizePair(row.primary_course_id, sid);
+          if (existingByNorm[key]?.length) continue;
+          const body = useBasketScoped
+            ? {
+                basket_id: targetBasketId,
+                primary_course_id: row.primary_course_id,
+                substitute_course_id: sid,
+                is_bidirectional: true,
+              }
+            : {
+                requirement_id: basketRequirementId,
+                primary_course_id: row.primary_course_id,
+                substitute_course_id: sid,
+                is_bidirectional: true,
+              };
+          await authed(createPath, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        }
+      }
+    } catch (err) {
+      // Fallback for partially-updated backend deployments: use requirement-scoped substitutions.
+      for (const [key, rows] of Object.entries(existingByNorm)) {
+        if (desiredNorm.has(key)) continue;
+        for (const row of rows) {
+          if (row.requirement_id === basketRequirementId) {
+            await authed(`/requirements/substitutions/${row.id}`, { method: "DELETE" });
+          }
+        }
+      }
+      for (const row of desiredRows) {
+        for (const sid of row.substitute_course_ids || []) {
+          const key = normalizePair(row.primary_course_id, sid);
+          if (existingByNorm[key]?.length) continue;
+          await authed("/requirements/substitutions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              requirement_id: basketRequirementId,
+              primary_course_id: row.primary_course_id,
+              substitute_course_id: sid,
+              is_bidirectional: true,
+            }),
+          });
+        }
+      }
+      // Preserve a visible signal for diagnostics.
+      if (err instanceof Error) {
+        window.alert(`Saved with fallback substitution path. ${err.message}`);
+      }
+    }
+
     setReqCourseModalOpen(false);
     setReqLinkKindLocked(false);
     resetBasketModal();
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["baskets", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["basket-substitutions-version", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["basket-substitutions-version", selectedVersion.id] }),
     ]);
   }
 
@@ -1173,6 +1359,7 @@ export function DesignStudioPage() {
     await authed(`/requirements/baskets/${linkId}`, { method: "DELETE" });
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["baskets", selectedVersion.id] }),
+      qc.invalidateQueries({ queryKey: ["basket-substitutions-version", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["requirements-tree", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["design-checklist", selectedVersion.id] }),
       qc.invalidateQueries({ queryKey: ["design-feasibility", selectedVersion.id] }),
@@ -2234,21 +2421,38 @@ export function DesignStudioPage() {
         return (coreRuleChoiceOptionsByReq[r.id] || []).some((o) => (o.group_course_ids || []).length > 1);
       })
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+    const reqMeta = optionalCoreReqs.map((req) => {
+      const logic = String(req.logic_type || "ALL_REQUIRED").toUpperCase();
+      const subGroupCount = (coreRuleChoiceOptionsByReq[req.id] || []).filter((o) => (o.group_course_ids || []).length > 1).length;
+      const restrictToSubGroups = !["PICK_N", "ANY_N", "ANY_ONE", "ONE_OF"].includes(logic);
+      const slotTotal = logic === "PICK_N" || logic === "ANY_N" ? Math.max(1, Number(req.pick_n || 1)) : Math.max(1, subGroupCount);
+      return {
+        requirement_id: req.id,
+        requirement_name: formatRequirementName(req.name, req.logic_type, req.pick_n),
+        slot_total: slotTotal,
+        restrict_to_sub_groups: restrictToSubGroups,
+      };
+    });
     const rows = [];
     for (const req of optionalCoreReqs) {
       const logic = String(req.logic_type || "ALL_REQUIRED").toUpperCase();
-      const slotCount = logic === "PICK_N" || logic === "ANY_N" ? Math.max(1, Number(req.pick_n || 1)) : 1;
+      const meta = reqMeta.find((m) => m.requirement_id === req.id);
+      const slotCount =
+        logic === "PICK_N" || logic === "ANY_N"
+          ? Math.max(1, Number(req.pick_n || 1))
+          : 0; // all-required substitute-group rules are opt-in via "Add Substitute Group Rule"
       for (let i = 0; i < slotCount; i += 1) {
         rows.push({
           requirement_id: req.id,
-          requirement_name: formatRequirementName(req.name, req.logic_type, req.pick_n),
+          requirement_name: meta?.requirement_name || formatRequirementName(req.name, req.logic_type, req.pick_n),
           slot_index: i,
-          slot_total: slotCount,
+          slot_total: meta?.slot_total || slotCount,
           primary_course_id: undefined,
           substitute_course_ids: [],
           required_semester: undefined,
           required_semester_min: undefined,
           required_semester_max: undefined,
+          restrict_to_sub_groups: !!meta?.restrict_to_sub_groups,
         });
       }
     }
@@ -2261,30 +2465,85 @@ export function DesignStudioPage() {
         cfg = {};
       }
       const groups = cfg.required_core_groups || [];
+      const usedSlotsByReq = {};
       for (const g of groups) {
-        const reqId = g.source_requirement_id || g.requirement_id || null;
-        const slotIndex = Number(g.slot_index || 0);
-        const nums = (g.course_numbers || []).map((x) => String(x || "").trim()).filter(Boolean);
-        if (!reqId || !nums.length) continue;
-        const primaryRaw = courseIdByNumber[nums[0]];
-        const representative = (coreRuleRepresentativeByReqCourse[reqId] || {})[primaryRaw] || primaryRaw;
-        const selected = Array.from(new Set(nums.map((n) => courseIdByNumber[n]).filter(Boolean)));
-        const targetIdx = rows.findIndex((r) => r.requirement_id === reqId && r.slot_index === slotIndex);
+        const selected = Array.from(new Set((g.course_numbers || []).map(resolveCourseIdFromToken).filter(Boolean)));
+        if (!selected.length) continue;
+        let reqId = g.source_requirement_id || g.requirement_id || null;
+        let slotIndex = Number(g.slot_index || 0);
+        let candidateOptions = reqId ? (coreRuleChoiceOptionsByReq[reqId] || []) : [];
+        // Legacy fallback: infer requirement when source_requirement_id was not stored.
+        if (!reqId || !candidateOptions.length) {
+          let bestReq = null;
+          let bestScore = -1;
+          for (const req of optionalCoreReqs) {
+            const opts = coreRuleChoiceOptionsByReq[req.id] || [];
+            if (!opts.length) continue;
+            const reqIds = new Set(opts.flatMap((o) => o.group_course_ids || []));
+            const score = selected.filter((id) => reqIds.has(id)).length;
+            if (score > bestScore) {
+              bestScore = score;
+              bestReq = req.id;
+            }
+          }
+          if (bestReq && bestScore > 0) {
+            reqId = bestReq;
+            candidateOptions = coreRuleChoiceOptionsByReq[reqId] || [];
+            const used = usedSlotsByReq[reqId] || new Set();
+            const slotRows = rows.filter((r) => r.requirement_id === reqId).map((r) => Number(r.slot_index || 0));
+            const firstOpen = slotRows.find((s) => !used.has(s));
+            if (firstOpen != null) slotIndex = firstOpen;
+          }
+        }
+        if (!reqId || !candidateOptions.length) continue;
+        const representative =
+          selected.find((sid) => candidateOptions.some((o) => o.value === sid))
+          || ((coreRuleRepresentativeByReqCourse[reqId] || {})[selected[0]])
+          || selected[0];
+        const selectedChoice = candidateOptions.find((o) => o.value === representative);
+        const groupIds = new Set((selectedChoice?.group_course_ids || []));
+        const fullGroupSelected = isFullChoiceGroupSelection(reqId, selected);
+        const sanitizedSubs = groupIds.size > 1
+          ? selected.filter((id) => id && groupIds.has(id))
+          : [];
+        let targetIdx = rows.findIndex((r) => r.requirement_id === reqId && r.slot_index === slotIndex);
+        if (targetIdx < 0) {
+          const meta = reqMeta.find((m) => m.requirement_id === reqId);
+          rows.push({
+            requirement_id: reqId,
+            requirement_name: meta?.requirement_name || requirementById[reqId]?.name || "Core Requirement",
+            slot_index: slotIndex,
+            slot_total: meta?.slot_total || Math.max(1, Number(requirementById[reqId]?.pick_n || 1)),
+            primary_course_id: undefined,
+            substitute_course_ids: [],
+            required_semester: undefined,
+            required_semester_min: undefined,
+            required_semester_max: undefined,
+            restrict_to_sub_groups: !!meta?.restrict_to_sub_groups,
+          });
+          targetIdx = rows.length - 1;
+        }
+        rows[targetIdx] = {
+          ...rows[targetIdx],
+          // Keep the selected group visible even when the full group is allowed.
+          // Empty substitute_course_ids already encodes "do not narrow".
+          primary_course_id: representative,
+          substitute_course_ids: fullGroupSelected ? [] : sanitizedSubs,
+          required_semester: g.required_semester || undefined,
+          required_semester_min: g.required_semester_min || undefined,
+          required_semester_max: g.required_semester_max || undefined,
+          restrict_to_sub_groups: rows[targetIdx].restrict_to_sub_groups,
+        };
         if (targetIdx >= 0) {
-          rows[targetIdx] = {
-            ...rows[targetIdx],
-            primary_course_id: representative,
-            substitute_course_ids: selected,
-            required_semester: g.required_semester || undefined,
-            required_semester_min: g.required_semester_min || undefined,
-            required_semester_max: g.required_semester_max || undefined,
-          };
+          usedSlotsByReq[reqId] = usedSlotsByReq[reqId] || new Set();
+          usedSlotsByReq[reqId].add(slotIndex);
         }
       }
     }
 
     setCoreRulesProgramId(majorProgram.id);
     setCoreRulesProgramName(majorProgram.name);
+    setCoreRulesReqMeta(reqMeta);
     setCoreRulesRows(rows);
     setCoreRulesModalOpen(true);
   }
@@ -2308,16 +2567,18 @@ export function DesignStudioPage() {
       if (!r.primary_course_id) continue;
       const groupIds =
         (coreRuleChoiceOptionsByReq[r.requirement_id] || []).find((o) => o.value === r.primary_course_id)?.group_course_ids || [];
-      const explicitSelected = Array.from(new Set((r.substitute_course_ids || []).filter(Boolean))).filter((id) => groupIds.includes(id));
-      if (!explicitSelected.length && groupIds.length > 1) {
-        validationErrors.push(`${r.requirement_name} - Choice ${Number(r.slot_index || 0) + 1}: choose at least one applicable course from the group.`);
-      }
+      const explicitSelected = groupIds.length > 1
+        ? Array.from(new Set((r.substitute_course_ids || []).filter(Boolean))).filter((id) => groupIds.includes(id))
+        : [];
       const timingFields = timingFieldsFromRules(coreRuleTimingRules(r));
-      const selectedForConflict = explicitSelected.length ? explicitSelected : groupIds;
+      const selectedForConflict = explicitSelected.length
+        ? explicitSelected
+        : (groupIds.length > 1 ? groupIds : (r.primary_course_id ? [r.primary_course_id] : groupIds));
       const conflictCid = hasTimingConflictWithExisting(selectedForConflict, timingFields);
       if (conflictCid) {
         const cnum = courseMapById[conflictCid]?.course_number || "course";
-        validationErrors.push(`${r.requirement_name} - Choice ${Number(r.slot_index || 0) + 1}: timing conflicts with existing rule for ${cnum}.`);
+        const choiceLabel = Number(r.slot_total || 1) > 1 ? ` - Choice ${Number(r.slot_index || 0) + 1}` : "";
+        validationErrors.push(`${r.requirement_name}${choiceLabel}: timing conflicts with existing rule for ${cnum}.`);
       }
       if (timingFields.required_semester != null || timingFields.required_semester_min != null || timingFields.required_semester_max != null) {
         const candidateAllowed = allowedSemestersForTiming(timingFields);
@@ -2329,8 +2590,9 @@ export function DesignStudioPage() {
             const exAllowed = allowedSemestersForTiming(ex);
             const overlap = Array.from(candidateAllowed).some((s) => exAllowed.has(s));
             if (!overlap) {
+              const choiceLabel = Number(r.slot_total || 1) > 1 ? ` - Choice ${Number(r.slot_index || 0) + 1}` : "";
               validationErrors.push(
-                `${r.requirement_name} - Choice ${Number(r.slot_index || 0) + 1}: timing conflicts with existing rule for ${num}.`
+                `${r.requirement_name}${choiceLabel}: timing conflicts with existing rule for ${num}.`
               );
               break;
             }
@@ -2347,8 +2609,12 @@ export function DesignStudioPage() {
       .map((r) => {
         const groupIds =
           (coreRuleChoiceOptionsByReq[r.requirement_id] || []).find((o) => o.value === r.primary_course_id)?.group_course_ids || [];
-        const explicitSelected = Array.from(new Set((r.substitute_course_ids || []).filter(Boolean))).filter((id) => groupIds.includes(id));
-        const ids = explicitSelected.length ? explicitSelected : (groupIds.length === 1 ? [groupIds[0]] : []);
+        const explicitSelected = groupIds.length > 1
+          ? Array.from(new Set((r.substitute_course_ids || []).filter(Boolean))).filter((id) => groupIds.includes(id))
+          : [];
+        const ids = explicitSelected.length
+          ? explicitSelected
+          : (groupIds.length > 1 ? groupIds : (r.primary_course_id ? [r.primary_course_id] : []));
         const seen = new Set();
         const nums = ids
           .filter((id) => {
@@ -2359,7 +2625,9 @@ export function DesignStudioPage() {
           .map((id) => courseMapById[id]?.course_number)
           .filter(Boolean);
         return {
-          name: `${r.requirement_name} - Choice ${Number(r.slot_index || 0) + 1}`,
+          name: Number(r.slot_total || 1) > 1
+            ? `${r.requirement_name} - Choice ${Number(r.slot_index || 0) + 1}`
+            : `${r.requirement_name}`,
           min_count: 1,
           course_numbers: nums,
           source_requirement_id: r.requirement_id,
@@ -3078,6 +3346,7 @@ export function DesignStudioPage() {
     if (reqLinkKind !== "BASKET") return [];
     const errors = [];
     const uniqueCourseIds = Array.from(new Set((basketCourseIds || []).filter(Boolean)));
+    const idSet = new Set(uniqueCourseIds);
     const parsedMin = Number(basketMinCount || 1);
     const minCount = Number.isFinite(parsedMin) && parsedMin > 0 ? Math.floor(parsedMin) : 0;
     if (!minCount) errors.push("Min count must be a whole number greater than 0.");
@@ -3093,8 +3362,48 @@ export function DesignStudioPage() {
     if (basketSelectedId && siblingLinks.some((b) => b.basket_id === basketSelectedId && b.id !== basketLinkId)) {
       errors.push("This basket is already linked to the selected requirement.");
     }
+    const seenPairs = new Set();
+    (basketSubGroupRows || []).forEach((row, idx) => {
+      const primary = row.primary_course_id;
+      const subs = Array.from(new Set((row.substitute_course_ids || []).filter(Boolean)));
+      if (!primary && !subs.length) return;
+      if (!primary || !idSet.has(primary)) {
+        errors.push(`Substitute group ${idx + 1}: select a primary course from Basket courses.`);
+        return;
+      }
+      if (!subs.length) {
+        errors.push(`Substitute group ${idx + 1}: select at least one substitute.`);
+        return;
+      }
+      for (const sid of subs) {
+        if (sid === primary) {
+          errors.push(`Substitute group ${idx + 1}: primary course cannot be its own substitute.`);
+          continue;
+        }
+        if (!idSet.has(sid)) {
+          errors.push(`Substitute group ${idx + 1}: substitute courses must be selected in Basket courses.`);
+          continue;
+        }
+        const key = [primary, sid].sort().join("|");
+        if (seenPairs.has(key)) {
+          errors.push(`Substitute group ${idx + 1}: duplicate substitute pair detected.`);
+        } else {
+          seenPairs.add(key);
+        }
+      }
+    });
     return errors;
-  }, [reqLinkKind, basketCourseIds, basketMinCount, basketSelectedId, basketName, requirementNodeMap, basketRequirementId, basketLinkId]);
+  }, [
+    reqLinkKind,
+    basketCourseIds,
+    basketMinCount,
+    basketSelectedId,
+    basketName,
+    requirementNodeMap,
+    basketRequirementId,
+    basketLinkId,
+    basketSubGroupRows,
+  ]);
   const courseMapById = useMemo(() => {
     const out = {};
     for (const c of coursesQ.data || []) out[c.id] = c;
@@ -3300,18 +3609,75 @@ export function DesignStudioPage() {
             </Space>
           </div>
         ),
-        children: [...(b.courses || [])]
-          .sort((a, b2) =>
-            String(a?.course_number || a?.course_title || "")
-              .localeCompare(String(b2?.course_number || b2?.course_title || ""), undefined, { sensitivity: "base" })
-          )
-          .map((bc) => ({
-          key: `basket-course:${b.id}:${bc.id}`,
-          title: renderCourseCodeWithHover(bc.course_number || bc.course_title || "Missing course"),
-          isLeaf: true,
-          selectable: false,
-          disableCheckbox: true,
-        })),
+        children: (() => {
+          const courses = [...(b.courses || [])];
+          if (!courses.length) return [];
+          const byCourseId = {};
+          courses.forEach((bc) => {
+            byCourseId[bc.course_id] = bc;
+          });
+          const setIds = new Set(courses.map((bc) => bc.course_id).filter(Boolean));
+          const adj = {};
+          const basketSubRows = (b.substitutions || []).filter(
+            (s) => setIds.has(s.primary_course_id) && setIds.has(s.substitute_course_id)
+          );
+          const fallbackReqSubRows = (requirementSubstitutionsVersionQ.data || []).filter(
+            (s) => s.requirement_id === n.id && setIds.has(s.primary_course_id) && setIds.has(s.substitute_course_id)
+          );
+          const subRows = basketSubRows.length ? basketSubRows : fallbackReqSubRows;
+          for (const s of subRows) {
+            if (!adj[s.primary_course_id]) adj[s.primary_course_id] = new Set();
+            if (!adj[s.substitute_course_id]) adj[s.substitute_course_id] = new Set();
+            adj[s.primary_course_id].add(s.substitute_course_id);
+            adj[s.substitute_course_id].add(s.primary_course_id);
+          }
+          const seen = new Set();
+          const groups = [];
+          for (const bc of courses) {
+            const cid = bc.course_id;
+            if (!cid || seen.has(cid)) continue;
+            if (!adj[cid] || !adj[cid].size) {
+              seen.add(cid);
+              groups.push([cid]);
+              continue;
+            }
+            const q = [cid];
+            const comp = [];
+            seen.add(cid);
+            while (q.length) {
+              const cur = q.shift();
+              comp.push(cur);
+              for (const nxt of Array.from(adj[cur] || [])) {
+                if (seen.has(nxt)) continue;
+                seen.add(nxt);
+                q.push(nxt);
+              }
+            }
+            groups.push(comp);
+          }
+          const displayRows = groups.map((groupIds, groupIdx) => {
+              const orderedIds = [...groupIds].sort((a, b2) =>
+                String(courseMapById[a]?.course_number || courseMapById[a]?.title || a)
+                  .localeCompare(String(courseMapById[b2]?.course_number || courseMapById[b2]?.title || b2), undefined, { sensitivity: "base" })
+              );
+              const titleParts = orderedIds.map((cid) => {
+                const item = byCourseId[cid];
+                return item?.course_number || item?.course_title || courseMapById[cid]?.course_number || courseMapById[cid]?.title || "Missing course";
+              });
+              const firstItem = byCourseId[orderedIds[0]];
+              return {
+                key: `basket-course:${b.id}:${firstItem?.id || groupIdx}`,
+                sortLabel: titleParts.join(" / "),
+                title: renderCourseCodeSeries(titleParts),
+                isLeaf: true,
+                selectable: false,
+                disableCheckbox: true,
+              };
+            });
+          return displayRows
+            .sort((a, b2) => String(a.sortLabel || "").localeCompare(String(b2.sortLabel || ""), undefined, { sensitivity: "base" }))
+            .map(({ sortLabel, ...row }) => row);
+        })(),
         disableCheckbox: true,
         selectable: false,
       }));
@@ -3400,14 +3766,21 @@ export function DesignStudioPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, width: "100%" }}>
               <Space>
                 <span>
-                  {`${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${
-                    formatRequirementName(
-                      g.name || `Core Rule ${idx + 1}`,
-                      requirementById[g.source_requirement_id]?.logic_type,
-                      requirementById[g.source_requirement_id]?.pick_n
-                    )
-                  }: `}
-                  {renderCourseCodeSeries(g.course_numbers || [])}
+                  {(() => {
+                    const srcReq = requirementById[g.source_requirement_id];
+                    const srcName = srcReq
+                      ? formatRequirementName(srcReq.name, srcReq.logic_type, srcReq.pick_n, srcReq.available_option_count || srcReq.direct_course_count)
+                      : formatRequirementName(
+                        g.name || `Core Rule ${idx + 1}`,
+                        requirementById[g.source_requirement_id]?.logic_type,
+                        requirementById[g.source_requirement_id]?.pick_n
+                      );
+                    const slotTotal = Math.max(1, Number(srcReq?.pick_n || 1));
+                    const showChoice = slotTotal > 1 && Number.isFinite(Number(g.slot_index));
+                    const slotLabel = showChoice ? ` - Choice ${Number(g.slot_index) + 1}` : "";
+                    return `${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${srcName}${slotLabel}: `;
+                  })()}
+                  {renderCourseCodeSeries(normalizeCoreRuleCourseNumbers(g.course_numbers || []))}
                 </span>
                 {formatSemesterConstraint(g) ? <Tag>{formatSemesterConstraint(g)}</Tag> : null}
               </Space>
@@ -3462,13 +3835,14 @@ export function DesignStudioPage() {
           draggable: false,
         };
       }
+      const leafNodes = [...basketLeaves, ...courseLeaves];
       reqNode.children = coreRuleNode
-        ? [coreRuleNode, ...basketLeaves, ...courseLeaves, ...childReqs]
-        : [...basketLeaves, ...courseLeaves, ...childReqs];
+        ? [coreRuleNode, ...leafNodes, ...childReqs]
+        : [...leafNodes, ...childReqs];
       return reqNode;
     }
     return filteredTree.map(mapNode);
-  }, [filteredTree, requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, courseMapById, courseIdByNumber, requirementById, validationRulesQ.data]);
+  }, [filteredTree, requirementFulfillmentVersionQ.data, requirementSubstitutionsVersionQ.data, courseMapById, courseIdByNumber, requirementById, validationRulesQ.data, treeExpandedKeys]);
   const coreRequirementTimingByCourse = useMemo(() => {
     const out = {};
     for (const row of requirementFulfillmentVersionQ.data || []) {
@@ -3578,9 +3952,12 @@ export function DesignStudioPage() {
   const coreRuleChoiceOptionsByReq = useMemo(() => {
     const byReq = {};
     const coursesByReq = {};
+    const basketSubsByReq = {};
+    const courseNumberFallbackById = {};
     for (const f of requirementFulfillmentVersionQ.data || []) {
       coursesByReq[f.requirement_id] = coursesByReq[f.requirement_id] || [];
       coursesByReq[f.requirement_id].push(f.course_id);
+      if (f.course_id && f.course_number) courseNumberFallbackById[f.course_id] = f.course_number;
     }
     const walkReqTree = (nodes) => {
       for (const n of nodes || []) {
@@ -3591,6 +3968,15 @@ export function DesignStudioPage() {
               if (!c?.course_id) continue;
               coursesByReq[rid] = coursesByReq[rid] || [];
               coursesByReq[rid].push(c.course_id);
+              if (c.course_id && c.course_number) courseNumberFallbackById[c.course_id] = c.course_number;
+            }
+            for (const s of b.substitutions || []) {
+              if (!s?.primary_course_id || !s?.substitute_course_id) continue;
+              basketSubsByReq[rid] = basketSubsByReq[rid] || [];
+              basketSubsByReq[rid].push({
+                primary_course_id: s.primary_course_id,
+                substitute_course_id: s.substitute_course_id,
+              });
             }
           }
         }
@@ -3610,7 +3996,7 @@ export function DesignStudioPage() {
       linkedIds.forEach((id) => {
         adj[id] = new Set();
       });
-      for (const s of subsByReq[reqId] || []) {
+      for (const s of [...(subsByReq[reqId] || []), ...(basketSubsByReq[reqId] || [])]) {
         const primaryLinked = setIds.has(s.primary_course_id);
         const substituteLinked = setIds.has(s.substitute_course_id);
         if (!primaryLinked && !substituteLinked) continue;
@@ -3635,11 +4021,13 @@ export function DesignStudioPage() {
           }
         }
         const ordered = group.sort((a, b) =>
-          String(courseMapById[a]?.course_number || courseMapById[a]?.title || "").localeCompare(
-            String(courseMapById[b]?.course_number || courseMapById[b]?.title || "")
+          String(courseMapById[a]?.course_number || courseNumberFallbackById[a] || courseMapById[a]?.title || "").localeCompare(
+            String(courseMapById[b]?.course_number || courseNumberFallbackById[b] || courseMapById[b]?.title || "")
           )
         );
-        const label = ordered.map((cid) => courseMapById[cid]?.course_number || courseMapById[cid]?.title || "Missing course").join(" / ");
+        const label = ordered
+          .map((cid) => courseMapById[cid]?.course_number || courseNumberFallbackById[cid] || courseMapById[cid]?.title || cid)
+          .join(" / ");
         groups.push({ value: ordered[0], label, group_course_ids: ordered });
       }
       byReq[reqId] = groups.sort((a, b) => a.label.localeCompare(b.label));
@@ -3659,10 +4047,26 @@ export function DesignStudioPage() {
   const coreRulesGroupedRows = useMemo(() => {
     const out = [];
     const map = {};
+    for (const m of coreRulesReqMeta || []) {
+      map[m.requirement_id] = {
+        requirement_id: m.requirement_id,
+        requirement_name: m.requirement_name,
+        slot_total: Math.max(1, Number(m.slot_total || 1)),
+        restrict_to_sub_groups: !!m.restrict_to_sub_groups,
+        rows: [],
+      };
+      out.push(map[m.requirement_id]);
+    }
     for (const r of coreRulesRows || []) {
       const key = r.requirement_id;
       if (!map[key]) {
-        map[key] = { requirement_id: r.requirement_id, requirement_name: r.requirement_name, slot_total: r.slot_total, rows: [] };
+        map[key] = {
+          requirement_id: r.requirement_id,
+          requirement_name: r.requirement_name,
+          slot_total: Math.max(1, Number(r.slot_total || 1)),
+          restrict_to_sub_groups: !!r.restrict_to_sub_groups,
+          rows: [],
+        };
         out.push(map[key]);
       }
       map[key].rows.push(r);
@@ -3671,7 +4075,7 @@ export function DesignStudioPage() {
       g.rows.sort((a, b) => Number(a.slot_index || 0) - Number(b.slot_index || 0));
     });
     return out;
-  }, [coreRulesRows]);
+  }, [coreRulesRows, coreRulesReqMeta]);
   const validationRulesWithDomain = useMemo(() => {
     return (validationRulesQ.data || [])
       .filter((r) => {
@@ -4079,6 +4483,59 @@ export function DesignStudioPage() {
         ))}
       </Space>
     );
+  }
+  function resolveCourseIdFromToken(token) {
+    const raw = String(token || "").trim();
+    if (!raw) return undefined;
+    if (courseMapById[raw]) return raw;
+    const byExact = courseIdByNumber[raw];
+    if (byExact) return byExact;
+    const byNorm = courseIdByNormalizedNumber[normalizeCourseNumber(raw)];
+    if (byNorm) return byNorm;
+    return undefined;
+  }
+  function normalizeCoreRuleCourseNumbers(tokens) {
+    return (tokens || [])
+      .map((t) => String(t || "").trim())
+      .filter(Boolean)
+      .map((t) => {
+        const cid = resolveCourseIdFromToken(t);
+        return cid ? (courseMapById[cid]?.course_number || t) : t;
+      });
+  }
+  function inferCoreRequirementIdFromCourseIds(courseIds) {
+    const ids = Array.from(new Set((courseIds || []).filter(Boolean)));
+    if (!ids.length) return null;
+    let bestReq = null;
+    let bestScore = -1;
+    for (const [reqId, opts] of Object.entries(coreRuleChoiceOptionsByReq || {})) {
+      const allowed = new Set((opts || []).flatMap((o) => o.group_course_ids || []));
+      const score = ids.filter((id) => allowed.has(id)).length;
+      if (score > bestScore) {
+        bestScore = score;
+        bestReq = reqId;
+      }
+    }
+    return bestScore > 0 ? bestReq : null;
+  }
+  function isFullChoiceGroupSelection(reqId, selectedIds) {
+    if (!reqId) return false;
+    const sel = new Set((selectedIds || []).filter(Boolean));
+    if (sel.size <= 1) return false;
+    for (const o of coreRuleChoiceOptionsByReq[reqId] || []) {
+      const grp = new Set((o.group_course_ids || []).filter(Boolean));
+      if (grp.size > 1 && grp.size === sel.size) {
+        let same = true;
+        for (const id of grp) {
+          if (!sel.has(id)) {
+            same = false;
+            break;
+          }
+        }
+        if (same) return true;
+      }
+    }
+    return false;
   }
   function requirementOptionTotal(node) {
     if (!node) return 0;
@@ -4960,7 +5417,9 @@ export function DesignStudioPage() {
                   if (!b) return;
                   setBasketName(b.name || "");
                   setBasketDescription(b.description || "");
-                  setBasketCourseIds((b.items || []).map((x) => x.course_id).filter(Boolean));
+                  const ids = (b.items || []).map((x) => x.course_id).filter(Boolean);
+                  setBasketCourseIds(ids);
+                  setBasketSubGroupRows(deriveBasketSubstituteRows(v, ids, basketRequirementId));
                 }}
                 options={(basketsQ.data || []).map((b) => ({
                   value: b.id,
@@ -4993,6 +5452,116 @@ export function DesignStudioPage() {
                 onChange={(v) => setBasketCourseIds(v || [])}
                 options={(coursesQ.data || []).map((c) => ({ value: c.id, label: `${c.course_number} - ${c.title}` }))}
               />
+              <Typography.Text strong>Substitute Groups (optional)</Typography.Text>
+              {basketSubGroupRows.map((row, idx) => {
+                const availableIds = Array.from(new Set((basketCourseIds || []).filter(Boolean)));
+                const primary = row.primary_course_id;
+                const substitutes = (row.substitute_course_ids || []);
+                return (
+                  <Card key={`basket-sub-row:${idx}`} size="small" style={{ width: "100%" }}>
+                    <Space direction="vertical" style={{ width: "100%" }}>
+                      <Select
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        placeholder="Primary course"
+                        style={{ width: "100%" }}
+                        value={primary}
+                        onChange={(v) =>
+                          setBasketSubGroupRows((prev) =>
+                            prev.map((r, i) =>
+                              i === idx
+                                ? {
+                                    ...r,
+                                    primary_course_id: v,
+                                    substitute_course_ids: (r.substitute_course_ids || []).filter((sid) => sid && sid !== v),
+                                  }
+                                : r
+                            )
+                          )
+                        }
+                        options={availableIds.map((cid) => ({
+                          value: cid,
+                          label: `${courseMapById[cid]?.course_number || ""} - ${courseMapById[cid]?.title || "Course"}`,
+                        }))}
+                      />
+                      {(substitutes || []).map((subId, subIdx) => (
+                        <div key={`basket-sub-choice:${idx}:${subIdx}`} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
+                          <Select
+                            allowClear
+                            showSearch
+                            optionFilterProp="label"
+                            placeholder={`Substitute ${subIdx + 1}`}
+                            style={{ width: "calc(100% - 84px)" }}
+                            value={subId}
+                            onChange={(v) =>
+                              setBasketSubGroupRows((prev) =>
+                                prev.map((r, i) => {
+                                  if (i !== idx) return r;
+                                  const next = [...(r.substitute_course_ids || [])];
+                                  next[subIdx] = v;
+                                  const cleaned = next
+                                    .filter(Boolean)
+                                    .filter((sid) => sid && sid !== (r.primary_course_id || ""));
+                                  return { ...r, substitute_course_ids: Array.from(new Set(cleaned)) };
+                                })
+                              )
+                            }
+                            options={availableIds
+                              .filter((cid) => cid !== (primary || ""))
+                              .filter((cid) => cid === subId || !(substitutes || []).includes(cid))
+                              .map((cid) => ({
+                                value: cid,
+                                label: `${courseMapById[cid]?.course_number || ""} - ${courseMapById[cid]?.title || "Course"}`,
+                              }))}
+                          />
+                          <Button
+                            danger
+                            style={{ width: 76 }}
+                            onClick={() =>
+                              setBasketSubGroupRows((prev) =>
+                                prev.map((r, i) =>
+                                  i === idx
+                                    ? { ...r, substitute_course_ids: (r.substitute_course_ids || []).filter((_, j) => j !== subIdx) }
+                                    : r
+                                )
+                              )
+                            }
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        onClick={() =>
+                          setBasketSubGroupRows((prev) =>
+                            prev.map((r, i) =>
+                              i === idx ? { ...r, substitute_course_ids: [...(r.substitute_course_ids || []), undefined] } : r
+                            )
+                          )
+                        }
+                        disabled={!primary || (substitutes || []).filter(Boolean).length >= Math.max(availableIds.length - 1, 0)}
+                      >
+                        Add Substitute
+                      </Button>
+                      <Button
+                        danger
+                        onClick={() => setBasketSubGroupRows((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        Delete Group
+                      </Button>
+                    </Space>
+                  </Card>
+                );
+              })}
+              <Button
+                onClick={() =>
+                  setBasketSubGroupRows((prev) => [...prev, { primary_course_id: undefined, substitute_course_ids: [] }])
+                }
+                disabled={!basketCourseIds.length}
+              >
+                Add Substitute Group
+              </Button>
               {(basketValidationErrors || []).map((msg, idx) => (
                 <Typography.Text key={`basket-error-${idx}`} type="danger">
                   {msg}
@@ -5018,9 +5587,51 @@ export function DesignStudioPage() {
               key={`core-rules-group:${group.requirement_id}`}
               size="small"
               style={{ borderColor: group.slot_total > 1 ? "#b7ccff" : undefined, background: group.slot_total > 1 ? "#fafcff" : undefined }}
-              title={group.requirement_name}
+              title={(
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span>{group.requirement_name}</span>
+                  {group.restrict_to_sub_groups ? (
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={() => {
+                        const used = new Set((group.rows || []).map((r) => Number(r.slot_index || 0)));
+                        let nextIdx = null;
+                        for (let i = 0; i < Math.max(1, Number(group.slot_total || 1)); i += 1) {
+                          if (!used.has(i)) {
+                            nextIdx = i;
+                            break;
+                          }
+                        }
+                        if (nextIdx == null) return;
+                        setCoreRulesRows((prev) => [
+                          ...prev,
+                          {
+                            requirement_id: group.requirement_id,
+                            requirement_name: group.requirement_name,
+                            slot_index: nextIdx,
+                            slot_total: Math.max(1, Number(group.slot_total || 1)),
+                            primary_course_id: undefined,
+                            substitute_course_ids: [],
+                            required_semester: undefined,
+                            required_semester_min: undefined,
+                            required_semester_max: undefined,
+                            restrict_to_sub_groups: true,
+                          },
+                        ]);
+                      }}
+                      disabled={(group.rows || []).length >= Math.max(1, Number(group.slot_total || 1))}
+                    >
+                      Add Substitute Group Rule
+                    </Button>
+                  ) : null}
+                </div>
+              )}
             >
               <Space direction="vertical" style={{ width: "100%" }}>
+                {group.restrict_to_sub_groups && !(group.rows || []).length ? (
+                  <Typography.Text type="secondary">No substitute-group constraints defined.</Typography.Text>
+                ) : null}
                 {group.rows.map((row) => {
                   const rowKey = `${row.requirement_id}:${row.slot_index}`;
                   const idx = (coreRulesRows || []).findIndex((x) => x.requirement_id === row.requirement_id && x.slot_index === row.slot_index);
@@ -5030,17 +5641,47 @@ export function DesignStudioPage() {
                       .map((r) => r.primary_course_id)
                       .filter(Boolean)
                   );
-                  const choiceOptions = (coreRuleChoiceOptionsByReq[row.requirement_id] || []).filter(
-                    (o) => !siblingSelected.has(o.value) || o.value === row.primary_course_id
-                  );
+                  const rawChoiceOptions = (coreRuleChoiceOptionsByReq[row.requirement_id] || [])
+                    .filter((o) => (row.restrict_to_sub_groups ? (o.group_course_ids || []).length > 1 : true));
+                  const choiceOptions = rawChoiceOptions.filter((o) => !siblingSelected.has(o.value) || o.value === row.primary_course_id);
                   const selectedChoice = choiceOptions.find((o) => o.value === row.primary_course_id);
                   const groupCourseIds = selectedChoice?.group_course_ids || [];
-                  const maxSubChoices = Math.max(0, groupCourseIds.length);
+                  const maxSubChoices = Math.max(0, groupCourseIds.length - 1);
+                  const applicableChoiceIds = groupCourseIds.length > 1
+                    ? Array.from(new Set((row.substitute_course_ids || []).filter((id) => id && groupCourseIds.includes(id))))
+                    : [];
+                  const applicableChoiceRows = groupCourseIds.length > 1
+                    ? (row.substitute_course_ids || [])
+                        .filter((id) => id == null || groupCourseIds.includes(id))
+                    : [];
                   const existingTimingRows = groupCourseIds.flatMap((cid) => coreRequirementTimingByCourse[cid] || []);
                   const existingTimingLabels = Array.from(new Set(existingTimingRows.map((x) => formatSemesterConstraint(x)).filter(Boolean)));
                   const hasExistingGroupTiming = existingTimingLabels.length > 0;
                   return (
-                    <Card key={`core-rule-row:${rowKey}`} size="small" title={`Pick ${row.slot_index + 1}/${Math.max(1, row.slot_total || 1)}`}>
+                    <Card
+                      key={`core-rule-row:${rowKey}`}
+                      size="small"
+                      title={
+                        row.restrict_to_sub_groups
+                          ? `Substitute Group ${row.slot_index + 1}/${Math.max(1, row.slot_total || 1)}`
+                          : `Pick ${row.slot_index + 1}/${Math.max(1, row.slot_total || 1)}`
+                      }
+                      extra={
+                        row.restrict_to_sub_groups ? (
+                          <Button
+                            size="small"
+                            danger
+                            onClick={() =>
+                              setCoreRulesRows((prev) =>
+                                prev.filter((r) => !(r.requirement_id === row.requirement_id && Number(r.slot_index) === Number(row.slot_index)))
+                              )
+                            }
+                          >
+                            Delete
+                          </Button>
+                        ) : null
+                      }
+                    >
                       <Space direction="vertical" style={{ width: "100%" }}>
                         <Select
                           allowClear
@@ -5065,15 +5706,15 @@ export function DesignStudioPage() {
                           }}
                           options={choiceOptions}
                         />
-                        {(row.substitute_course_ids || []).map((subId, subIdx) => (
+                        {applicableChoiceRows.map((subId, subIdx) => (
                           <div key={`core-sub-choice-${idx}-${subIdx}`} style={{ width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
                             {(() => {
                               const selectedElsewhere = new Set(
-                                (row.substitute_course_ids || []).filter((_, j) => j !== subIdx).filter(Boolean)
+                                applicableChoiceRows.filter((_, j) => j !== subIdx).filter(Boolean)
                               );
                               const optionsForThisSub = groupCourseIds
                                 .filter((cid) => !selectedElsewhere.has(cid) || cid === subId)
-                                .map((cid) => ({ value: cid, label: courseMapById[cid]?.course_number || cid }));
+                                .map((cid) => ({ value: cid, label: courseMapById[cid]?.course_number || courseMapById[cid]?.title || "Missing course" }));
                               return (
                             <Select
                               allowClear
@@ -5086,7 +5727,7 @@ export function DesignStudioPage() {
                                 setCoreRulesRows((prev) =>
                                   prev.map((r, i) => {
                                     if (i !== idx) return r;
-                                    const next = [...(r.substitute_course_ids || [])];
+                                    const next = [...applicableChoiceRows];
                                     next[subIdx] = v;
                                     const unique = [];
                                     const seen = new Set();
@@ -5110,7 +5751,7 @@ export function DesignStudioPage() {
                                 setCoreRulesRows((prev) =>
                                   prev.map((r, i) =>
                                     i === idx
-                                      ? { ...r, substitute_course_ids: (r.substitute_course_ids || []).filter((_, j) => j !== subIdx) }
+                                      ? { ...r, substitute_course_ids: applicableChoiceRows.filter((_, j) => j !== subIdx) }
                                       : r
                                   )
                                 )
@@ -5125,13 +5766,13 @@ export function DesignStudioPage() {
                             onClick={() =>
                               setCoreRulesRows((prev) =>
                                 prev.map((r, i) =>
-                                  i === idx ? { ...r, substitute_course_ids: [...(r.substitute_course_ids || []), undefined] } : r
+                                  i === idx ? { ...r, substitute_course_ids: [...applicableChoiceRows, undefined] } : r
                                 )
                               )
                             }
-                            disabled={!row.primary_course_id || (row.substitute_course_ids || []).length >= maxSubChoices}
+                            disabled={!row.primary_course_id || applicableChoiceRows.length >= maxSubChoices}
                           >
-                            Choose Applicable Course
+                            Choose Applicable Course (Optional)
                           </Button>
                         ) : null}
                         {hasExistingGroupTiming ? (

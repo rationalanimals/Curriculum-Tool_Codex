@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from collections import defaultdict
 import hashlib
 import io
 import itertools
@@ -281,6 +282,15 @@ class CourseBasketItem(Base):
     basket_id: Mapped[str] = mapped_column(String, ForeignKey("course_baskets.id"), index=True)
     course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class CourseBasketSubstitution(Base):
+    __tablename__ = "course_basket_substitutions"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    basket_id: Mapped[str] = mapped_column(String, ForeignKey("course_baskets.id"), index=True)
+    primary_course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
+    substitute_course_id: Mapped[str] = mapped_column(String, ForeignKey("courses.id"), index=True)
+    is_bidirectional: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class RequirementBasketLink(Base):
@@ -587,6 +597,13 @@ class RequirementBasketLinkIn(BaseModel):
     min_count: int = Field(default=1, ge=1, le=50)
     max_count: Optional[int] = Field(default=None, ge=1, le=50)
     sort_order: Optional[int] = Field(default=None, ge=0)
+
+
+class CourseBasketSubstitutionIn(BaseModel):
+    basket_id: str
+    primary_course_id: str
+    substitute_course_id: str
+    is_bidirectional: bool = True
 
 
 class CourseBasketItemOrderIn(BaseModel):
@@ -987,6 +1004,281 @@ def normalize_requirement_node_titles(db: Session) -> int:
         target = f"{base}: {suffix}"
         if existing != target:
             r.name = target
+            changed += 1
+    return changed
+
+
+def backfill_basket_substitutions_from_requirement_substitutions(db: Session) -> int:
+    """
+    One-way compatibility bridge: if a requirement has basket-linked courses and
+    legacy requirement-level substitutions between those courses, copy them into
+    basket-level substitutions so basket editing remains populated.
+    """
+    created = 0
+    links = db.scalars(select(RequirementBasketLink)).all()
+    for link in links:
+        basket_course_ids = {
+            x.course_id
+            for x in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id == link.basket_id)).all()
+        }
+        if not basket_course_ids:
+            continue
+        legacy = db.scalars(
+            select(RequirementSubstitution).where(RequirementSubstitution.requirement_id == link.requirement_id)
+        ).all()
+        if not legacy:
+            continue
+        existing_pairs = {
+            tuple(sorted((x.primary_course_id, x.substitute_course_id)))
+            for x in db.scalars(select(CourseBasketSubstitution).where(CourseBasketSubstitution.basket_id == link.basket_id)).all()
+        }
+        for row in legacy:
+            a = row.primary_course_id
+            b = row.substitute_course_id
+            if a == b:
+                continue
+            if a not in basket_course_ids or b not in basket_course_ids:
+                continue
+            norm = tuple(sorted((a, b)))
+            if norm in existing_pairs:
+                continue
+            db.add(
+                CourseBasketSubstitution(
+                    basket_id=link.basket_id,
+                    primary_course_id=a,
+                    substitute_course_id=b,
+                    is_bidirectional=bool(row.is_bidirectional),
+                )
+            )
+            existing_pairs.add(norm)
+            created += 1
+    return created
+
+
+def normalize_core_pathway_rule_configs(db: Session) -> int:
+    changed = 0
+    courses = db.scalars(select(Course)).all()
+    course_by_id = {c.id: c for c in courses}
+    course_id_by_number = {str(c.course_number or "").strip(): c.id for c in courses if str(c.course_number or "").strip()}
+    course_id_by_norm = {normalize_course_number(c.course_number): c.id for c in courses if str(c.course_number or "").strip()}
+    courses_by_version: dict[str, list[Course]] = defaultdict(list)
+    for c in courses:
+        if c.version_id:
+            courses_by_version[c.version_id].append(c)
+    course_id_by_number_version: dict[str, dict[str, str]] = {}
+    course_id_by_norm_version: dict[str, dict[str, str]] = {}
+    for vid, rows in courses_by_version.items():
+        course_id_by_number_version[vid] = {str(c.course_number or "").strip(): c.id for c in rows if str(c.course_number or "").strip()}
+        course_id_by_norm_version[vid] = {normalize_course_number(c.course_number): c.id for c in rows if str(c.course_number or "").strip()}
+
+    reqs = db.scalars(select(Requirement)).all()
+    req_by_id = {r.id: r for r in reqs}
+    core_reqs = [r for r in reqs if str(r.category or "").upper() == "CORE" and r.parent_requirement_id is not None]
+    programs = db.scalars(select(AcademicProgram)).all()
+    program_by_id = {p.id: p for p in programs}
+
+    direct = db.scalars(select(RequirementFulfillment)).all()
+    baskets = db.scalars(select(RequirementBasketLink)).all()
+    basket_items = db.scalars(select(CourseBasketItem)).all()
+    basket_course_ids_by_basket: dict[str, set[str]] = defaultdict(set)
+    for item in basket_items:
+        if item.course_id:
+            basket_course_ids_by_basket[item.basket_id].add(item.course_id)
+    course_ids_by_req: dict[str, set[str]] = defaultdict(set)
+    for row in direct:
+        if row.course_id:
+            course_ids_by_req[row.requirement_id].add(row.course_id)
+    for bl in baskets:
+        for cid in basket_course_ids_by_basket.get(bl.basket_id, set()):
+            course_ids_by_req[bl.requirement_id].add(cid)
+
+    for rule in db.scalars(select(ValidationRule)).all():
+        try:
+            cfg = json.loads(rule.config_json or "{}")
+        except Exception:
+            continue
+        t = str(cfg.get("type") or "").upper()
+        if t not in {"MAJOR_PATHWAY_CORE", "MAJOR_CORE_PATHWAY"}:
+            continue
+        groups = cfg.get("required_core_groups") or []
+        if not isinstance(groups, list):
+            continue
+        version_id = None
+        pid = cfg.get("program_id")
+        if pid and pid in program_by_id:
+            version_id = program_by_id[pid].version_id
+        local_number_map = course_id_by_number_version.get(version_id, {}) if version_id else {}
+        local_norm_map = course_id_by_norm_version.get(version_id, {}) if version_id else {}
+        local_core_reqs = [r for r in core_reqs if (not version_id or r.version_id == version_id)]
+
+        used_slots: dict[str, set[int]] = defaultdict(set)
+        next_groups = []
+        local_changed = False
+
+        for idx, g in enumerate(groups):
+            g = dict(g or {})
+            raw_group_name = str(g.get("name") or "")
+            tokens = [str(x or "").strip() for x in (g.get("course_numbers") or []) if str(x or "").strip()]
+            resolved_ids = []
+            for tok in tokens:
+                cid = None
+                if tok in course_by_id:
+                    cid = tok
+                elif tok in local_number_map:
+                    cid = local_number_map[tok]
+                elif tok in course_id_by_number:
+                    cid = course_id_by_number[tok]
+                else:
+                    cid = local_norm_map.get(normalize_course_number(tok)) or course_id_by_norm.get(normalize_course_number(tok))
+                if cid:
+                    resolved_ids.append(cid)
+            resolved_ids = list(dict.fromkeys(resolved_ids))
+            if not resolved_ids:
+                next_groups.append(g)
+                continue
+
+            req_id = g.get("source_requirement_id") or g.get("requirement_id")
+            if req_id not in req_by_id or str(req_by_id[req_id].category or "").upper() != "CORE":
+                best_req = None
+                best_score = -1
+                sel = set(resolved_ids)
+                for req in local_core_reqs:
+                    req_ids = course_ids_by_req.get(req.id, set())
+                    score = len(sel & req_ids)
+                    if score > best_score:
+                        best_score = score
+                        best_req = req.id
+                if best_req and best_score > 0:
+                    req_id = best_req
+                    local_changed = True
+                # Name-based fallback for legacy core rules that omitted source req ids.
+                if (not req_id or req_id not in req_by_id) and raw_group_name:
+                    gl = raw_group_name.lower()
+                    def find_req_name(fragment: str) -> Optional[str]:
+                        for rr in local_core_reqs:
+                            if fragment in str(rr.name or "").lower():
+                                return rr.id
+                        return None
+                    if "p / c / b" in gl or "intermediate science" in gl:
+                        req_id = find_req_name("intermediate science") or req_id
+                    elif "statistics" in gl or "stats" in gl:
+                        req_id = find_req_name("intermediate stats") or req_id
+                    elif "sociocultural" in gl or "liberal arts" in gl:
+                        req_id = find_req_name("advanced liberal arts") or req_id
+                    elif "open option" in gl or "advanced:" in gl:
+                        req_id = find_req_name("track - advanced:") or req_id
+                    elif "stem" in gl:
+                        req_id = find_req_name("advanced stem") or req_id
+                    elif "aero engr" in gl:
+                        req_id = find_req_name("track - intermediate:") or req_id
+                    if req_id in req_by_id:
+                        local_changed = True
+
+            if req_id in req_by_id:
+                gl = raw_group_name.lower()
+                if gl:
+                    def _find_req(fragment: str) -> Optional[str]:
+                        for rr in local_core_reqs:
+                            if fragment in str(rr.name or "").lower():
+                                return rr.id
+                        return None
+                    forced_req = None
+                    if "open option" in gl:
+                        forced_req = _find_req("track - advanced:")
+                    elif "sociocultural" in gl or "liberal arts" in gl:
+                        forced_req = _find_req("advanced liberal arts")
+                    elif "statistics" in gl or "stats" in gl:
+                        forced_req = _find_req("intermediate stats")
+                    elif "p / c / b" in gl or "intermediate science" in gl:
+                        forced_req = _find_req("intermediate science")
+                    elif "aero engr" in gl:
+                        forced_req = _find_req("track - intermediate:")
+                    if forced_req and forced_req != req_id:
+                        req_id = forced_req
+                        local_changed = True
+                sel = set(resolved_ids)
+                current_overlap = len(sel & course_ids_by_req.get(req_id, set()))
+                if current_overlap == 0 and local_core_reqs:
+                    best_req = req_id
+                    best_score = 0
+                    for req_try in local_core_reqs:
+                        score = len(sel & course_ids_by_req.get(req_try.id, set()))
+                        if score > best_score:
+                            best_score = score
+                            best_req = req_try.id
+                    if best_req != req_id and best_score > 0:
+                        req_id = best_req
+                        local_changed = True
+                req = req_by_id[req_id]
+                logic = str(req.logic_type or "ALL_REQUIRED").upper()
+                slot_total = int(req.pick_n or 1) if logic in {"PICK_N", "ANY_N"} else 1
+                try:
+                    slot = int(g.get("slot_index")) if g.get("slot_index") is not None else None
+                except Exception:
+                    slot = None
+                if slot is None or slot < 0 or slot >= slot_total or slot in used_slots[req_id]:
+                    open_slots = [s for s in range(slot_total) if s not in used_slots[req_id]]
+                    slot = open_slots[0] if open_slots else 0
+                    local_changed = True
+                used_slots[req_id].add(slot)
+
+                normalized_nums = []
+                for cid in resolved_ids:
+                    num = str(course_by_id.get(cid).course_number or "").strip() if course_by_id.get(cid) else ""
+                    if num:
+                        normalized_nums.append(num)
+                normalized_nums = list(dict.fromkeys(normalized_nums))
+                # If legacy data encoded the full option set for a Pick-1 core node,
+                # treat as unconstrained (empty) so the modal/tree do not imply a forced choice.
+                req_option_ids = list(course_ids_by_req.get(req_id, set()))
+                if logic in {"PICK_N", "ANY_N"} and int(req.pick_n or 1) == 1 and len(req_option_ids) > 1:
+                    if set(resolved_ids) == set(req_option_ids):
+                        normalized_nums = []
+                        local_changed = True
+                new_name = f"{req.name} - Choice {slot + 1}"
+
+                if g.get("source_requirement_id") != req_id:
+                    g["source_requirement_id"] = req_id
+                    local_changed = True
+                if g.get("slot_index") != slot:
+                    g["slot_index"] = slot
+                    local_changed = True
+                if g.get("name") != new_name:
+                    g["name"] = new_name
+                    local_changed = True
+                if g.get("course_numbers") != normalized_nums:
+                    g["course_numbers"] = normalized_nums
+                    local_changed = True
+
+            next_groups.append(g)
+
+        # Deduplicate accidental duplicates for the same core rule slot.
+        deduped: list[dict] = []
+        idx_by_key: dict[tuple[str, int], int] = {}
+        for g in next_groups:
+            req_id = g.get("source_requirement_id")
+            slot = g.get("slot_index")
+            if req_id is None or slot is None:
+                deduped.append(g)
+                continue
+            key = (str(req_id), int(slot))
+            if key not in idx_by_key:
+                idx_by_key[key] = len(deduped)
+                deduped.append(g)
+                continue
+            prev_idx = idx_by_key[key]
+            prev = dict(deduped[prev_idx] or {})
+            prev_nums = tuple(prev.get("course_numbers") or [])
+            cur_nums = tuple(g.get("course_numbers") or [])
+            if prev_nums != cur_nums:
+                prev["course_numbers"] = []
+            deduped[prev_idx] = prev
+            local_changed = True
+        next_groups = deduped
+
+        if local_changed:
+            cfg["required_core_groups"] = next_groups
+            rule.config_json = json.dumps(cfg)
             changed += 1
     return changed
 
@@ -1488,6 +1780,19 @@ def ensure_runtime_migrations() -> None:
                     basket_id TEXT NOT NULL,
                     course_id TEXT NOT NULL,
                     sort_order INTEGER DEFAULT 0
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS course_basket_substitutions (
+                    id TEXT PRIMARY KEY,
+                    basket_id TEXT NOT NULL,
+                    primary_course_id TEXT NOT NULL,
+                    substitute_course_id TEXT NOT NULL,
+                    is_bidirectional BOOLEAN DEFAULT 1
                 )
                 """
             )
@@ -2840,6 +3145,8 @@ def startup():
             req.logic_type = "PICK_N"
             req.pick_n = 1
         normalize_requirement_node_titles(db)
+        normalize_core_pathway_rule_configs(db)
+        backfill_basket_substitutions_from_requirement_substitutions(db)
         rename_engineering_open_option_nodes(db)
         ensure_validation_rule_codes(db)
         for prog in db.scalars(select(AcademicProgram)).all():
@@ -3546,6 +3853,8 @@ def delete_basket(basket_id: str, db: Session = Depends(get_db), _: User = Depen
         raise HTTPException(status_code=404, detail="Basket not found")
     for item in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id == basket_id)).all():
         db.delete(item)
+    for sub in db.scalars(select(CourseBasketSubstitution).where(CourseBasketSubstitution.basket_id == basket_id)).all():
+        db.delete(sub)
     for link in db.scalars(select(RequirementBasketLink).where(RequirementBasketLink.basket_id == basket_id)).all():
         db.delete(link)
     db.delete(row)
@@ -3569,6 +3878,15 @@ def list_baskets(version_id: Optional[str] = None, db: Session = Depends(get_db)
         if basket_ids
         else []
     )
+    substitutions = (
+        db.scalars(
+            select(CourseBasketSubstitution)
+            .where(CourseBasketSubstitution.basket_id.in_(basket_ids))
+            .order_by(CourseBasketSubstitution.basket_id.asc(), CourseBasketSubstitution.primary_course_id.asc())
+        ).all()
+        if basket_ids
+        else []
+    )
     items_by_basket: dict[str, list[dict]] = {}
     for item in items:
         out = serialize(item)
@@ -3576,10 +3894,21 @@ def list_baskets(version_id: Optional[str] = None, db: Session = Depends(get_db)
         out["course_number"] = course.course_number if course else None
         out["course_title"] = course.title if course else None
         items_by_basket.setdefault(item.basket_id, []).append(out)
+    subs_by_basket: dict[str, list[dict]] = {}
+    for row in substitutions:
+        out = serialize(row)
+        primary = db.get(Course, row.primary_course_id)
+        sub = db.get(Course, row.substitute_course_id)
+        out["primary_course_number"] = primary.course_number if primary else None
+        out["primary_course_title"] = primary.title if primary else None
+        out["substitute_course_number"] = sub.course_number if sub else None
+        out["substitute_course_title"] = sub.title if sub else None
+        subs_by_basket.setdefault(row.basket_id, []).append(out)
     out_rows = []
     for row in rows:
         item = serialize(row)
         item["items"] = items_by_basket.get(row.id, [])
+        item["substitutions"] = subs_by_basket.get(row.id, [])
         out_rows.append(item)
     return out_rows
 
@@ -3627,6 +3956,127 @@ def reorder_basket_items(payload: list[CourseBasketItemOrderIn], db: Session = D
             updated += 1
     db.commit()
     return {"status": "ok", "updated": updated}
+
+
+@app.post("/baskets/substitutions")
+def create_basket_substitution(payload: CourseBasketSubstitutionIn, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    if payload.primary_course_id == payload.substitute_course_id:
+        raise HTTPException(status_code=400, detail="primary_course_id and substitute_course_id must differ")
+    basket = db.get(CourseBasket, payload.basket_id)
+    if not basket:
+        raise HTTPException(status_code=404, detail="Basket not found")
+    basket_course_ids = {
+        x.course_id
+        for x in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id == payload.basket_id)).all()
+    }
+    if payload.primary_course_id not in basket_course_ids or payload.substitute_course_id not in basket_course_ids:
+        raise HTTPException(status_code=400, detail="Both courses must be in the basket")
+    existing = db.scalar(
+        select(CourseBasketSubstitution).where(
+            CourseBasketSubstitution.basket_id == payload.basket_id,
+            CourseBasketSubstitution.primary_course_id == payload.primary_course_id,
+            CourseBasketSubstitution.substitute_course_id == payload.substitute_course_id,
+        )
+    )
+    if existing:
+        return serialize(existing)
+    reverse = db.scalar(
+        select(CourseBasketSubstitution).where(
+            CourseBasketSubstitution.basket_id == payload.basket_id,
+            CourseBasketSubstitution.primary_course_id == payload.substitute_course_id,
+            CourseBasketSubstitution.substitute_course_id == payload.primary_course_id,
+        )
+    )
+    if reverse:
+        reverse.is_bidirectional = payload.is_bidirectional or reverse.is_bidirectional
+        db.commit()
+        db.refresh(reverse)
+        return serialize(reverse)
+    row = CourseBasketSubstitution(**payload.model_dump())
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.get("/baskets/substitutions/{basket_id}")
+def list_basket_substitutions(basket_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    rows = db.scalars(
+        select(CourseBasketSubstitution)
+        .where(CourseBasketSubstitution.basket_id == basket_id)
+        .order_by(CourseBasketSubstitution.primary_course_id.asc(), CourseBasketSubstitution.substitute_course_id.asc())
+    ).all()
+    out = []
+    for row in rows:
+        item = serialize(row)
+        primary = db.get(Course, row.primary_course_id)
+        sub = db.get(Course, row.substitute_course_id)
+        item["primary_course_number"] = primary.course_number if primary else None
+        item["primary_course_title"] = primary.title if primary else None
+        item["substitute_course_number"] = sub.course_number if sub else None
+        item["substitute_course_title"] = sub.title if sub else None
+        out.append(item)
+    return out
+
+
+@app.get("/baskets/substitutions/version/{version_id}")
+def list_basket_substitutions_version(version_id: str, db: Session = Depends(get_db), _: User = Depends(current_user)):
+    basket_ids = db.scalars(select(CourseBasket.id).where(CourseBasket.version_id == version_id)).all()
+    if not basket_ids:
+        return []
+    rows = db.scalars(
+        select(CourseBasketSubstitution)
+        .where(CourseBasketSubstitution.basket_id.in_(basket_ids))
+        .order_by(CourseBasketSubstitution.basket_id.asc(), CourseBasketSubstitution.primary_course_id.asc())
+    ).all()
+    out = []
+    for row in rows:
+        item = serialize(row)
+        primary = db.get(Course, row.primary_course_id)
+        sub = db.get(Course, row.substitute_course_id)
+        item["primary_course_number"] = primary.course_number if primary else None
+        item["primary_course_title"] = primary.title if primary else None
+        item["substitute_course_number"] = sub.course_number if sub else None
+        item["substitute_course_title"] = sub.title if sub else None
+        out.append(item)
+    return out
+
+
+@app.put("/baskets/substitutions/{substitution_id}")
+def update_basket_substitution(
+    substitution_id: str, payload: CourseBasketSubstitutionIn, db: Session = Depends(get_db), _: User = Depends(require_design)
+):
+    row = db.get(CourseBasketSubstitution, substitution_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Basket substitution not found")
+    if payload.primary_course_id == payload.substitute_course_id:
+        raise HTTPException(status_code=400, detail="primary_course_id and substitute_course_id must differ")
+    basket = db.get(CourseBasket, payload.basket_id)
+    if not basket:
+        raise HTTPException(status_code=404, detail="Basket not found")
+    basket_course_ids = {
+        x.course_id
+        for x in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id == payload.basket_id)).all()
+    }
+    if payload.primary_course_id not in basket_course_ids or payload.substitute_course_id not in basket_course_ids:
+        raise HTTPException(status_code=400, detail="Both courses must be in the basket")
+    row.basket_id = payload.basket_id
+    row.primary_course_id = payload.primary_course_id
+    row.substitute_course_id = payload.substitute_course_id
+    row.is_bidirectional = payload.is_bidirectional
+    db.commit()
+    db.refresh(row)
+    return serialize(row)
+
+
+@app.delete("/baskets/substitutions/{substitution_id}")
+def delete_basket_substitution(substitution_id: str, db: Session = Depends(get_db), _: User = Depends(require_design)):
+    row = db.get(CourseBasketSubstitution, substitution_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Basket substitution not found")
+    db.delete(row)
+    db.commit()
+    return {"status": "deleted"}
 
 
 @app.post("/requirements/baskets")
@@ -3808,6 +4258,15 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
         if basket_ids
         else []
     )
+    basket_subs = (
+        db.scalars(
+            select(CourseBasketSubstitution)
+            .where(CourseBasketSubstitution.basket_id.in_(basket_ids))
+            .order_by(CourseBasketSubstitution.basket_id.asc(), CourseBasketSubstitution.primary_course_id.asc())
+        ).all()
+        if basket_ids
+        else []
+    )
     items_by_basket: dict[str, list[dict]] = {}
     for item in basket_items:
         course = db.get(Course, item.course_id)
@@ -3818,6 +4277,23 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
                 "course_number": course.course_number if course else None,
                 "course_title": course.title if course else None,
                 "sort_order": item.sort_order,
+            }
+        )
+    subs_by_basket: dict[str, list[dict]] = {}
+    for row in basket_subs:
+        primary = db.get(Course, row.primary_course_id)
+        sub = db.get(Course, row.substitute_course_id)
+        subs_by_basket.setdefault(row.basket_id, []).append(
+            {
+                "id": row.id,
+                "basket_id": row.basket_id,
+                "primary_course_id": row.primary_course_id,
+                "substitute_course_id": row.substitute_course_id,
+                "is_bidirectional": row.is_bidirectional,
+                "primary_course_number": primary.course_number if primary else None,
+                "primary_course_title": primary.title if primary else None,
+                "substitute_course_number": sub.course_number if sub else None,
+                "substitute_course_title": sub.title if sub else None,
             }
         )
     baskets_by_req: dict[str, list[dict]] = {}
@@ -3833,6 +4309,7 @@ def requirements_tree(version_id: str, program_id: Optional[str] = None, db: Ses
                 "max_count": row.max_count,
                 "sort_order": row.sort_order,
                 "courses": items_by_basket.get(row.basket_id, []),
+                "substitutions": subs_by_basket.get(row.basket_id, []),
             }
         )
     links_by_req: dict[str, list[dict]] = {}
@@ -4506,6 +4983,17 @@ def build_rule_sets_payload(version_id: str, db: Session) -> dict:
         for i in db.scalars(select(CourseBasketItem).order_by(CourseBasketItem.basket_id.asc(), CourseBasketItem.sort_order.asc())).all()
         if i.basket_id in basket_ids
     ]
+    basket_substitutions = [
+        serialize(s)
+        for s in db.scalars(
+            select(CourseBasketSubstitution).order_by(
+                CourseBasketSubstitution.basket_id.asc(),
+                CourseBasketSubstitution.primary_course_id.asc(),
+                CourseBasketSubstitution.substitute_course_id.asc(),
+            )
+        ).all()
+        if s.basket_id in basket_ids
+    ]
     requirement_baskets = [
         serialize(x)
         for x in db.scalars(select(RequirementBasketLink).order_by(RequirementBasketLink.requirement_id.asc(), RequirementBasketLink.sort_order.asc())).all()
@@ -4527,6 +5015,7 @@ def build_rule_sets_payload(version_id: str, db: Session) -> dict:
         "requirements": requirements,
         "course_baskets": baskets,
         "course_basket_items": basket_items,
+        "course_basket_substitutions": basket_substitutions,
         "requirement_basket_links": requirement_baskets,
         "requirement_fulfillment": fulfillment,
         "requirement_substitutions": req_substitutions,
@@ -4680,6 +5169,7 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
     incoming_requirements = rules_payload.get("requirements") or []
     incoming_baskets = rules_payload.get("course_baskets") or []
     incoming_basket_items = rules_payload.get("course_basket_items") or []
+    incoming_basket_subs = rules_payload.get("course_basket_substitutions") or []
     incoming_req_baskets = rules_payload.get("requirement_basket_links") or []
     incoming_fulfillment = rules_payload.get("requirement_fulfillment") or []
     incoming_req_subs = rules_payload.get("requirement_substitutions") or []
@@ -4699,6 +5189,8 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
                 db.delete(row)
         if basket_ids:
             for row in db.scalars(select(CourseBasketItem).where(CourseBasketItem.basket_id.in_(basket_ids))).all():
+                db.delete(row)
+            for row in db.scalars(select(CourseBasketSubstitution).where(CourseBasketSubstitution.basket_id.in_(basket_ids))).all():
                 db.delete(row)
         for row in basket_rows:
             db.delete(row)
@@ -4754,6 +5246,21 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
         db.add(CourseBasketItem(**row))
         created_basket_items += 1
 
+    created_basket_subs = 0
+    for raw in incoming_basket_subs:
+        row = filter_model_row(CourseBasketSubstitution, raw)
+        if (
+            row.get("basket_id") not in basket_ids
+            or row.get("primary_course_id") not in course_ids
+            or row.get("substitute_course_id") not in course_ids
+            or row.get("primary_course_id") == row.get("substitute_course_id")
+        ):
+            continue
+        if row.get("id") and db.get(CourseBasketSubstitution, row["id"]):
+            continue
+        db.add(CourseBasketSubstitution(**row))
+        created_basket_subs += 1
+
     created_req_baskets = 0
     for raw in incoming_req_baskets:
         row = filter_model_row(RequirementBasketLink, raw)
@@ -4806,6 +5313,7 @@ def apply_rule_sets_import(version_id: str, rules_payload: dict, replace_existin
         "requirements_created": created_requirements,
         "course_baskets_created": created_baskets,
         "course_basket_items_created": created_basket_items,
+        "course_basket_substitutions_created": created_basket_subs,
         "requirement_basket_links_created": created_req_baskets,
         "requirement_fulfillment_created": created_fulfillment,
         "requirement_substitutions_created": created_req_subs,

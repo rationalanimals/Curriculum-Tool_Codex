@@ -67,6 +67,37 @@ pre {
   min-width: max-content;
 }
 
+/* Match Program Design virtual-tree scrollbar styling with other studio sections. */
+.program-design-tree .rc-virtual-list-holder {
+  scrollbar-color: #bfbfbf #f2f2f2;
+}
+
+.program-design-tree .rc-virtual-list-holder::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.program-design-tree .rc-virtual-list-holder::-webkit-scrollbar-track {
+  background: #f2f2f2;
+}
+
+.program-design-tree .rc-virtual-list-holder::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 8px;
+}
+
+/* AntD/rc-virtual-list custom scrollbar (used by Tree with `virtual`). */
+.program-design-tree .rc-virtual-list-scrollbar {
+  width: 10px !important;
+  background: #f2f2f2 !important;
+  border-radius: 8px;
+}
+
+.program-design-tree .rc-virtual-list-scrollbar-thumb {
+  background: #bfbfbf !important;
+  border-radius: 8px !important;
+}
+
 /* Unified gray scrollbar styling across sections (including Ant table bodies). */
 * {
   scrollbar-color: #bfbfbf #f2f2f2;

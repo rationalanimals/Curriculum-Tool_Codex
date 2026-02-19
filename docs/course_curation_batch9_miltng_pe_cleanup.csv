@@ -1,0 +1,3 @@
+﻿action,course_number,new_title,new_credit_hours,new_additional_requirements_text,notes
+UPDATE,Mil Tng 270,Expeditionary Skills Training,0,Student course; academy graduation requirement; summer only.,"COI title cleanup"
+UPDATE,Phy Ed 926,Intercollegiate Practice Time,0,Intercollegiate athletes are enrolled to block out practice time on T afternoons.,"COI indicates scheduling block, not academic credit"

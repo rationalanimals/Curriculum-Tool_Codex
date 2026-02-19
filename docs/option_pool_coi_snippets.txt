@@ -1,0 +1,322 @@
+matches: 107
+
+--- open option ---
+ngr 210/210S  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245    5 Semester hours of Director of Athletics core courses.    46 Semester hours of major's courses:  Aero Engr 206 Fundamental Tools for Engineering    or Comp Sci 206  Fundamentals of Programming for Engineers     or Comp Sc
+
+--- open option ---
+ Physics 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245    5 Semester hours of Director of Athletics core courses.    48 Semester hours of major's courses:  Astr Engr 201  Technology Skills for Astronautics         or Comp Sci 211  (See Supplemental Information 1)  Mech Engr 320  
+
+--- open option ---
+d Statistics for  Engineers and Scientists or   Advanced Probability and Statistics  Math 356  or  Math 377  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    36  Semester hours of major’s courses:    There are no specific mandatory Basic Sciences major’s courses, so cadets have tremendous flexibility in designing their program.  Cadets are f
+
+--- open option ---
+ci Option  3  1  Bas Sci Option  3  1  3  1  Bas Sci Option  3  1  Bas Sci Option  3  1  4  2  Bas Sci Option  3  1  Bas Sci Option  3  1  Aero Engr 315  Math 356  Ldrshp 300  Adv Open Option  Astr Engr 310  Ldrshp 400  3  1 3  1 3  1 3  1 3  1 3  1  0.75  0 0.75  0 0.75  0  0.5  2  Phy Ed  0.5  2  Phy Ed  0.5  2  17.25  8  16.25  7  16.25  7  Semester Hour Summary  Core =  93.0  Sem Hours  Major =  36.0  "  Phy Ed =  5.0  "  Total =  134.0  "    
+
+--- open option ---
+s II with Laboratory  Chem 200 or Physics 215  Statistics  Introduction to Statistics  Math 300  Adv STEM Option    Choose 1  Adv Sociocultural Option  Sociology  Beh Sci 360  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42 Semester hours of major's courses:      1.   2.    3.  Beh Sci 280  Beh Sci 361  Beh Sci 498  Scientific Method and Research Design  Social Problems  Senior Capstone in the Behaviora
+
+--- academy option ---
+gy      Other Beh Sci Elective Courses:             Beh Sci 314   Influence and Persuasion in Future Conflict             Beh Sci 414   Applied Influence and Persuasion    13.-14. Academy Options Any two additional courses (≥3.0 sem hrs each) taught under the supervision of the Dean of Faculty. Cadets may use the  Academy Options for a variety of purposes: supporting pre-med/health professional coursework, helping to meet a minor's requirements, inde
+
+--- academy option ---
+Applied Influence and Persuasion    13.-14. Academy Options Any two additional courses (≥3.0 sem hrs each) taught under the supervision of the Dean of Faculty. Cadets may use the  Academy Options for a variety of purposes: supporting pre-med/health professional coursework, helping to meet a minor's requirements, independent study, pursuing an area of interest, etc.      SUGGESTED COURSE SEQUENCE                       BIOLOGY    THE BIOLOGY MAJOR AT A
+
+--- academy option ---
+my Core, the Biology major comprises 9 core courses (including organic chemistry), as well as 5 electives that include: 3 additional Biology courses, 1 Basic Sciences course and 1 Academy Option.  The required courses represent and explore the spectrum of biological levels, from the molecules within cells to the organisms within ecosystems; the elective courses allow emphasis in environmental and organismal biology, cellular and molecular biology, an
+
+--- open option ---
+ntroduction to Statistics OR  Probability and Statistics for Scientists and Engineers  Math 300 OR Math 356  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses    45 Semester hours of major's courses:  Biology 330  Zoology  Biology 331  Botany  Biology 332  Microbial Diversity  Biology 360  Cell and Molecular Biology  Biology 363  Genetics  Biolog
+
+--- academy option ---
+Biology course  Chemistry Option  Chem 230 or Chem 233  Scientific Breadth Option  ≥200-level course in DFBI, DFCH, DFMS, or DFPM      Other courses with Department Head approval  Academy Option 1(See Supplemental Information)  Academy Option 2 (See Supplemental Information)    Supplemental Information:  An Academy Option course is any course, of 3.0 sem hrs or greater, taught under the supervision of the Dean of Faculty, Commandant of Cadets, Direct
+
+--- academy option ---
+em 233  Scientific Breadth Option  ≥200-level course in DFBI, DFCH, DFMS, or DFPM      Other courses with Department Head approval  Academy Option 1(See Supplemental Information)  Academy Option 2 (See Supplemental Information)    Supplemental Information:  An Academy Option course is any course, of 3.0 sem hrs or greater, taught under the supervision of the Dean of Faculty, Commandant of Cadets, Director of Athletics, or 306 FTG.  Cadets can use the
+
+--- academy option ---
+      Other courses with Department Head approval  Academy Option 1(See Supplemental Information)  Academy Option 2 (See Supplemental Information)    Supplemental Information:  An Academy Option course is any course, of 3.0 sem hrs or greater, taught under the supervision of the Dean of Faculty, Commandant of Cadets, Director of Athletics, or 306 FTG.  Cadets can use the Academy Option for a variety of purposes, such as helping to meet minor's requir
+
+--- academy option ---
+ course is any course, of 3.0 sem hrs or greater, taught under the supervision of the Dean of Faculty, Commandant of Cadets, Director of Athletics, or 306 FTG.  Cadets can use the Academy Option for a variety of purposes, such as helping to meet minor's requirements, instructor upgrade coursework, independent study(ies), or to dig deeper into an area of interest.        SUGGESTED COURSE SEQUENCE     Biology Major  4 o  hrs  per  3 o  hrs  per  2 o  h
+
+--- open option ---
+ Ed    1   2 ECE 315    3 1   Phy Ed  0.5   2   16.5     9 19.5   10   Phy Ed  1   2     20 9   3  1  3  1  15.5  7  Aero Engr 315  Math 300/Math 356  Ldrshp 300  Soc Sci 311  Adv Open Option  Ldrshp 400  For Lang 2  3     2 Biology 330    4 2   Chem 200  4   2   Biology 332  3     1 Comp Sci 110    3 1   Econ 201  3.5     2 English 111    3   1 Pol Sci 211  3     1 Math 142  3   1   Law 220  3   1   Ldrshp 100    0.75   0 Mech Engr 220    3 1   P
+
+--- academy option ---
+ 142  3   1   Law 220  3   1   Ldrshp 100    0.75   0 Mech Engr 220    3 1   Phy Ed  0.5   2   Ldrshp 200  0.75   0   17.25     9 Phy Ed  0.5   2   20.75   10   Biology 360  3  1  Academy Option  3  1  Sci Breadth Option  3  1  Biology Option #3  3  1  Spring  Biology 331  4  2  Biology Option #4  3  1  3  1 3  1  3  1 3  1  0.75  0 0.75  0  Phy Ed  0.5  2  Phy Ed  0.5  2  17.25  8  16.25  7  Course Unit Summary  Core (29)  Major (14)  Phy Ed (10)  S
+
+--- open option ---
+sics 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Analytical Chemistry  Chem 222  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1 *      Cadets in the Chemistry Track should take an Advanced Sociocultural Option to fulfill the     Advanced Open Option.    Biochemistry Track      Core Requirement  Required Core Options / Substitutes  P / C / B Option 1  General Chemistry II L
+
+--- open option ---
+22  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1 *      Cadets in the Chemistry Track should take an Advanced Sociocultural Option to fulfill the     Advanced Open Option.    Biochemistry Track      Core Requirement  Required Core Options / Substitutes  P / C / B Option 1  General Chemistry II Lecture and Lab  Chem 200  P / C / B Option 2  General Physics II with Laboratory  Physics 215  Statistics  Probability and Statistics 
+
+--- open option ---
+sics 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Analytical Chemistry  Chem 222  Adv Sociocultural Option    Choose 1  Adv Open Option  Introductory Biology with Laboratory  Biology 215 *      Biology 215 is an approved requirement for the Advanced Open Option for the Biochemistry     track.  If Biology 215 is validated, cadets should choose any Advanced Sociocultural Option     course to fu
+
+--- open option ---
+  Chem 222  Adv Sociocultural Option    Choose 1  Adv Open Option  Introductory Biology with Laboratory  Biology 215 *      Biology 215 is an approved requirement for the Advanced Open Option for the Biochemistry     track.  If Biology 215 is validated, cadets should choose any Advanced Sociocultural Option     course to fulfill the Advanced Open Option requirement.    Engineering Chemistry  Track Core Requirement  Required Core Options / Substitu
+
+--- open option ---
+or the Advanced Open Option for the Biochemistry     track.  If Biology 215 is validated, cadets should choose any Advanced Sociocultural Option     course to fulfill the Advanced Open Option requirement.    Engineering Chemistry  Track Core Requirement  Required Core Options / Substitutes  P / C / B Option 1  General Chemistry II Lecture and Lab  Chem 200  P / C / B Option 2  General Physics II with Laboratory  Physics 215  Statistics  Probabilit
+
+--- open option ---
+sics 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Analytical Chemistry  Chem 222  Adv Sociocultural Option    Choose 1  Adv Open Option  Calculus III / Differential Equations  Math 243/245 *      If any core math course(s) (e.g., Math 141, Math 142, Math 243, and/or Math 245) is(are)     validated, the cadet should choose any Advanced Sociocultural Option course to fill the     Advanced Open 
+
+--- open option ---
+th course(s) (e.g., Math 141, Math 142, Math 243, and/or Math 245) is(are)     validated, the cadet should choose any Advanced Sociocultural Option course to fill the     Advanced Open Option requirement.    5 Semester hours of Director of Athletics core courses    48-51 Semester hours of major's courses:    The major's three tracks are Chemistry, Biochemistry, and Engineering Chemistry.  Depending on the number and type of course validation(s), c
+
+--- open option ---
+ab  Chem 200  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245    5 Semester hours of Director of Athletics core courses.    45 Semester hours of major's courses:    Civ Engr 330  Elementary Structural Analysis  Civ Engr 351  Civil Engineering Practices – Field Engineering      (taken 1 
+
+--- open option ---
+ists and Engineers or Advanced Probability and Statistics  Math 356 or Math 377  Adv STEM Option  Programming Fundamentals  Comp Sci 210  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    45 Semester hours of major's courses:  Math 340  Discrete Mathematics    or Math 474  Combinatorics and Graph Theory  Comp Sci 220  Data Structures and Systems Programming  Comp Sci 330
+
+--- open option ---
+ 3   1 Phy Ed    0.5   2 Phy Ed  1   2   Econ 201    3.5   2 Soc Sci 311  3   1   15.5   8   18   9   Phy Ed  0.5     2 Phy Ed    0.5   2   19 9   15.5     9 Philos 210  Math 356  Open Option  Ldrshp 300  History 300  Astr Engr 310  SocioCultural Choice  Ldrshp 400  For Lang 2  3   2   Comp Sci 220  3     1 Chem 100  4   2   Comp Sci 351    3 1   English 111  3     1 Math 340    3 1   Math 142    3 1   MSS 251  4.5     2 Physics 110    4   2 Chem 
+
+--- open option ---
+ists and Engineers or Advanced Probability and Statistics  Math 356 or Math 377  Adv STEM Option  Programming Fundamentals  Comp Sci 210  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    46 Semester hours of major's courses:  Math 340         Discrete Mathematics    or Math 474         Combinatorics and Graph Theory  Comp Sci 220         Data Structures and Systems Prog
+
+--- open option ---
+Option 2    Choose 1  Statistics  Advanced Probability and Statistics  Math 377  Adv STEM Option  Programming Fundamentals  Comp Sci 210  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    27 Semester hours of required major's courses:    Comp Sci 220  Data Structures and Systems Programming  Data  364  Data Acquisition and Management   Comp Sci 471  Artificial Intelligen
+
+--- open option ---
+y Ed    0.5   2 Phy Ed  1   2   Adv Sociocultural Opt  3   1   Phy Ed  0.5   2   15.5     8   20 10   Phy Ed    1 2   19     8 3  1  3  1  15.5  8  Aero Engr 315  Soc Sci 311  Adv Open Option  Ldrshp 400  Philos 210  Ldrshp 300  Chem 100    4   2 Comp Sci 220  3   1   For Lang 2  3   2   Math 344  3   1   History 100    3 1   Law 220    3 1   Math 142  3   1   Mech Engr 220  3   1   Physics 110    4   2 Pol Sci 211    3 1   Ldrshp 100  0.75     0 
+
+--- open option ---
+ P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option  Systems Analysis  Ops Rsch 310  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42 Semester hours of major's courses:  Required Economics Courses (9 courses – 27 Sem Hrs)  Econ 332  Intermediate Microeconomics I: Competitive Markets  Econ 333  Intermediate Microeco
+
+--- academy option ---
+ophy  Philos 370  Introduction to Symbolic Logic  Soc Sci 483  Principles of Negotiation  Sys Engr 301  Project Engineering  Sys Engr 310  Introduction to Systems Engineering *    Academy Option (1 course – 3 Sem Hrs)  Academy Option: any course taught for credit under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG.  Courses must carry at least three semester hours of credit.      Supplemen
+
+--- academy option ---
+lic Logic  Soc Sci 483  Principles of Negotiation  Sys Engr 301  Project Engineering  Sys Engr 310  Introduction to Systems Engineering *    Academy Option (1 course – 3 Sem Hrs)  Academy Option: any course taught for credit under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG.  Courses must carry at least three semester hours of credit.      Supplemental Information:    Curriculum  The eco
+
+--- open option ---
+ or Chem 200  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Programming Fundamentals  Comp Sci 210  ECE 315  Principles of Electronic Cyber Warfare  ECE 215    5 Semester hours of Director of Athletics core courses.    48 Semester hours of major's courses:  ECE 245  Differential Equations with Circuit Applications I 
+
+--- open option ---
+   Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  War Stories, or  Special Topics in War and Literature  English 411, or English 370  Adv Open Option    Choose 1 Advanced  Sociocultural  Option    5 Semester hours of Director of Athletics core courses.  42 Semester hours of major's courses:    One pre-1800  English 303, 308, or 313  One post-1800  English 319, 324, or 330  One course focusing on social or 
+
+--- academy option ---
+65 contexts  4-10. English and Creative Arts Options      Choose seven courses from among non-core English and Creative Arts courses.      Law 360 counts in this category.  11-14. Academy Options      Four non-core courses from any academic division.    Yearlong Capstone Sequence Option:    English 489 (fall, 1.5 semester hours), Capstone Research    English 490 (spring, 3.0 semester hours), Capstone Colloquium   English 490 counts as one of the Engl
+
+--- open option ---
+1 1   1   1   1   2   8   English Option 4  Engl ish Option 5  Adv SocioCultural Opt  Soc Sci 311  Phy Ed  3   3   3   3   0.5   15. 5     1 1     1 1   2     7 Astr Engr 310  Adv Open Option  Ldrshp 400  Spring  For Lang 2  Ch em 100  English 111  Math 142  Physics 110  Ldrshp 100  Phy Ed  3   4     3 3   4     0.75 0   .5   18.25   2 2   1   1   2   0   2   10   Engl 300 or Engl Opt 1  Ac ademy Option 1  History 300  Law 220  P / C / B Option  M
+
+--- academy option ---
+0  P / C / B Option  Mech Engr 220  Ldrshp 200  Phy Ed  3   3   3   3   4   3   0.75   0 .5   20.25     1   1   1   1 2   1     0   2 9   Engl 319, 324, or 330  Engl ish Option 3  Academy Option 3  Aero Engr 315  Stats Option  Ldrshp 300  Phy Ed  3   3     3 3   3   0.75   1   16. 75   1   1     1 1   1     0 2     7 Spring  For Lang 2  Ch em 100  English 111  Math 142  Physics 110  Ldrshp 100  Phy Ed  3   4     3 3   4     0.75 0   .5   18.25   2 2 
+
+--- academy option ---
+0  P / C / B Option  Mech Engr 220  Ldrshp 200  Phy Ed  3   3   3   3   4   3   0.75   0 .5   20.25     1   1   1   1 2   1     0   2 9   Engl 319, 324, or 330  Engl ish Option 3  Academy Option 3  Aero Engr 315  Stats Option  Ldrshp 300  Phy Ed  3   3     3 3   3   0.75   1   16. 75   1   1     1 1   1     0 2     7 English Option 6  3  1 Engl Opt 7 (Engl 490)  3  1  Academy Option 4  3  1 3  1  3  1  0.75  0  Phy Ed  0.5  2  16.25  7  Course Unit S
+
+--- academy option ---
+ion 3  Aero Engr 315  Stats Option  Ldrshp 300  Phy Ed  3   3     3 3   3   0.75   1   16. 75   1   1     1 1   1     0 2     7 English Option 6  3  1 Engl Opt 7 (Engl 490)  3  1  Academy Option 4  3  1 3  1  3  1  0.75  0  Phy Ed  0.5  2  16.25  7  Course Unit Summary  Core (29)  Major (14)  Phy Ed (10)  Semester Hour Summary  Core =  93.0  Sem Hours  Major =  42.0  " Phy Ed =  5.0  "  Total =  140.0  "        FOREIGN AREA STUDIES    THE FOREIGN ARE
+
+--- open option ---
+1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Soc Sci 311  International Security  Soc Sci 212  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    Cadets must complete at least  five  For Lang courses at the 200-level or higher in the same language to earn the minor  42  Semester hours of major’s courses:    1. – 3. For Lang I, II
+
+--- open option ---
+  3  1  Phy Ed  0.5  2  20  18  6  For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  History 300  P / C / B Option  Soc Sci 212  Ldrshp 200  Aero Engr 315  Adv Open Option  Ldrshp 400  Law 220  Ldrshp 300  2  For Lang 4  3  1  Regional History  3  1  FAS Elective  3  1  2  Geo 250  3  1  History 340/Pol Sci 302  3  1  Area MSS  3  1  Spring  3  1 3  1  Pol Sci 300  3  1  Econ 374/Soc Sci 444  3  1  1 4  2  Area Pol Sci  3  1 3 
+
+--- open option ---
+3  1 3  1  3  1  For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  Econ 201  Aero Engr 315  Law 220  Ldrshp 300  P / C / B Option  Soc Sci 212  Ldrshp 200  Adv Open Option  Ldrshp 400  2  For Lang 4  3  1  History World Empires  3  1  Area Pol Sci  3  1  2  Geo 250  3  1  History 340/Pol Sci 302  3  1  Area MSS  3  1  Spring  3  1  History 200  3  1 3.5  2  Econ 374  3  1 3  1 4  2 3  1  History 402  3  1  4  2 3  1 3  1 3  1  
+
+--- open option ---
+  3  1  3  1  For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  History 300  P / C / B Option  Soc Sci 212  Ldrshp 200  Aero Engr 315  Law 220  Ldrshp 300  Adv Open Option  Ldrshp 400  2  For Lang 4  3  1  Regional History  3  1  Area Pol Sci  3  1  2  MSS 298  3  1  History 340/Pol Sci 302  3  1  Area MSS  3  1  Spring  3  1 3  1  Geo 250  3  1  Econ 374  3  1 3  1 4  2 3  1  MSS 498  3  1  4  2 3  1 3  1 3  1  0.75  0 0.75  0
+
+--- open option ---
+on 2    Choose 1  Statistics  Probability and Statistics for Engineers and Scientists  Math 356 or Math 377  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    36  Semester hours of major’s courses:    Engr Option  (See Supplemental Information 1)  Engr Option 3. Engr Option 4. Engr Option 5. Engr Option 6. Engr Option  Engr Option  Engr/Bas S
+
+--- open option ---
+Supplemental Information 2) 9. Engr/Bas Sci Option  (See Supplemental Information 2)  Math Option  (See Supplemental Information 3)  Math Option  (See Supplemental Information 3)  Open Option  Any 200-level or higher course    Supplemental Information:    An Engineering Option is any course taught by the Engineering Division not used to satisfy any other requirement.  There is no required distribution of courses from each department.    An Enginee
+
+--- open option ---
+346 (Engineering Math with Applications), or CyberSci 431 (Crytography) may be used to satisfy this option.  The Math Options may not be used to fill the Advanced STEM or Advanced Open Option in the Core requirements simultaneously (i.e. may not be doublecounted for the Core Baskets and General Engineering Math Options requirements).      SUGGESTED COURSE SEQUENCE   hrs  per  2 o  hrs  per  1 o  hrs  per  For Lang 1  3     2 Econ 201  3.5     2 En
+
+--- open option ---
+  For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  Pol Sci 211  P / C / B Option  Law 220  Mech Engr 220  Ldrshp 200  Aero Engr 315  Math 356  Ldrshp 300  Adv Open Option  Astr Engr 310  Ldrshp 400  2  Math Option  3  1  Engr Option  3  1  Engr Option  3  1  2 3  1  Engr Option  3  1  Engr/Bas Sci Option  3  1  Spring  3  1 4  2  Math Option  3  1  Open Option  3  1  1 3  1 3  1 3  1  2 3  1 3  1 3  1  0.75  0 0.75  0 0.75  0 
+
+--- open option ---
+ Astr Engr 310  Ldrshp 400  2  Math Option  3  1  Engr Option  3  1  Engr Option  3  1  2 3  1  Engr Option  3  1  Engr/Bas Sci Option  3  1  Spring  3  1 4  2  Math Option  3  1  Open Option  3  1  1 3  1 3  1 3  1  2 3  1 3  1 3  1  0.75  0 0.75  0 0.75  0 0.75  0  0.5   2   18.25   10   0.5   2   18.25   10   Phy Ed Phy Ed  0.5  2  Phy Ed  0.5  2  Phy Ed  0.5  2  17.25  8  16.25  7  16.25  7  Course Unit Summary  Core (29)  Major (12)  Phy Ed (
+
+--- open option ---
+tions / Substitutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42  Semester hours of major’s courses:    Foundational Course (all required):   Geospatial Techniques  Geo 310 Map Design and Graphic Communication     Geo 340 Introduction to Geographi
+
+--- academy option ---
+    Synthesis or Capstone (1 course required; 12.)  Geo 491  Capstone Seminar in Geospatial Science: Military Geography*   OR  Geo 497  Capstone Research in Geospatial Science*    Academy Option (2 courses required; 13. – 14.)   Any course offered for academic credit    *Denotes required courses to obtain the Geospatial Intelligence Certificate.  ** Regional courses without Geo prefix require Geospatial Science AIC approval      SUGGESTED COURSE SEQU
+
+--- open option ---
+ Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  World History    History 300S (optional)  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42 Semester hours of major's courses:    1. History 200 2. History 210  History 220  Airpower History Option  Regional History Option   The Historian's Craft: Introduction to Historical
+
+--- open option ---
+from the Academy Course of Instruction. Cadets may only use one foreign language course as a history option.  If  cadets select History 345: The American Way of War as an advanced open option in the core, that course may not count toward one of these five history options.    American, Military, or International History Designation .  To achieve an American History, Military History, or International History designation on your transcript, four 300
+
+--- open option ---
+ Airpower Option  3  1 3 1  3 1 3 1  1 3 1  3.5  2  Phy Ed  Phy Ed  1 2     19.5   9   1 2     19.5   9   For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  Adv Open Option  Adv Sociocultural Opt  Philos 210  Ldrshp 400  History 300/300S  P / C / B Option  Mech Engr 220  Ldrshp 200  Aero Engr 315  ECE 315  Ldrshp 300  2  History 220  3  1  History Option 2  3  1  History Option 5  3  1  2  Regional/Socio Option  3  1  History Op
+
+--- open option ---
+tutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  War Stories  English 411  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42  Semester hours of major's courses:    1. Research Methods and Critical Enquiry requirement (choose one):  English 300  History 200  Philosophy 200 or any 300- or 400-level Philosoph
+
+--- open option ---
+s  ECE 315  Law 220  Adv STEM Option  Phy Ed  hrs  3   3   3   3     3   3   1 19   per    1   1   1   1   1   1   2 8   1 o  Hum Option  Hum Option  English 411  Soc Sci 311  Adv Open Option  Phy Ed  4 o  For Lang 1  Beh Sci 110  History 100  Math 141  Comp Sci 110  Phy Ed  hrs    3 3   3     3 3   0.5     15.5 per  2   1   1   1   1   2   8   3 o  Creative Art 1  MSS 251  Philos 210  History 300  Econ 201  Phy Ed  hrs  3     4.5   3   3 3.5     
+
+--- open option ---
+s  ECE 315  Law 220  Adv STEM Option  Phy Ed  hrs  3   3   3   3     3   3   1 19   per    1   1   1   1   1   1   2 8   1 o  Hum Option  Hum Option  English 411  Soc Sci 311  Adv Open Option  Phy Ed  hrs  per  3  1  3  1  3  1  3  1  3  1  0.5  2  15.5  7  P / C / B Option  Aero Engr 315  Math 300  Ldrshp 300  Astr Engr 310  Ldrshp 400  For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  Phy Ed  3   4   3   3   4   0.75   0 .5  
+
+--- open option ---
+tions / Substitutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42  Semester hours of major's courses:    Required Major’s Courses:    Law 221  Legal Research and Writing  Law 321  Legal Advocacy  Law 351  U.S. Constitutional Law  Law 421  Law for C
+
+--- academy option ---
+hilosophy of Law  Law and Economics  Principles of Negotiation  (See Supplemental Information 1)    13. Any Social Sciences/Humanities 300/400-level courses (≥ 3.0 sem hrs)    14. Academy Option        any course taught for credit (≥ 3.0 sem hrs) under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG. (See Supplemental Information 2)    Supplemental Information:    Legal Studies majors who ta
+
+--- academy option ---
+en only need to take 6 Law Option courses; the seventh Law Option course could be any 200-400 level course taught under the supervision of the Dean of Faculty.  Cadets can use the Academy Option for a variety of purposes: to study specific areas in more depth, to expand their world view with broadening courses, to help meet requirements for an academic minor, or to accommodate instructor upgrade coursework or independent studies, to name a few.      
+
+--- open option ---
+ P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option  Systems Analysis  Ops Rsch 310  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42 Semester hours of additional major’s courses.    Mgt 303  Managerial Perspectives  Mgt 341  Financial Accounting  Mgt 342  Managerial Accounting  Mgt 345  Organizational Behavior and
+
+--- open option ---
+375  3   1   Mgt Option    1   3 Math 142  1   3 Law 220  1   3   Mgt Option    1 3   Adv Sociocultural Opt  1   3 Physics 110  4   2 Mech Engr 220  3 1   Aero Engr 315    1 3 Adv Open Option    3 1 Ldrshp 100  0.75   0   Ldrshp 200  0.75   0   Math 300  1   3 Ldrshp 400    0.75   0 Phy Ed    0.5 2   Phy Ed    0.5   2 Ldrshp 300    0.75   0 Phy Ed    0.5 2   18.25   10   17.25     8 Phy Ed  0   .5 2   16.25   8     19.25 8   For Lang 2    2 3 H is
+
+--- open option ---
+375  3   1   Mgt Option    1   3 Math 142  1   3 Law 220  1   3   Mgt Option    1 3   Adv Sociocultural Opt  1   3 Physics 110  4   2 Mech Engr 220  3 1   Aero Engr 315    1 3 Adv Open Option    3 1 Ldrshp 100  0.75   0   Ldrshp 200  0.75   0   Math 300  1   3 Ldrshp 400    0.75   0 Phy Ed    0.5 2   Phy Ed    0.5   2 Ldrshp 300    0.75   0 Phy Ed    0.5 2   18.25   10   17.25     8 Phy Ed  0   .5 2   16.25   8     19.25 8   Course Unit Summary  C
+
+--- open option ---
+  P / C / B Option 2    Choose 1  Statistics  Advanced Probability and Statistics  Math 377  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245    5 Semester hours of Director of Athletics core courses.    22 Semester hours of required major's courses:  Choose one of the following:    Comp Sci 210  Programming Fundamentals, or    Comp Sci 211  Programming for Scienti
+
+--- open option ---
+  P / C / B Option 2    Choose 1  Statistics  Advanced Probability and Statistics  Math 377  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245    5 Semester hours of Director of Athletics core courses.    22 Semester hours of required major's courses:  1. Choose one of the following:       Comp Sci 210       Comp Sci 211       Comp Sci 212  Programming Fundamentals,
+
+--- open option ---
+ Physics 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245    5 Semester hours of Director of Athletics core courses.    46 Semester hours of major's courses:    Comp Sci 206/206X  Fundamentals of Programming for Engineers    or Comp Sci 211  Introduction to Programming for Scientist
+
+--- open option ---
+ Physics 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42 Semester hours of major's courses :    Meteor 320  Introduction to Meteorology and Aviation Weather  Meteor 330  Physical Meteorology I  Meteor 331  Physical Meteorology II  Meteor 3
+
+--- open option ---
+.5     2 Phy Ed  1   2 History 300  3   1 Soc Sci 311  15.5     8   10 19   Ph y Ed  2   1 Phy Ed  0.5   2   19     8 15.5     8 3 1  3 1  Aero Engr 315  Math 356  Ldrshp 300  Adv Open Option  Adv Sociocultural Opt  Ldrshp 400  For Lang 2  3 2   M eteor Elective    1 3   Chem 100    4 2 English 211  1   3   History 100  3 1   Pol Sci 211  1   3   Math 142  3 1   Law 220  3   1 Physics 110    4 2 Chem 200    2 4 Ldrshp 100  0.75   0   Mech Engr 220
+
+--- open option ---
+tions / Substitutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42  Semester hours of major’s courses:    1. - 5. 15 semester hours of Foundations of Strategy (five courses):     MSS 298  MSS 343  MSS 444  MSS 498      and either  MSS 302       or  
+
+--- open option ---
+0  3 1   Phy Ed    0.5   2 Phy Ed    2 1 Phy Ed  2 1   Adv STEM Option  3 1     15.5 8   19   10     16 7   Ph y Ed  0.5   2   18.5   8   Astr Engr 310  Adv Sociocultural Opt  Adv Open Option  Ldrshp 400  Aero Engr 315  Ldrshp 300  For Lang 2  3   2   M SS 298  3   1   Chem 100  4 2   Pol Sci 211  3   1   En glish 111  3 1   Math 300  3     1 Math 142    1 3 P / C / B Option    4 2   Physics 110  2   4 Soc Sci 311  3 1   Ldrshp 100  0.75   0   Mec
+
+--- academy option ---
+ons and Strategy minor requires a minimum of 146 hours and at least 2 noncore academic courses (6 semester hours) in residence in excess of the major’s requirements (including the Academy Option).  The student must complete these five courses (15 semester hours) with a grade of “C” or better.  As this is an interdisciplinary minor, no more than 3 courses for the minor can be from any one department; therefore, the option course must be from a departm
+
+--- open option ---
+  P / C / B Option 2    Choose 1  Statistics  Advanced Probability and Statistics  Math 377  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Systems Analysis  Ops Rsch 310    5 Semester hours of Director of Athletics core courses.    43 Semester hours of major's courses:    Comp Sci 212  Intro to Programming for Analysts  Comp Sci 362  Computer Simulation  Econ 365  Econometrics I  Econ 465  Econ
+
+--- open option ---
+tutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  War Stories  English 411  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics courses.    42 Semester hours of major’s courses:    Philos 311  War, Morality, and the Military Profession  Philos 370  Introduction to Symbolic Logic  Philos 391/2/3/4  Philos 401/402  Comparative Rel
+
+--- open option ---
+ 370  3   1   Philos 401    3 1   Fall  History 100  3   1   Philos 210    3 1   Law 220    3   1 Philos Option    3   1 Math 141  3     1 Econ 201  3.5     2 ECE 315  3     1 Adv Open Option    3 1   Comp Sci 110  3     1 P / C / B Option    4   2 Adv STEM Option    3 1   Soc Sci 311    3   1 Phy Ed    0.5   2 Phy Ed    1   2 English 411    3   1 Phy Ed    0.5 2   15.5   8     19   10 Phy Ed  1   2   15.5   7     19   8 For Lang 1  3   2   Philos
+
+--- open option ---
+ 370  3   1   Philos 401    3 1   Fall  History 100  3   1   Philos 210    3 1   Law 220    3   1 Philos Option    3   1 Math 141  3     1 Econ 201  3.5     2 ECE 315  3     1 Adv Open Option    3 1   Comp Sci 110  3     1 P / C / B Option    4   2 Adv STEM Option    3 1   Soc Sci 311    3   1 Phy Ed    0.5   2 Phy Ed    1   2 English 411    3   1 Phy Ed    0.5 2   15.5   8     19   10 Phy Ed  1   2   15.5   7     19   8 History 300  Astr Engr 310
+
+--- open option ---
+ Biology 215  Statistics  Probability and Statistics for Scientists and Engineers  Math 356  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Differential Equations  Math 245     *For P / C / B Option 2, Chem 200 is preferred for most concentrations    5 Semester hours of Director of Athletics core courses.    3 Semester hours in Applied Mathematics as follows:    1. Math 346  Engineering Mathemat
+
+--- open option ---
+1  P / C / B Option 1    Choose 1  Statistics    Choose 1  Soc Sci 311  International Security  Soc Sci 212  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    42 Semester hours of major's courses :    Pol Sci 300  Quantitative Methods and Research Design  Pol Sci 301  Political Theory   Pol Sci 302  American Foreign and National Security Poli
+
+--- open option ---
+tr Engr 310  Phy Ed    0.5   2 Phy Ed    1   2 ECE 315    3   1 Phy Ed  0.5   2     15.5   8   19   10 Phy Ed    1   2 19     8 3  1  3  1  15.5  7  Aero Engr 315  Ldrshp 300  Adv Open Option  Ldrshp 400  For Lang 2  3     2 Adv STEM Option  3     1 Chem 100  4   2   English 211    3 1   English 111    3 1   Math 300    3   1 Math 142  3   1   P / C / B Option    4 2   Physics 110  4     2 Soc Sci 212  3     1 Ldrshp 100  0.75   0   Mech Engr 220 
+
+--- open option ---
+ Lab  Chem 200  P / C / B Option 2  General Physics II with Laboratory  Physics 215  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1      21 Semester hours of minor’s courses:  Bio 215        Introductory Biology with Laboratory (4)  Chem 233      Organic Chemistry I (3)  Chem 234      Organic Chemistry II (3)  Chem 243      Organic Chemistry Laboratory (4)  Bio 360       Cell 
+
+--- open option ---
+C / B Option 2  Introductory Biology with Laboratory  Biology 215  Statistics    Choose 1  Adv STEM Option  Human Nutrition  Biology 370  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1      15 Semester hours of minor’s courses:  Biology 332      Microbial Diversity (3)  Biology 410       Anatomy and Physiology: Sensory and Motor Integration (3)  Biology 431      Microbiology (3)  Biology 440      Anatomy and Physiology: Visceral
+
+--- open option ---
+ab  Chem 200  P / C / B Option 2  Introductory Biology with Laboratory  Biology 215  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    18 Semester hours of minor’s courses:  Chem 230        Introductory Organic Chemistry (3)  Biology 332      Microbial Diversity (3)  Biology 410       Anatomy and Physiology: Sensory and Motor Integration (3)  Biology 431      Microbiology (3) 
+
+--- open option ---
+00  P / C / B Option 2  General Physics II with Laboratory  Physics 215  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  Sociology  Beh Sci 360  Adv Open Option    Choose 1    16 Semester hours of minor’s courses:  Biology 215       Introductory Biology with Laboratory (4)  Biology 320      Biomechanics (3) (Offered Spring, even numbered years only)  Biology 410       Anatomy and Physiology: Sensory and Motor Integra
+
+--- open option ---
+tions / Substitutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    36  Semester hours of major’s courses:    1. Social Sciences Breadth Elective #1 2. Social Sciences Breadth Elective #2 3.  Social Sciences Breadth Elective #3 4. Social Sciences Breadt
+
+--- academy option ---
+iences Depth Elective #2  Social Sciences Depth Elective #3 9. Social Sciences Depth Elective #4  Social Sciences Depth Elective #5  Social Sciences or Humanities Division Option  Academy Option    Supplemental Information:  Econ 423 (Managerial Economics) may satisfy a Mgt or Econ requirement.    Soc Sci 420 (Law and Economics), taught by DFEG and DFLA, may satisfy a Law or Econ requirement.    Soc Sci 483 (Principles of Negotiation), taught by DFLA
+
+--- academy option ---
+ntration.    Social Sciences or Humanities Divisions Option: Any three semester hour graded course taught within either the Social Sciences Division or the Humanities Division.    Academy Option: Any course taught for credit under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG.  Courses must carry at least three semester hours of credit.  Academy Options may include EAP 109, Armnshp 461, Ar
+
+--- academy option ---
+it under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG.  Courses must carry at least three semester hours of credit.  Academy Options may include EAP 109, Armnshp 461, Armnshp 491, or any non-core course worth at least 3.0 semester hours.      SUGGESTED COURSE SEQUENCE     Social Sciences Major  4 o  hrs  per  3 o  hrs  per  2 o  hrs  per  1 o  hrs  per  For Lang 1  3     2 Econ 201  3.5  
+
+--- academy option ---
+al Sciences Option    3   1 Beh Sci 110  3     1 MSS 251  4.5     2 Social Sciences Option    3 1   Soc Sci/Hum Div Option  3   1   Fall  History 100    3   1 English 211  3   1   Academy Option  3     1 Adv Sociocultural Opt  3   1   Math 141    3 1   P / C / B Option    4   2 ECE 315  3     1 Soc Sci 311  Comp Sci 110  3   1   Phy Ed  1     2 History 300  3     1 Adv STEM Option  Phy Ed  0.5     2   16 9   Philos 210  3     1 Phy Ed  0.5   2   15.5
+
+--- academy option ---
+al Sciences Option    3   1 Beh Sci 110  3     1 MSS 251  4.5     2 Social Sciences Option    3 1   Soc Sci/Hum Div Option  3   1   Fall  History 100    3   1 English 211  3   1   Academy Option  3     1 Adv Sociocultural Opt  3   1   Math 141    3 1   P / C / B Option    4   2 ECE 315  3     1 Soc Sci 311  Comp Sci 110  3   1   Phy Ed  1     2 History 300  3     1 Adv STEM Option  Phy Ed  0.5     2   16 9   Philos 210  3     1 Phy Ed  0.5   2   15.5
+
+--- open option ---
+ 1     2 19     8 3  1  3  1  15.5  7  For Lang 2  Chem 100  English 111  Math 142  Physics 110  Ldrshp 100  Pol Sci 211  P / C / B Option  Law 220  Mech Engr 220  Ldrshp 200  Adv Open Option  Astr Engr 310  Ldrshp 400  Aero Engr 315  Math 356  Ldrshp 300  2  Social Sciences Option  3  1  Social Sciences Option  3  1  Social Sciences Option  3  1  2 3  1  Social Sciences Option  3  1  Social Sciences Option  3  1  Spring  3  1 4  2  Social Science
+
+--- open option ---
+s 215  P / C / B Option 2    Choose 1*  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  Space and Cyber Strategy for National Security  MSS 444  Adv Open Option    Choose 1  *For P / C / B Option 2, Chem 200 is preferred.    Required courses:    Astr Engr 321  Intermediate Astrodynamics  Astr Engr 431  Space Warfighting Payload Design  Law 419  Space Law  Pol Sci 465  US National Space Policy    Choose at least one o
+
+--- open option ---
+cs 215  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  Space and Cyber Strategy for National Security  MSS 444  Adv Open Option    Choose 1    Required courses:    Astr Engr 431  Space Warfighting Payload Design  Geo 340  Introduction to Geographic Information Systems  Pol Sci 465  US National Space Policy    Choose at least two of the following.  Must take at least one Russia or Chin
+
+--- open option ---
+cs 215  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  Space and Cyber Strategy for National Security  MSS 444  Adv Open Option    Choose 1    Required courses:  Astr Engr 431  Space Warfighting Payload Design  Law 440 or Law 419  Cyber Law or Space Law  Pol Sci 466 or Pol Sci 465  Cyber Security Policy and Politics or US National Space  Policy    Choose at least one of the following:
+
+--- open option ---
+s 215  P / C / B Option 2    Choose 1*  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option  Space and Cyber Strategy for National Security  MSS 444  Adv Open Option    Choose 1  *For P / C / B Option 2, Chem 200 is preferred.    Required courses:  Astr Engr 331  Space Systems Engineering  Astr Engr 431  Space Warfighting Payload Design  Pol Sci 465  US National Space Policy  Sys Engr 310/Mgt 477  Introduction to Systems 
+
+--- open option ---
+s  Probability and Statistics for Engineers and Scientists  Math 300/356/377 or Beh Sci 332  Adv STEM Option  Calculus III  Math 243/253  Adv Sociocultural Option    Choose 1  Adv Open Option  Systems Analysis  Ops Rsch 310  *For P / C / B Options, Physics 215 and Biology 215 are preferred, but other course combinations are possible with approval of the SE Program Director.    5 Semester hours of Director of Athletics core courses.    46 Semester 
+
+--- open option ---
+tions / Substitutes  P / C / B Option 1    Choose 1  P / C / B Option 2    Choose 1  Statistics    Choose 1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    3 Semester hours of Academy Option.    27  Semester Hours of additional coursework    1. – 8.  Academic Division Option         9.  Academic Division/Open Option      SUGGESTED COURSE S
+
+--- academy option ---
+1  Adv STEM Option    Choose 1  Adv Sociocultural Option    Choose 1  Adv Open Option    Choose 1    5 Semester hours of Director of Athletics core courses.    3 Semester hours of Academy Option.    27  Semester Hours of additional coursework    1. – 8.  Academic Division Option         9.  Academic Division/Open Option      SUGGESTED COURSE SEQUENCE     Bachelor of Science Program  For Lang 1  Beh Sci 110  History 100  Math 141  Comp Sci 110  hrs  3
+
+--- open option ---
+of Athletics core courses.    3 Semester hours of Academy Option.    27  Semester Hours of additional coursework    1. – 8.  Academic Division Option         9.  Academic Division/Open Option      SUGGESTED COURSE SEQUENCE     Bachelor of Science Program  For Lang 1  Beh Sci 110  History 100  Math 141  Comp Sci 110  hrs  3   3   3   3   3   15   per  2   1   1   1   1   2   6   3 o  Academic Div Option  English 211  MSS 251  Phy Ed  hrs  3     4 3
+
+--- open option ---
+Academic Div Option  Ae ro Engr 315  Math 300  P / C / B Option  Ldrshp 300  Phy Ed  3     3 3   4   0.75   1   14.   75   1 1   1     2 0   2   7   Academic Div Option  Ac ad Div/Open Option  Academy Option  Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 3     4   3 3     3.5 0. 75   0.5   17.75     2 2   1     1   2 0   2   10   Academic Div Option  Po l Sci 211  Law 2
+
+--- academy option ---
+Option  Ae ro Engr 315  Math 300  P / C / B Option  Ldrshp 300  Phy Ed  3     3 3   4   0.75   1   14.   75   1 1   1     2 0   2   7   Academic Div Option  Ac ad Div/Open Option  Academy Option  Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 3     4   3 3     3.5 0. 75   0.5   17.75     2 2   1     1   2 0   2   10   Academic Div Option  Po l Sci 211  Law 220  History 300 
+
+--- open option ---
+ / C / B Option  Ldrshp 300  Phy Ed  3     3 3   4   0.75   1   14.   75   1 1   1     2 0   2   7   Academic Div Option  Ac ad Div/Open Option  Academy Option  Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 3     4   3 3     3.5 0. 75   0.5   17.75     2 2   1     1   2 0   2   10   Academic Div Option  Po l Sci 211  Law 220  History 300  Mech Engr 220  Ldrshp 200  Phy 
+
+--- open option ---
+Academic Div Option  Ae ro Engr 315  Math 300  P / C / B Option  Ldrshp 300  Phy Ed  3     3 3   4   0.75   1   14.   75   1 1   1     2 0   2   7   Academic Div Option  Ac ad Div/Open Option  Academy Option  Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 Phy Ed  Course Unit Summary  Core (29)  Bach Sci (9)  Academy Option (1)  Phy Ed (10)  Semester Hour Summary  Core = 
+
+--- academy option ---
+Option  Ae ro Engr 315  Math 300  P / C / B Option  Ldrshp 300  Phy Ed  3     3 3   4   0.75   1   14.   75   1 1   1     2 0   2   7   Academic Div Option  Ac ad Div/Open Option  Academy Option  Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 Phy Ed  Course Unit Summary  Core (29)  Bach Sci (9)  Academy Option (1)  Phy Ed (10)  Semester Hour Summary  Core =  93.0  Sem Hours
+
+--- open option ---
+ / C / B Option  Ldrshp 300  Phy Ed  3     3 3   4   0.75   1   14.   75   1 1   1     2 0   2   7   Academic Div Option  Ac ad Div/Open Option  Academy Option  Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 Phy Ed  Course Unit Summary  Core (29)  Bach Sci (9)  Academy Option (1)  Phy Ed (10)  Semester Hour Summary  Core =  93.0  Sem Hours  Major =  27.0  "  Academy Opti
+
+--- academy option ---
+ Astr Engr 310  Adv Open Option  Ldrshp 400  Phy Ed  3   3   3   3     3   0.75 0   .5   15.5   1   1 1     1 1     0 2     7 Phy Ed  Course Unit Summary  Core (29)  Bach Sci (9)  Academy Option (1)  Phy Ed (10)  Semester Hour Summary  Core =  93.0  Sem Hours  Major =  27.0  "  Academy Option =  3.0  " Phy Ed =  5.0  "  Total =  128.0  "      APPENDIX 1: THE ACADEMY INSTITUTIONAL OUTCOME WHITE PAPERS     CRITICAL THINKING    Outcome Team Lead: Assist
+
+--- academy option ---
+ 1 1     1 1     0 2     7 Phy Ed  Course Unit Summary  Core (29)  Bach Sci (9)  Academy Option (1)  Phy Ed (10)  Semester Hour Summary  Core =  93.0  Sem Hours  Major =  27.0  "  Academy Option =  3.0  " Phy Ed =  5.0  "  Total =  128.0  "      APPENDIX 1: THE ACADEMY INSTITUTIONAL OUTCOME WHITE PAPERS     CRITICAL THINKING    Outcome Team Lead: Assistant Professor John Ternovski (DFPS/OLEA)    Upon graduation, our graduates will be required to iden
+
+--- academy option ---
+lation, and trigonometric calculations are covered.  Elementary functions, function manipulation, and some function applications are also discussed.  This course may be used as an Academy Option to fulfill graduation requirements.  This course does not fulfill any major’s requirements.  Final exam. Prereq: Can only be enrolled in the course by  recommendation of the Department of Mathematical Sciences.  Sem hrs: 3 fall.    Math 141.   Calculus I.   3
+
+--- academy option ---
+t three semester hours of credit and be graded.  Qualifying courses generally include offerings from the Basic Sciences, Engineering, Social Sciences, and Humanities divisions.    ACADEMY OPTION :  Any course taught for credit under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG.  Courses must carry at least three semester hours of credit.  Academy Options may include EAP 109, Armnshp 461, 
+
+--- academy option ---
+it under the supervision of the Dean of the Faculty, Commandant of Cadets, the Director of Athletics, or the 306 FTG.  Courses must carry at least three semester hours of credit.  Academy Options may include EAP 109, Armnshp 461, Armnshp 491, or any non-core course worth at least 3.0 semester hours.    ADVANCED COURSE : An academic course of similar content to another course, but covers material in significantly greater depth (e.g., Math 356 is an ad
+
+--- academy option ---
+ Title 10 Re-exam, 84  USAFAI 36-3523, 80  Waive Rights to Appeal, 83  Academic Success Center, 92, 372 Learning Strategies, 409  Reading Strategies, 348, 467 Academic Waivers, 51 Academy Option, 476  Academy Scholars Program.  See  Scholars  ACPRO, 44, 74  3 Sequential Deficient Sem, 75  Going on ACPRO, 75  Low GPA, 75  Multi Pro, 75  Multiple Deficient Sem, 75 Multiple F, 74  Removal from ACPRO, 78  Repeat F, 75  Two Sequential Deficient Sem, 75  U

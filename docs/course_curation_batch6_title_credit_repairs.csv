@@ -1,0 +1,7 @@
+﻿action,course_number,new_title,new_credit_hours,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,Armnshp 302,Powered Flight Training,0,,Summer only; no academic credit; requires USAF Flight Medicine exam.,Aviation 100,,"COI title/credit; enrollment and additional prereqs noted"
+UPDATE,Armnshp 475,Sailplane Aerobatic Demonstration/Competition Team,0,,No academic credit; USAF Flight Medicine exam required.,Armnshp 461;Armnshp 472,,"COI title/credit/prereqs"
+UPDATE,Chem 499,Independent Study,3,,DFCH approval required.,,,"COI title"
+UPDATE,Civ Engr 462,Site Assessment & Remediation,3,,Systems Engineers may have Civ Engr 390 prerequisite waived.,Civ Engr 361,Civ Engr 362;Civ Engr 390,"COI title + prereq/coreq"
+UPDATE,Philos 370,Introduction to Symbolic Logic,3,,,Comp Sci 110,"COI title + completed or enrolled in Comp Sci 110"
+UPDATE,Sys Engr 406,Systems Engineering Colloquium II,0,C1C,Pass/fail.,,,"COI title/credit/standing"

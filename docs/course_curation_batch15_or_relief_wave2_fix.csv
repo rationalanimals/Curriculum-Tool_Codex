@@ -1,0 +1,15 @@
+action,course_id,course_number,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,,Comp Sci 362,,,,,,"Prereq includes Comp Sci 210, Comp Sci 211, or Comp Sci 212; and Math 356 or Math 377.",Comp Sci 210;Math 356,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Comp Sci 380,,,,,,Prereq includes Comp Sci 220 and Math 340 or Math 374.,Comp Sci 220;Math 340,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Econ 351,,,,,,Prereq includes Econ 201 and Econ 350 or Econ 374.,Econ 201;Econ 350,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Econ 377,,,,,,"Prereq includes Econ 333 or Ops Rsch 331, and either Math 300, Math 356, or Math 377 (or equivalent/department approval).",Econ 333;Math 300,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Econ 454,,,,,,Prereq includes Econ 201 and Econ 350 or Econ 374.,Econ 201;Econ 350,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Econ 473,,,,,,"Prereq is Econ 333 or Ops Rsch 331, or department approval.",Econ 333,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Econ 480,Defense Economics,,,,,"Prereq includes Econ 333 or Econ 423; C1C standing in Economics major, or department approval.",Econ 333,,Fix CSV-shifted row; title+OR relief baseline
+UPDATE,,ECE 446,,,,,,"Prereq includes Engr 342 and Math 346, Math 356, or Math 377.",Engr 342;Math 346,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Math 443,,,,,,"Prereq includes Math 346 or Math 469, and one of Math 342 or Physics 356, or department permission.",Math 346;Physics 356,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Math 470,,,,,,Prereq is Math 346 or Math 469 or department head approval.,Math 346,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Mech Engr 421,,,,,,Prereq includes Mech Engr 320 or Physics 355; completed or enrolled in Math 346 or Engr 346.,Mech Engr 320;Engr 346,,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Mech Engr 460,Experimental Mechanics,,,,,"Prereq includes ECE 315, Mech Engr 320, Mech Engr 330, and Math 300 or Math 356.",ECE 315;Mech Engr 320;Mech Engr 330;Math 300,,Fix CSV-shifted row; title+OR relief baseline
+UPDATE,,Ops Rsch 311,,,,,,"Prereq includes Math 344 or Math 360, and either Ops Rsch 310 or department approval. Coreq: Math 243/253.",Math 344;Ops Rsch 310,Math 243,Fix CSV-shifted row; OR relief baseline
+UPDATE,,Phy Ed 344,,,,,,Prereq is Phy Ed 112 or Phy Ed 152/252/352/452.,Phy Ed 112,,Fix CSV-shifted row; OR relief baseline

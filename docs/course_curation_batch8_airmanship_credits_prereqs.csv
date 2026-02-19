@@ -1,0 +1,8 @@
+﻿action,course_number,new_credit_hours,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,Armnshp 201,0,No academic credit. Aviation 100 completion prior to Armnshp 201 is highly desired.,,,"COI 0(3), no academic credit"
+UPDATE,Armnshp 251,0,No academic credit; USAF Flight Medicine medical exam required.,,,"COI Sem hrs 0 fall/spring/summer"
+UPDATE,Armnshp 465,0,No academic credit; selection process conducted by 557 FTS and USAF Flight Medicine medical exam required.,,,"COI Sem hrs 0 fall/spring"
+UPDATE,Armnshp 472,0,No academic credit; USAF Flight Medicine medical exam required.,Armnshp 461,,"COI Sem hrs 0 fall/spring/summer"
+UPDATE,Armnshp 473,0,No academic credit; USAF Flight Medicine medical exam required.,Armnshp 461;Armnshp 472,,"COI Sem hrs 0 fall/spring/summer"
+UPDATE,Armnshp 474,0,No academic credit; USAF Flight Medicine medical exam required.,Armnshp 461;Armnshp 472,,"COI Sem hrs 0 fall/spring/summer"
+UPDATE,Armnshp 461,3,Variable credit by term (0 fall and 3 spring); USAF Flight Medicine medical exam required.,Armnshp 251,,"COI variable credit preserved"

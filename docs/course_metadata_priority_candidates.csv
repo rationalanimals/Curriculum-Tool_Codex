@@ -1,0 +1,12 @@
+course_id,course_number,title,credit_hours,designated_semester,offered_periods_json,standing_requirement,additional_requirements_text,why_flagged
+ef15e015-9b84-49e0-8812-c55c035573f2,Aero Engr 456L,Flight Test Techniques Laboratory,3.0,,,,,Title suggests lab component but credits <=3
+8bc0b252-8bb1-4c5e-a064-998f2da2d8b6,Aero Engr 471,Aeronautics Laboratory,3.0,,,,,Title suggests lab component but credits <=3
+8b6a171f-b5df-4561-9c53-b68ebc1b6672,Biology 215,Introductory Biology with Laboratory,3.0,,,,,Title suggests lab component but credits <=3
+cfdb832b-83c5-474d-a0de-a5b70588713c,Biology 431,Microbiology Lab,3.0,,,,,Title suggests lab component but credits <=3
+284e9341-0205-4c19-8780-08ec47b8a07a,Chem 243,Organic Chemistry Laboratory,3.0,,,,,Title suggests lab component but credits <=3
+9dfcbc1f-d93c-4bb9-a7d9-c4884df80c69,Chem 444,Integrated Chemistry Laboratory,3.0,,,,,Title suggests lab component but credits <=3
+ecaa2cd4-791e-452c-ac23-f0779ee4c8d5,Chem 445,Advanced Laboratory Techniques,3.0,,,,,Title suggests lab component but credits <=3
+306c6f9f-36a5-4a27-992a-02dd29151ac5,Chem 481,Laboratory Practical Exam at semester’s end,3.0,,,,,Title suggests lab component but credits <=3
+5ca6199a-d068-4361-a43e-289d048ce382,Chem 491,Biochemistry Laboratory,3.0,,,,,Title suggests lab component but credits <=3
+03a4e8ac-89d0-40f4-9ae0-0a8f96e6da7c,Mil Tng 351,Civil Engineering Field Engineering and Readiness Lab (FERL) Leadership,0.0,,,,,Title suggests lab component but credits <=3
+fc6d2af1-c377-43a1-b0d6-8ae69450d95d,Physics 341,Laboratory Techniques,3.0,,,,,Title suggests lab component but credits <=3

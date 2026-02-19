@@ -1,0 +1,9 @@
+﻿action,course_number,new_credit_hours,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,Aero Engr 456L,1,,Department approval required.,,Aero Engr 456,"COI: Sem hrs 1; Coreq Aero Engr 456 and department approval"
+UPDATE,Biology 215,4,,,Chem 100,,"COI: Sem hrs 4; Prereq Chem 100"
+UPDATE,Chem 243,4,,,,Chem 234,"COI: Sem hrs 4; Coreq Chem 234"
+UPDATE,Physics 341,4,,,,Physics 264,"COI: Sem hrs 4; Coreq Physics 264"
+UPDATE,CE 100,,C4C,"Fourth-class standing.",,,"COI: Prereq Fourth-class standing"
+UPDATE,CE 200,,C3C,,,CE 100,,"COI: Prereq CE100"
+UPDATE,CE 300,,C2C,,,CE 100,,"COI: Prereq CE100"
+UPDATE,CE 400,,C1C,,,CE 100,,"COI: Prereq CE100"

@@ -1,0 +1,6 @@
+﻿action,course_number,new_credit_hours,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,CL 100,0,C4C,"Pass/fail; integrated with CE 100 and Ldrshp 100; fall or spring.",,,"COI CL100 level alignment"
+UPDATE,CL 200,0,C3C,"Pass/fail; integrated with CE 200 and Ldrshp 200; fall or spring.",CL 100,,"COI Prereq CL100"
+UPDATE,CL 300,0,C2C,"Pass/fail; integrated with CE 300 and Ldrshp 300; fall or spring.",CL 200,,"COI Prereq CL200"
+UPDATE,CL 400,0,C1C,"Pass/fail; integrated with CE 400 and Ldrshp 400; fall or spring.",CL 300,,"COI Prereq CL300"
+UPDATE,Ldrshp 100,1.5,C4C standing,"Integrated with CE 100 and CL 100.",,,"COI Sem hrs 1.5"

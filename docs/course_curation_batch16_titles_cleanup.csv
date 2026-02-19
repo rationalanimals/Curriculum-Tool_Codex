@@ -1,0 +1,10 @@
+action,course_id,course_number,new_title,new_credit_hours,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,,Econ 423,Managerial Economics,,,,,,COI title fix
+UPDATE,,Mgt 337,Managerial Finance,,,,,,COI title fix
+UPDATE,,Ops Rsch 421,Capstone in Operations Research I,,,,,,COI title fix
+UPDATE,,Ops Rsch 422,Capstone in Operations Research II,,,,,,COI title fix
+UPDATE,,Phy Ed 111,Swimming,0.5,,,,,COI title/credits normalization
+UPDATE,,Phy Ed 152,Intercollegiate Sports,0.5,,,,,COI title/credits normalization
+UPDATE,,Phy Ed 252,Intercollegiate Sports,0.5,,,,,COI title normalization
+UPDATE,,Phy Ed 352,Intercollegiate Sports,0.5,,,,,COI title normalization
+UPDATE,,Phy Ed 452,Intercollegiate Sports,0.5,,,,,COI title normalization

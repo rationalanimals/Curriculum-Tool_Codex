@@ -1,0 +1,5 @@
+﻿action,course_number,new_title,new_credit_hours,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,Chem 481,Biochemistry I,3,,,Chem 234,,"COI title + Prereq Chem 234 or DFCH approval"
+UPDATE,Chem 491,Biochemistry Laboratory,4,,,,Chem 481,"COI: Sem hrs 4; Coreq Chem 481"
+UPDATE,Biology 431,Microbiology Lab,3,,Prereq or Coreq: Biology 332.,,Biology 332,"COI: Prereq or Coreq Biology 332"
+UPDATE,Mil Tng 351,,0,C1C,C1C Civil Engineering cadets selected by department.,,,"COI: C1C Civ Engr cadets selected by department"

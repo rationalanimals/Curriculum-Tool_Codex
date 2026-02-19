@@ -1,0 +1,7 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,eb4a2c66-a951-41f0-aad6-195db6d79888,Chem 200,General Chemistry II Lecture and Lab,3.0,,4.0,,,,Core P/C/B option with lab,,,Deep-dive batch 2 core metadata
+UPDATE,4bb8ed01-3438-4265-b907-0ff95e6b5b1d,Physics 215,General Physics II with Laboratory,3.0,,4.0,,,,Core P/C/B option with lab,,,Deep-dive batch 2 core metadata
+UPDATE,25ae0715-710d-425b-8315-f1e4697206c5,Ldrshp 100,Interpersonal Foundations,0.75,,0.75,2,"{""offered"":[2]}",C4C standing,Core leadership sequence,,,Deep-dive batch 2 core metadata
+UPDATE,8d6281bf-de0a-4e86-a854-4737b5d4bd48,Ldrshp 200,Foundations for Interpersonal Leadership,0.75,,0.75,7,"{""offered"":[7]}",C3C standing,Core leadership sequence,,,Deep-dive batch 2 core metadata
+UPDATE,13244e39-8a28-4df3-857f-dca53ea5c440,Ldrshp 300,Foundations for Team Leadership,0.75,,0.75,12,"{""offered"":[12]}",C2C standing,Core leadership sequence,,,Deep-dive batch 2 core metadata
+UPDATE,07a26750-eae9-41d7-907f-39304f1f107a,Ldrshp 400,Leadership Capstone,0.75,,0.75,17,"{""offered"":[17]}",C1C standing,Core leadership sequence,,,Deep-dive batch 2 core metadata

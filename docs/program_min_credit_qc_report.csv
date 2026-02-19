@@ -1,0 +1,931 @@
+kind,label,min_required_credits,status,consistency_status,validation_fail_count,consistency_fail_count,mandatory_course_count
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Physics,202.0,PASS,CONSISTENT,0,0,70
+DOUBLE_MAJOR,Double Major - Civil Engineering + Mechanical Engineering,201.0,FAIL,CONSISTENT,2,0,62
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Mechanical Engineering,200.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Mechanical Engineering,200.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Civil Engineering + Physics,200.0,PASS,CONSISTENT,0,0,71
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Mechanical Engineering,200.0,FAIL,CONSISTENT,2,0,59
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Physics,199.0,PASS,CONSISTENT,0,0,69
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Physics,199.0,PASS,CONSISTENT,0,0,67
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Physics,199.0,PASS,CONSISTENT,0,0,68
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Civil Engineering,198.0,FAIL,CONSISTENT,2,0,61
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Civil Engineering,198.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Civil Engineering + Electrical And Computer Engineering,198.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Astronautical Engineering,197.0,FAIL,CONSISTENT,2,0,56
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Electrical And Computer Engineering,197.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Electrical And Computer Engineering,197.0,FAIL,CONSISTENT,2,0,57
+DOUBLE_MAJOR,Double Major - Computer Science + Mechanical Engineering,197.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Cyber Science + Mechanical Engineering,197.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Meteorology,197.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Computer Science + Physics,196.0,PASS,CONSISTENT,0,0,69
+DOUBLE_MAJOR,Double Major - Cyber Science + Physics,196.0,PASS,CONSISTENT,0,0,69
+DOUBLE_MAJOR,Double Major - Meteorology + Physics,196.0,FAIL,CONSISTENT,2,0,71
+DOUBLE_MAJOR,Double Major - Chemistry + Mechanical Engineering,195.0,PASS,CONSISTENT,0,0,65
+DOUBLE_MAJOR,Double Major - Civil Engineering + Computer Science,195.0,FAIL,CONSISTENT,2,0,61
+DOUBLE_MAJOR,Double Major - Civil Engineering + Cyber Science,195.0,FAIL,CONSISTENT,2,0,61
+DOUBLE_MAJOR,Double Major - Civil Engineering + Meteorology,195.0,PASS,CONSISTENT,0,0,63
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Systems Engineering,195.0,FAIL,CONSISTENT,2,0,61
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Computer Science,194.0,FAIL,CONSISTENT,2,0,59
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Cyber Science,194.0,FAIL,CONSISTENT,2,0,59
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Meteorology,194.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Computer Science,194.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Cyber Science,194.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Meteorology,194.0,PASS,CONSISTENT,0,0,60
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Biology + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Chemistry + Physics,194.0,FAIL,CONSISTENT,2,0,74
+DOUBLE_MAJOR,Double Major - Computer Science + Electrical And Computer Engineering,194.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Cyber Science + Electrical And Computer Engineering,194.0,FAIL,CONSISTENT,2,0,57
+DOUBLE_MAJOR,Double Major - Economics + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Meteorology,194.0,PASS,CONSISTENT,0,0,60
+DOUBLE_MAJOR,Double Major - English + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,60
+DOUBLE_MAJOR,Double Major - Geospatial Science + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - History + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Humanities + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Management + Mechanical Engineering,194.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Military & Strategic Studies,194.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Operations Research,194.0,PASS,CONSISTENT,0,0,60
+DOUBLE_MAJOR,Double Major - Physics + Systems Engineering,194.0,PASS,CONSISTENT,0,0,70
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Physics,193.0,PASS,CONSISTENT,0,0,67
+DOUBLE_MAJOR,Double Major - Biology + Physics,193.0,FAIL,CONSISTENT,2,0,65
+DOUBLE_MAJOR,Double Major - Chemistry + Civil Engineering,193.0,PASS,CONSISTENT,0,0,66
+DOUBLE_MAJOR,Double Major - Civil Engineering + Systems Engineering,193.0,FAIL,CONSISTENT,2,0,62
+DOUBLE_MAJOR,Double Major - Economics + Physics,193.0,PASS,CONSISTENT,0,0,66
+DOUBLE_MAJOR,Double Major - English + Physics,193.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Physics,193.0,PASS,CONSISTENT,0,0,69
+DOUBLE_MAJOR,Double Major - Geospatial Science + Physics,193.0,PASS,CONSISTENT,0,0,65
+DOUBLE_MAJOR,Double Major - History + Physics,193.0,PASS,CONSISTENT,0,0,63
+DOUBLE_MAJOR,Double Major - Humanities + Physics,193.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Management + Physics,193.0,PASS,CONSISTENT,0,0,67
+DOUBLE_MAJOR,Double Major - Military & Strategic Studies + Physics,193.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Operations Research + Physics,193.0,FAIL,CONSISTENT,2,0,69
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Chemistry,192.0,PASS,CONSISTENT,0,0,64
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Systems Engineering,192.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Chemistry,192.0,PASS,CONSISTENT,0,0,63
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Systems Engineering,192.0,FAIL,CONSISTENT,2,0,59
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Civil Engineering,192.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Biology + Civil Engineering,192.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Chemistry + Electrical And Computer Engineering,192.0,PASS,CONSISTENT,0,0,63
+DOUBLE_MAJOR,Double Major - Civil Engineering + Economics,192.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Civil Engineering + English,192.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Civil Engineering + Foreign Area Studies,192.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Civil Engineering + Geospatial Science,192.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Civil Engineering + History,192.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Civil Engineering + Humanities,192.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Civil Engineering + Management,192.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Civil Engineering + Military & Strategic Studies,192.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Civil Engineering + Operations Research,192.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Systems Engineering,192.0,FAIL,CONSISTENT,2,0,59
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Behavioral Sciences,191.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Biology,191.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Economics,191.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + English,191.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Foreign Area Studies,191.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Geospatial Science,191.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + History,191.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Humanities,191.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Management,191.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Military & Strategic Studies,191.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Operations Research,191.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Behavioral Sciences,191.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Biology,191.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Economics,191.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + English,191.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Foreign Area Studies,191.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Geospatial Science,191.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + History,191.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Humanities,191.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Management,191.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Military & Strategic Studies,191.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Operations Research,191.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Electrical And Computer Engineering,191.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Biology + Electrical And Computer Engineering,191.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Computer Science + Cyber Science,191.0,FAIL,CONSISTENT,2,0,55
+DOUBLE_MAJOR,Double Major - Computer Science + Meteorology,191.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Cyber Science + Meteorology,191.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Data Science + Mechanical Engineering,191.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Economics + Electrical And Computer Engineering,191.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + English,191.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Foreign Area Studies,191.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Geospatial Science,191.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + History,191.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Humanities,191.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Management,191.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Military & Strategic Studies,191.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Operations Research,191.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Legal Studies + Mechanical Engineering,191.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Political Science,191.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Data Science + Physics,190.0,PASS,CONSISTENT,0,0,67
+DOUBLE_MAJOR,Double Major - Legal Studies + Physics,190.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Physics + Political Science,190.0,PASS,CONSISTENT,0,0,63
+DOUBLE_MAJOR,Double Major - Chemistry + Computer Science,189.0,PASS,CONSISTENT,0,0,64
+DOUBLE_MAJOR,Double Major - Chemistry + Cyber Science,189.0,PASS,CONSISTENT,0,0,64
+DOUBLE_MAJOR,Double Major - Chemistry + Meteorology,189.0,FAIL,CONSISTENT,2,0,66
+DOUBLE_MAJOR,Double Major - Civil Engineering + Data Science,189.0,FAIL,CONSISTENT,2,0,59
+DOUBLE_MAJOR,Double Major - Civil Engineering + Legal Studies,189.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Civil Engineering + Political Science,189.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Computer Science + Systems Engineering,189.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Cyber Science + Systems Engineering,189.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Meteorology + Systems Engineering,189.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Data Science,188.0,FAIL,CONSISTENT,2,0,57
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Legal Studies,188.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Political Science,188.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Data Science,188.0,FAIL,CONSISTENT,2,0,56
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Legal Studies,188.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Political Science,188.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Basic Sciences + Mechanical Engineering,188.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Computer Science,188.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Cyber Science,188.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Meteorology,188.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Biology + Computer Science,188.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Biology + Cyber Science,188.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Biology + Meteorology,188.0,FAIL,CONSISTENT,2,0,57
+DOUBLE_MAJOR,Double Major - Computer Science + Economics,188.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Computer Science + English,188.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Computer Science + Foreign Area Studies,188.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Computer Science + Geospatial Science,188.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Computer Science + History,188.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Computer Science + Humanities,188.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Computer Science + Management,188.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Computer Science + Military & Strategic Studies,188.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Computer Science + Operations Research,188.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Cyber Science + Economics,188.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Cyber Science + English,188.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Cyber Science + Foreign Area Studies,188.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Cyber Science + Geospatial Science,188.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Cyber Science + History,188.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Cyber Science + Humanities,188.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Cyber Science + Management,188.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Cyber Science + Military & Strategic Studies,188.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Cyber Science + Operations Research,188.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Data Science + Electrical And Computer Engineering,188.0,FAIL,CONSISTENT,2,0,56
+DOUBLE_MAJOR,Double Major - Economics + Meteorology,188.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Legal Studies,188.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Political Science,188.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - English + Meteorology,188.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Meteorology,188.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - General Engineering + Mechanical Engineering,188.0,FAIL,CONSISTENT,2,0,49
+DOUBLE_MAJOR,Double Major - Geospatial Science + Meteorology,188.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - History + Meteorology,188.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Humanities + Meteorology,188.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Management + Meteorology,188.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Philosophy,188.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Mechanical Engineering + Social Sciences,188.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Meteorology + Military & Strategic Studies,188.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Meteorology + Operations Research,188.0,FAIL,CONSISTENT,2,0,61
+DOUBLE_MAJOR,Double Major - Basic Sciences + Physics,187.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Chemistry + Systems Engineering,187.0,PASS,CONSISTENT,0,0,65
+DOUBLE_MAJOR,Double Major - General Engineering + Physics,187.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Philosophy + Physics,187.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Physics + Social Sciences,187.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Basic Sciences + Civil Engineering,186.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Chemistry,186.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Systems Engineering,186.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Biology + Chemistry,186.0,FAIL,CONSISTENT,2,0,60
+DOUBLE_MAJOR,Double Major - Biology + Systems Engineering,186.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Chemistry + Economics,186.0,PASS,CONSISTENT,0,0,61
+DOUBLE_MAJOR,Double Major - Chemistry + English,186.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Chemistry + Foreign Area Studies,186.0,PASS,CONSISTENT,0,0,64
+DOUBLE_MAJOR,Double Major - Chemistry + Geospatial Science,186.0,PASS,CONSISTENT,0,0,60
+DOUBLE_MAJOR,Double Major - Chemistry + History,186.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Chemistry + Humanities,186.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Chemistry + Management,186.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Chemistry + Military & Strategic Studies,186.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Chemistry + Operations Research,186.0,FAIL,CONSISTENT,2,0,64
+DOUBLE_MAJOR,Double Major - Civil Engineering + General Engineering,186.0,FAIL,CONSISTENT,2,0,50
+DOUBLE_MAJOR,Double Major - Civil Engineering + Philosophy,186.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Civil Engineering + Social Sciences,186.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Economics + Systems Engineering,186.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - English + Systems Engineering,186.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Systems Engineering,186.0,PASS,CONSISTENT,0,0,60
+DOUBLE_MAJOR,Double Major - Geospatial Science + Systems Engineering,186.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - History + Systems Engineering,186.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Humanities + Systems Engineering,186.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Management + Systems Engineering,186.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Military & Strategic Studies + Systems Engineering,186.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Operations Research + Systems Engineering,186.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Basic Sciences,185.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + General Engineering,185.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Philosophy,185.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Social Sciences,185.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Basic Sciences,185.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + General Engineering,185.0,FAIL,CONSISTENT,2,0,47
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Philosophy,185.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Social Sciences,185.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Basic Sciences + Electrical And Computer Engineering,185.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Biology,185.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Economics,185.0,FAIL,CONSISTENT,2,0,54
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + English,185.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Foreign Area Studies,185.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Geospatial Science,185.0,FAIL,CONSISTENT,2,0,53
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + History,185.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Humanities,185.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Management,185.0,FAIL,CONSISTENT,2,0,55
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Military & Strategic Studies,185.0,FAIL,CONSISTENT,2,0,50
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Operations Research,185.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Biology + Economics,185.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Biology + English,185.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Biology + Foreign Area Studies,185.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Biology + Geospatial Science,185.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Biology + History,185.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Biology + Humanities,185.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Biology + Management,185.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Biology + Military & Strategic Studies,185.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Biology + Operations Research,185.0,FAIL,CONSISTENT,2,0,55
+DOUBLE_MAJOR,Double Major - Computer Science + Data Science,185.0,FAIL,CONSISTENT,2,0,56
+DOUBLE_MAJOR,Double Major - Computer Science + Legal Studies,185.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Computer Science + Political Science,185.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Cyber Science + Data Science,185.0,FAIL,CONSISTENT,2,0,56
+DOUBLE_MAJOR,Double Major - Cyber Science + Legal Studies,185.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Cyber Science + Political Science,185.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Data Science + Meteorology,185.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Economics + English,185.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Economics + Foreign Area Studies,185.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Economics + Geospatial Science,185.0,FAIL,CONSISTENT,2,0,52
+DOUBLE_MAJOR,Double Major - Economics + History,185.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Economics + Humanities,185.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Economics + Management,185.0,FAIL,CONSISTENT,2,0,54
+DOUBLE_MAJOR,Double Major - Economics + Military & Strategic Studies,185.0,FAIL,CONSISTENT,2,0,49
+DOUBLE_MAJOR,Double Major - Economics + Operations Research,185.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + General Engineering,185.0,FAIL,CONSISTENT,2,0,47
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Philosophy,185.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Social Sciences,185.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - English + Foreign Area Studies,185.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - English + Geospatial Science,185.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - English + History,185.0,FAIL,CONSISTENT,2,0,42
+DOUBLE_MAJOR,Double Major - English + Humanities,185.0,FAIL,CONSISTENT,2,0,37
+DOUBLE_MAJOR,Double Major - English + Management,185.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - English + Military & Strategic Studies,185.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - English + Operations Research,185.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Geospatial Science,185.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + History,185.0,FAIL,CONSISTENT,2,0,52
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Humanities,185.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Management,185.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Military & Strategic Studies,185.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Operations Research,185.0,PASS,CONSISTENT,0,0,59
+DOUBLE_MAJOR,Double Major - Geospatial Science + History,185.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Geospatial Science + Humanities,185.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Geospatial Science + Management,185.0,FAIL,CONSISTENT,2,0,53
+DOUBLE_MAJOR,Double Major - Geospatial Science + Military & Strategic Studies,185.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - Geospatial Science + Operations Research,185.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - History + Humanities,185.0,FAIL,CONSISTENT,2,0,42
+DOUBLE_MAJOR,Double Major - History + Management,185.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - History + Military & Strategic Studies,185.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - History + Operations Research,185.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Humanities + Management,185.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Humanities + Military & Strategic Studies,185.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - Humanities + Operations Research,185.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Legal Studies + Meteorology,185.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Management + Military & Strategic Studies,185.0,FAIL,CONSISTENT,2,0,50
+DOUBLE_MAJOR,Double Major - Management + Operations Research,185.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Mathematics + Mechanical Engineering,185.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Meteorology + Political Science,185.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Military & Strategic Studies + Operations Research,185.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Mathematics + Physics,184.0,FAIL,CONSISTENT,2,0,66
+DOUBLE_MAJOR,Double Major - Chemistry + Data Science,183.0,PASS,CONSISTENT,0,0,62
+DOUBLE_MAJOR,Double Major - Chemistry + Legal Studies,183.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Chemistry + Political Science,183.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Civil Engineering + Mathematics,183.0,PASS,CONSISTENT,0,0,58
+DOUBLE_MAJOR,Double Major - Data Science + Systems Engineering,183.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Legal Studies + Systems Engineering,183.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Political Science + Systems Engineering,183.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Aeronautical Engineering + Mathematics,182.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Astronautical Engineering + Mathematics,182.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Basic Sciences + Computer Science,182.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Basic Sciences + Cyber Science,182.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Basic Sciences + Meteorology,182.0,FAIL,CONSISTENT,2,0,50
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Data Science,182.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Legal Studies,182.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Political Science,182.0,FAIL,CONSISTENT,2,0,51
+DOUBLE_MAJOR,Double Major - Biology + Data Science,182.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Biology + Legal Studies,182.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Biology + Political Science,182.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Computer Science + General Engineering,182.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - Computer Science + Philosophy,182.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Computer Science + Social Sciences,182.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Cyber Science + General Engineering,182.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - Cyber Science + Philosophy,182.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Cyber Science + Social Sciences,182.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Data Science + Economics,182.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Data Science + English,182.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Data Science + Foreign Area Studies,182.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Data Science + Geospatial Science,182.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Data Science + History,182.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Data Science + Humanities,182.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Data Science + Management,182.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Data Science + Military & Strategic Studies,182.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Data Science + Operations Research,182.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - Economics + Legal Studies,182.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Economics + Political Science,182.0,FAIL,CONSISTENT,2,0,50
+DOUBLE_MAJOR,Double Major - Electrical And Computer Engineering + Mathematics,182.0,PASS,CONSISTENT,0,0,55
+DOUBLE_MAJOR,Double Major - English + Legal Studies,182.0,FAIL,CONSISTENT,2,0,41
+DOUBLE_MAJOR,Double Major - English + Political Science,182.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Legal Studies,182.0,FAIL,CONSISTENT,2,0,52
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Political Science,182.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - General Engineering + Meteorology,182.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Geospatial Science + Legal Studies,182.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Geospatial Science + Political Science,182.0,FAIL,CONSISTENT,2,0,49
+DOUBLE_MAJOR,Double Major - History + Legal Studies,182.0,FAIL,CONSISTENT,2,0,46
+DOUBLE_MAJOR,Double Major - History + Political Science,182.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Humanities + Legal Studies,182.0,FAIL,CONSISTENT,2,0,41
+DOUBLE_MAJOR,Double Major - Humanities + Political Science,182.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - Legal Studies + Management,182.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Legal Studies + Military & Strategic Studies,182.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Legal Studies + Operations Research,182.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Management + Political Science,182.0,FAIL,CONSISTENT,2,0,51
+DOUBLE_MAJOR,Double Major - Meteorology + Philosophy,182.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Meteorology + Social Sciences,182.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Military & Strategic Studies + Political Science,182.0,FAIL,CONSISTENT,2,0,46
+DOUBLE_MAJOR,Double Major - Operations Research + Political Science,182.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Basic Sciences + Chemistry,180.0,FAIL,CONSISTENT,2,0,53
+DOUBLE_MAJOR,Double Major - Basic Sciences + Systems Engineering,180.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Chemistry + General Engineering,180.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - Chemistry + Philosophy,180.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Chemistry + Social Sciences,180.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - General Engineering + Systems Engineering,180.0,FAIL,CONSISTENT,2,0,49
+DOUBLE_MAJOR,Double Major - Philosophy + Systems Engineering,180.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - Social Sciences + Systems Engineering,180.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Basic Sciences + Behavioral Sciences,179.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Basic Sciences + Biology,179.0,FAIL,CONSISTENT,2,0,44
+DOUBLE_MAJOR,Double Major - Basic Sciences + Economics,179.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Basic Sciences + English,179.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Basic Sciences + Foreign Area Studies,179.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Basic Sciences + Geospatial Science,179.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Basic Sciences + History,179.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - Basic Sciences + Humanities,179.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Basic Sciences + Management,179.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Basic Sciences + Military & Strategic Studies,179.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - Basic Sciences + Operations Research,179.0,FAIL,CONSISTENT,2,0,48
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + General Engineering,179.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Philosophy,179.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Social Sciences,179.0,FAIL,CONSISTENT,2,0,46
+DOUBLE_MAJOR,Double Major - Biology + General Engineering,179.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Biology + Philosophy,179.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Biology + Social Sciences,179.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Computer Science + Mathematics,179.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Cyber Science + Mathematics,179.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - Data Science + Legal Studies,179.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Data Science + Political Science,179.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Economics + General Engineering,179.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Economics + Philosophy,179.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Economics + Social Sciences,179.0,FAIL,CONSISTENT,2,0,45
+DOUBLE_MAJOR,Double Major - English + General Engineering,179.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - English + Philosophy,179.0,FAIL,CONSISTENT,2,0,40
+DOUBLE_MAJOR,Double Major - English + Social Sciences,179.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + General Engineering,179.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Philosophy,179.0,FAIL,CONSISTENT,2,0,51
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Social Sciences,179.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - General Engineering + Geospatial Science,179.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - General Engineering + History,179.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - General Engineering + Humanities,179.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - General Engineering + Management,179.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - General Engineering + Military & Strategic Studies,179.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - General Engineering + Operations Research,179.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Geospatial Science + Philosophy,179.0,PASS,CONSISTENT,0,0,47
+DOUBLE_MAJOR,Double Major - Geospatial Science + Social Sciences,179.0,FAIL,CONSISTENT,2,0,44
+DOUBLE_MAJOR,Double Major - History + Philosophy,179.0,FAIL,CONSISTENT,2,0,45
+DOUBLE_MAJOR,Double Major - History + Social Sciences,179.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - Humanities + Philosophy,179.0,FAIL,CONSISTENT,2,0,40
+DOUBLE_MAJOR,Double Major - Humanities + Social Sciences,179.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Legal Studies + Political Science,179.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Management + Philosophy,179.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Management + Social Sciences,179.0,FAIL,CONSISTENT,2,0,46
+DOUBLE_MAJOR,Double Major - Mathematics + Meteorology,179.0,FAIL,CONSISTENT,2,0,58
+DOUBLE_MAJOR,Double Major - Military & Strategic Studies + Philosophy,179.0,PASS,CONSISTENT,0,0,44
+DOUBLE_MAJOR,Double Major - Military & Strategic Studies + Social Sciences,179.0,FAIL,CONSISTENT,2,0,41
+DOUBLE_MAJOR,Double Major - Operations Research + Philosophy,179.0,PASS,CONSISTENT,0,0,51
+DOUBLE_MAJOR,Double Major - Operations Research + Social Sciences,179.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Chemistry + Mathematics,177.0,FAIL,CONSISTENT,2,0,61
+DOUBLE_MAJOR,Double Major - Mathematics + Systems Engineering,177.0,PASS,CONSISTENT,0,0,57
+DOUBLE_MAJOR,Double Major - Basic Sciences + Data Science,176.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Basic Sciences + Legal Studies,176.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - Basic Sciences + Political Science,176.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - Behavioral Sciences + Mathematics,176.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Biology + Mathematics,176.0,FAIL,CONSISTENT,2,0,52
+DOUBLE_MAJOR,Double Major - Data Science + General Engineering,176.0,FAIL,CONSISTENT,2,0,46
+DOUBLE_MAJOR,Double Major - Data Science + Philosophy,176.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Data Science + Social Sciences,176.0,PASS,CONSISTENT,0,0,46
+DOUBLE_MAJOR,Double Major - Economics + Mathematics,176.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - English + Mathematics,176.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Foreign Area Studies + Mathematics,176.0,PASS,CONSISTENT,0,0,56
+DOUBLE_MAJOR,Double Major - General Engineering + Legal Studies,176.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - General Engineering + Political Science,176.0,PASS,CONSISTENT,0,0,42
+DOUBLE_MAJOR,Double Major - Geospatial Science + Mathematics,176.0,PASS,CONSISTENT,0,0,52
+DOUBLE_MAJOR,Double Major - History + Mathematics,176.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Humanities + Mathematics,176.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Legal Studies + Philosophy,176.0,FAIL,CONSISTENT,2,0,44
+DOUBLE_MAJOR,Double Major - Legal Studies + Social Sciences,176.0,PASS,CONSISTENT,0,0,41
+DOUBLE_MAJOR,Double Major - Management + Mathematics,176.0,PASS,CONSISTENT,0,0,54
+DOUBLE_MAJOR,Double Major - Mathematics + Military & Strategic Studies,176.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Mathematics + Operations Research,176.0,FAIL,CONSISTENT,2,0,55
+DOUBLE_MAJOR,Double Major - Philosophy + Political Science,176.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Political Science + Social Sciences,176.0,FAIL,CONSISTENT,2,0,42
+DOUBLE_MAJOR,Double Major - Basic Sciences + General Engineering,173.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Basic Sciences + Philosophy,173.0,PASS,CONSISTENT,0,0,40
+DOUBLE_MAJOR,Double Major - Basic Sciences + Social Sciences,173.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Data Science + Mathematics,173.0,PASS,CONSISTENT,0,0,53
+DOUBLE_MAJOR,Double Major - General Engineering + Philosophy,173.0,PASS,CONSISTENT,0,0,40
+DOUBLE_MAJOR,Double Major - General Engineering + Social Sciences,173.0,PASS,CONSISTENT,0,0,37
+DOUBLE_MAJOR,Double Major - Legal Studies + Mathematics,173.0,PASS,CONSISTENT,0,0,49
+DOUBLE_MAJOR,Double Major - Mathematics + Political Science,173.0,PASS,CONSISTENT,0,0,50
+DOUBLE_MAJOR,Double Major - Philosophy + Social Sciences,173.0,PASS,CONSISTENT,0,0,40
+DOUBLE_MAJOR,Double Major - Basic Sciences + Mathematics,170.0,FAIL,CONSISTENT,2,0,45
+DOUBLE_MAJOR,Double Major - General Engineering + Mathematics,170.0,PASS,CONSISTENT,0,0,45
+DOUBLE_MAJOR,Double Major - Mathematics + Philosophy,170.0,PASS,CONSISTENT,0,0,48
+DOUBLE_MAJOR,Double Major - Mathematics + Social Sciences,170.0,PASS,CONSISTENT,0,0,45
+MAJOR,Major - Mechanical Engineering,152.0,PASS,CONSISTENT,0,0,49
+MAJOR,Major - Physics,151.0,PASS,CONSISTENT,0,0,58
+MAJOR,Major - Civil Engineering,150.0,PASS,CONSISTENT,0,0,50
+MAJOR,Major - Aeronautical Engineering,149.0,PASS,CONSISTENT,0,0,48
+MAJOR,Major - Astronautical Engineering,149.0,PASS,CONSISTENT,0,0,47
+MAJOR,Major - Electrical And Computer Engineering,149.0,PASS,CONSISTENT,0,0,47
+MAJOR,Major - Computer Science,146.0,PASS,CONSISTENT,0,0,48
+MAJOR,Major - Cyber Science,146.0,PASS,CONSISTENT,0,0,48
+MAJOR,Major - Meteorology,146.0,PASS,CONSISTENT,0,0,50
+MAJOR,Major - Chemistry,144.0,PASS,CONSISTENT,0,0,53
+MAJOR,Major - Systems Engineering,144.0,PASS,CONSISTENT,0,0,49
+MAJOR,Major - Behavioral Sciences,143.0,PASS,CONSISTENT,0,0,46
+MAJOR,Major - Biology,143.0,PASS,CONSISTENT,0,0,44
+MAJOR,Major - Economics,143.0,PASS,CONSISTENT,0,0,45
+MAJOR,Major - English,143.0,PASS,CONSISTENT,0,0,37
+MAJOR,Major - Foreign Area Studies,143.0,PASS,CONSISTENT,0,0,48
+MAJOR,Major - Geospatial Science,143.0,PASS,CONSISTENT,0,0,44
+MAJOR,Major - History,143.0,PASS,CONSISTENT,0,0,42
+MAJOR,Major - Humanities,143.0,PASS,CONSISTENT,0,0,37
+MAJOR,Major - Management,143.0,PASS,CONSISTENT,0,0,46
+MAJOR,Major - Military & Strategic Studies,143.0,PASS,CONSISTENT,0,0,41
+MAJOR,Major - Operations Research,143.0,PASS,CONSISTENT,0,0,48
+MAJOR,Major - Data Science,140.0,PASS,CONSISTENT,0,0,46
+MAJOR,Major - Legal Studies,140.0,PASS,CONSISTENT,0,0,41
+MAJOR,Major - Political Science,140.0,PASS,CONSISTENT,0,0,42
+MAJOR,Major - Basic Sciences,137.0,PASS,CONSISTENT,0,0,37
+MAJOR,Major - General Engineering,137.0,PASS,CONSISTENT,0,0,37
+MAJOR,Major - Philosophy,137.0,PASS,CONSISTENT,0,0,40
+MAJOR,Major - Social Sciences,137.0,PASS,CONSISTENT,0,0,37
+MAJOR,Major - Mathematics,134.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Aerospace Materials,167.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Airpower Studies,167.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + American Studies,167.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Foreign Language,167.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Future Conflict,167.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Global Logistics Management,167.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + High Performance Computing,167.0,PASS,CONSISTENT,0,0,67
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Nuclear Weapons And Strategy,167.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Philosophy,167.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Pre-Health Professions,167.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Quantum Technologies,167.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Religion Studies,167.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Robotics And Autonomous Systems,167.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Space Warfighting,167.0,PASS,CONSISTENT,0,0,57
+MAJOR_MINOR,Major/Minor - Physics + Aerospace Materials,166.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Physics + Airpower Studies,166.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Physics + American Studies,166.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Physics + Foreign Language,166.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Physics + Future Conflict,166.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Physics + Global Logistics Management,166.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Physics + High Performance Computing,166.0,PASS,CONSISTENT,0,0,75
+MAJOR_MINOR,Major/Minor - Physics + Nuclear Weapons And Strategy,166.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Physics + Philosophy,166.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Physics + Pre-Health Professions,166.0,PASS,CONSISTENT,0,0,72
+MAJOR_MINOR,Major/Minor - Physics + Quantum Technologies,166.0,PASS,CONSISTENT,0,0,67
+MAJOR_MINOR,Major/Minor - Physics + Religion Studies,166.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Physics + Robotics And Autonomous Systems,166.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Physics + Space Warfighting,166.0,PASS,CONSISTENT,0,0,66
+MAJOR_MINOR,Major/Minor - Civil Engineering + Aerospace Materials,165.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Civil Engineering + Airpower Studies,165.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Civil Engineering + American Studies,165.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Civil Engineering + Foreign Language,165.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Civil Engineering + Future Conflict,165.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Civil Engineering + Global Logistics Management,165.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Civil Engineering + High Performance Computing,165.0,PASS,CONSISTENT,0,0,68
+MAJOR_MINOR,Major/Minor - Civil Engineering + Nuclear Weapons And Strategy,165.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Civil Engineering + Philosophy,165.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Civil Engineering + Pre-Health Professions,165.0,PASS,CONSISTENT,0,0,64
+MAJOR_MINOR,Major/Minor - Civil Engineering + Quantum Technologies,165.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Civil Engineering + Religion Studies,165.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Civil Engineering + Robotics And Autonomous Systems,165.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Civil Engineering + Space Warfighting,165.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Aerospace Materials,164.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Airpower Studies,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + American Studies,164.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Foreign Language,164.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Future Conflict,164.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Global Logistics Management,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + High Performance Computing,164.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Nuclear Weapons And Strategy,164.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Philosophy,164.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Pre-Health Professions,164.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Quantum Technologies,164.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Religion Studies,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Robotics And Autonomous Systems,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Space Warfighting,164.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Aerospace Materials,164.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Airpower Studies,164.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + American Studies,164.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Foreign Language,164.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Future Conflict,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Global Logistics Management,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + High Performance Computing,164.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Nuclear Weapons And Strategy,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Philosophy,164.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Pre-Health Professions,164.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Quantum Technologies,164.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Religion Studies,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Robotics And Autonomous Systems,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Space Warfighting,164.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Aerospace Materials,164.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Airpower Studies,164.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + American Studies,164.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Foreign Language,164.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Future Conflict,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Global Logistics Management,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + High Performance Computing,164.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Nuclear Weapons And Strategy,164.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Philosophy,164.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Pre-Health Professions,164.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Quantum Technologies,164.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Religion Studies,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Robotics And Autonomous Systems,164.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Space Warfighting,164.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Computer Science + Aerospace Materials,161.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Computer Science + Airpower Studies,161.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Computer Science + American Studies,161.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Computer Science + Foreign Language,161.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Computer Science + Future Conflict,161.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Computer Science + Global Logistics Management,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Computer Science + High Performance Computing,161.0,PASS,CONSISTENT,0,0,64
+MAJOR_MINOR,Major/Minor - Computer Science + Nuclear Weapons And Strategy,161.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Computer Science + Philosophy,161.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Computer Science + Pre-Health Professions,161.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Computer Science + Quantum Technologies,161.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Computer Science + Religion Studies,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Computer Science + Robotics And Autonomous Systems,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Computer Science + Space Warfighting,161.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Cyber Science + Aerospace Materials,161.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Cyber Science + Airpower Studies,161.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Cyber Science + American Studies,161.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Cyber Science + Foreign Language,161.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Cyber Science + Future Conflict,161.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Cyber Science + Global Logistics Management,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Cyber Science + High Performance Computing,161.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Cyber Science + Nuclear Weapons And Strategy,161.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Cyber Science + Philosophy,161.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Cyber Science + Pre-Health Professions,161.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Cyber Science + Quantum Technologies,161.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Cyber Science + Religion Studies,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Cyber Science + Robotics And Autonomous Systems,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Cyber Science + Space Warfighting,161.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Mechanical Engineering + Sustainability,161.0,FAIL,INCONSISTENT,2,5,68
+MAJOR_MINOR,Major/Minor - Meteorology + Aerospace Materials,161.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Meteorology + Airpower Studies,161.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Meteorology + American Studies,161.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Meteorology + Foreign Language,161.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Meteorology + Future Conflict,161.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Meteorology + Global Logistics Management,161.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Meteorology + High Performance Computing,161.0,PASS,CONSISTENT,0,0,68
+MAJOR_MINOR,Major/Minor - Meteorology + Nuclear Weapons And Strategy,161.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Meteorology + Philosophy,161.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Meteorology + Pre-Health Professions,161.0,PASS,CONSISTENT,0,0,64
+MAJOR_MINOR,Major/Minor - Meteorology + Quantum Technologies,161.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Meteorology + Religion Studies,161.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Meteorology + Robotics And Autonomous Systems,161.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Meteorology + Space Warfighting,161.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Physics + Sustainability,160.0,FAIL,INCONSISTENT,2,5,78
+MAJOR_MINOR,Major/Minor - Chemistry + Aerospace Materials,159.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Chemistry + Airpower Studies,159.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Chemistry + American Studies,159.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Chemistry + Foreign Language,159.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Chemistry + Future Conflict,159.0,PASS,CONSISTENT,0,0,57
+MAJOR_MINOR,Major/Minor - Chemistry + Global Logistics Management,159.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Chemistry + High Performance Computing,159.0,PASS,CONSISTENT,0,0,71
+MAJOR_MINOR,Major/Minor - Chemistry + Nuclear Weapons And Strategy,159.0,PASS,CONSISTENT,0,0,57
+MAJOR_MINOR,Major/Minor - Chemistry + Philosophy,159.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Chemistry + Pre-Health Professions,159.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Chemistry + Quantum Technologies,159.0,PASS,CONSISTENT,0,0,66
+MAJOR_MINOR,Major/Minor - Chemistry + Religion Studies,159.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Chemistry + Robotics And Autonomous Systems,159.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Chemistry + Space Warfighting,159.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Civil Engineering + Sustainability,159.0,FAIL,INCONSISTENT,2,5,70
+MAJOR_MINOR,Major/Minor - Systems Engineering + Aerospace Materials,159.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Systems Engineering + Airpower Studies,159.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Systems Engineering + American Studies,159.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Systems Engineering + Foreign Language,159.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Systems Engineering + Future Conflict,159.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Systems Engineering + Global Logistics Management,159.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Systems Engineering + High Performance Computing,159.0,PASS,CONSISTENT,0,0,67
+MAJOR_MINOR,Major/Minor - Systems Engineering + Nuclear Weapons And Strategy,159.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Systems Engineering + Philosophy,159.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Systems Engineering + Pre-Health Professions,159.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Systems Engineering + Quantum Technologies,159.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Systems Engineering + Religion Studies,159.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Systems Engineering + Robotics And Autonomous Systems,159.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Systems Engineering + Space Warfighting,159.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Aeronautical Engineering + Sustainability,158.0,FAIL,INCONSISTENT,2,5,68
+MAJOR_MINOR,Major/Minor - Astronautical Engineering + Sustainability,158.0,FAIL,INCONSISTENT,2,5,67
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Airpower Studies,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + American Studies,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Foreign Language,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Future Conflict,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + High Performance Computing,158.0,PASS,CONSISTENT,0,0,64
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Philosophy,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Religion Studies,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Space Warfighting,158.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Biology + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Biology + Airpower Studies,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Biology + American Studies,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Biology + Foreign Language,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Biology + Future Conflict,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Biology + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Biology + High Performance Computing,158.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Biology + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Biology + Philosophy,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Biology + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Biology + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,57
+MAJOR_MINOR,Major/Minor - Biology + Religion Studies,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Biology + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Biology + Space Warfighting,158.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Economics + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Economics + Airpower Studies,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Economics + American Studies,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Economics + Foreign Language,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Economics + Future Conflict,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Economics + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Economics + High Performance Computing,158.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Economics + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Economics + Philosophy,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Economics + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Economics + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Economics + Religion Studies,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Economics + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Economics + Space Warfighting,158.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Electrical And Computer Engineering + Sustainability,158.0,FAIL,INCONSISTENT,2,5,67
+MAJOR_MINOR,Major/Minor - English + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,38
+MAJOR_MINOR,Major/Minor - English + Airpower Studies,158.0,PASS,CONSISTENT,0,0,39
+MAJOR_MINOR,Major/Minor - English + American Studies,158.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - English + Foreign Language,158.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - English + Future Conflict,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - English + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - English + High Performance Computing,158.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - English + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - English + Philosophy,158.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - English + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - English + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - English + Religion Studies,158.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - English + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - English + Space Warfighting,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Airpower Studies,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + American Studies,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Foreign Language,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Future Conflict,158.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + High Performance Computing,158.0,PASS,CONSISTENT,0,0,66
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Philosophy,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Religion Studies,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Space Warfighting,158.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Geospatial Science + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Geospatial Science + Airpower Studies,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Geospatial Science + American Studies,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Geospatial Science + Foreign Language,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Geospatial Science + Future Conflict,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Geospatial Science + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Geospatial Science + High Performance Computing,158.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Geospatial Science + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Geospatial Science + Philosophy,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Geospatial Science + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Geospatial Science + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,57
+MAJOR_MINOR,Major/Minor - Geospatial Science + Religion Studies,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Geospatial Science + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Geospatial Science + Space Warfighting,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - History + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - History + Airpower Studies,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - History + American Studies,158.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - History + Foreign Language,158.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - History + Future Conflict,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - History + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - History + High Performance Computing,158.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - History + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - History + Philosophy,158.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - History + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - History + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - History + Religion Studies,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - History + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - History + Space Warfighting,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Humanities + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,38
+MAJOR_MINOR,Major/Minor - Humanities + Airpower Studies,158.0,PASS,CONSISTENT,0,0,39
+MAJOR_MINOR,Major/Minor - Humanities + American Studies,158.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Humanities + Foreign Language,158.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Humanities + Future Conflict,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Humanities + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Humanities + High Performance Computing,158.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Humanities + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Humanities + Philosophy,158.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Humanities + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Humanities + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Humanities + Religion Studies,158.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Humanities + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Humanities + Space Warfighting,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Management + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Management + Airpower Studies,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Management + American Studies,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Management + Foreign Language,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Management + Future Conflict,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Management + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Management + High Performance Computing,158.0,PASS,CONSISTENT,0,0,64
+MAJOR_MINOR,Major/Minor - Management + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Management + Philosophy,158.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Management + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Management + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Management + Religion Studies,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Management + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Management + Space Warfighting,158.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Airpower Studies,158.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + American Studies,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Foreign Language,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Future Conflict,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + High Performance Computing,158.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Philosophy,158.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Religion Studies,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Space Warfighting,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Operations Research + Aerospace Materials,158.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Operations Research + Airpower Studies,158.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Operations Research + American Studies,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Operations Research + Foreign Language,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Operations Research + Future Conflict,158.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Operations Research + Global Logistics Management,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Operations Research + High Performance Computing,158.0,PASS,CONSISTENT,0,0,63
+MAJOR_MINOR,Major/Minor - Operations Research + Nuclear Weapons And Strategy,158.0,PASS,CONSISTENT,0,0,52
+MAJOR_MINOR,Major/Minor - Operations Research + Philosophy,158.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Operations Research + Pre-Health Professions,158.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Operations Research + Quantum Technologies,158.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Operations Research + Religion Studies,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Operations Research + Robotics And Autonomous Systems,158.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Operations Research + Space Warfighting,158.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Computer Science + Sustainability,155.0,FAIL,INCONSISTENT,2,5,68
+MAJOR_MINOR,Major/Minor - Cyber Science + Sustainability,155.0,FAIL,INCONSISTENT,2,5,68
+MAJOR_MINOR,Major/Minor - Data Science + Aerospace Materials,155.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Data Science + Airpower Studies,155.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Data Science + American Studies,155.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Data Science + Foreign Language,155.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Data Science + Future Conflict,155.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Data Science + Global Logistics Management,155.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Data Science + High Performance Computing,155.0,PASS,CONSISTENT,0,0,61
+MAJOR_MINOR,Major/Minor - Data Science + Nuclear Weapons And Strategy,155.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Data Science + Philosophy,155.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Data Science + Pre-Health Professions,155.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Data Science + Quantum Technologies,155.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Data Science + Religion Studies,155.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Data Science + Robotics And Autonomous Systems,155.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Data Science + Space Warfighting,155.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Legal Studies + Aerospace Materials,155.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - Legal Studies + Airpower Studies,155.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - Legal Studies + American Studies,155.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Legal Studies + Foreign Language,155.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Legal Studies + Future Conflict,155.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Legal Studies + Global Logistics Management,155.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Legal Studies + High Performance Computing,155.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Legal Studies + Nuclear Weapons And Strategy,155.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Legal Studies + Philosophy,155.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Legal Studies + Pre-Health Professions,155.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Legal Studies + Quantum Technologies,155.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Legal Studies + Religion Studies,155.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Legal Studies + Robotics And Autonomous Systems,155.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Legal Studies + Space Warfighting,155.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Meteorology + Sustainability,155.0,FAIL,INCONSISTENT,2,5,68
+MAJOR_MINOR,Major/Minor - Political Science + Aerospace Materials,155.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - Political Science + Airpower Studies,155.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Political Science + American Studies,155.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - Political Science + Foreign Language,155.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - Political Science + Future Conflict,155.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Political Science + Global Logistics Management,155.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Political Science + High Performance Computing,155.0,PASS,CONSISTENT,0,0,60
+MAJOR_MINOR,Major/Minor - Political Science + Nuclear Weapons And Strategy,155.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Political Science + Philosophy,155.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - Political Science + Pre-Health Professions,155.0,PASS,CONSISTENT,0,0,56
+MAJOR_MINOR,Major/Minor - Political Science + Quantum Technologies,155.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Political Science + Religion Studies,155.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Political Science + Robotics And Autonomous Systems,155.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Political Science + Space Warfighting,155.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Chemistry + Sustainability,153.0,FAIL,INCONSISTENT,2,5,73
+MAJOR_MINOR,Major/Minor - Systems Engineering + Sustainability,153.0,FAIL,INCONSISTENT,2,5,68
+MAJOR_MINOR,Major/Minor - Basic Sciences + Aerospace Materials,152.0,PASS,CONSISTENT,0,0,38
+MAJOR_MINOR,Major/Minor - Basic Sciences + Airpower Studies,152.0,PASS,CONSISTENT,0,0,39
+MAJOR_MINOR,Major/Minor - Basic Sciences + American Studies,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Basic Sciences + Foreign Language,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Basic Sciences + Future Conflict,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Basic Sciences + Global Logistics Management,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Basic Sciences + High Performance Computing,152.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Basic Sciences + Nuclear Weapons And Strategy,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Basic Sciences + Philosophy,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Basic Sciences + Pre-Health Professions,152.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Basic Sciences + Quantum Technologies,152.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Basic Sciences + Religion Studies,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Basic Sciences + Robotics And Autonomous Systems,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Basic Sciences + Space Warfighting,152.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Behavioral Sciences + Sustainability,152.0,FAIL,INCONSISTENT,2,5,66
+MAJOR_MINOR,Major/Minor - Biology + Sustainability,152.0,FAIL,INCONSISTENT,2,5,64
+MAJOR_MINOR,Major/Minor - Economics + Sustainability,152.0,FAIL,INCONSISTENT,2,5,65
+MAJOR_MINOR,Major/Minor - English + Sustainability,152.0,FAIL,INCONSISTENT,2,5,57
+MAJOR_MINOR,Major/Minor - Foreign Area Studies + Sustainability,152.0,FAIL,INCONSISTENT,2,5,67
+MAJOR_MINOR,Major/Minor - General Engineering + Aerospace Materials,152.0,PASS,CONSISTENT,0,0,38
+MAJOR_MINOR,Major/Minor - General Engineering + Airpower Studies,152.0,PASS,CONSISTENT,0,0,39
+MAJOR_MINOR,Major/Minor - General Engineering + American Studies,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - General Engineering + Foreign Language,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - General Engineering + Future Conflict,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - General Engineering + Global Logistics Management,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - General Engineering + High Performance Computing,152.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - General Engineering + Nuclear Weapons And Strategy,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - General Engineering + Philosophy,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - General Engineering + Pre-Health Professions,152.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - General Engineering + Quantum Technologies,152.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - General Engineering + Religion Studies,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - General Engineering + Robotics And Autonomous Systems,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - General Engineering + Space Warfighting,152.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Geospatial Science + Sustainability,152.0,FAIL,INCONSISTENT,2,5,58
+MAJOR_MINOR,Major/Minor - History + Sustainability,152.0,FAIL,INCONSISTENT,2,5,62
+MAJOR_MINOR,Major/Minor - Humanities + Sustainability,152.0,FAIL,INCONSISTENT,2,5,57
+MAJOR_MINOR,Major/Minor - Management + Sustainability,152.0,FAIL,INCONSISTENT,2,5,66
+MAJOR_MINOR,Major/Minor - Military & Strategic Studies + Sustainability,152.0,FAIL,INCONSISTENT,2,5,61
+MAJOR_MINOR,Major/Minor - Operations Research + Sustainability,152.0,FAIL,INCONSISTENT,2,5,67
+MAJOR_MINOR,Major/Minor - Philosophy + Aerospace Materials,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Philosophy + Airpower Studies,152.0,PASS,CONSISTENT,0,0,42
+MAJOR_MINOR,Major/Minor - Philosophy + American Studies,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Philosophy + Foreign Language,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Philosophy + Future Conflict,152.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Philosophy + Global Logistics Management,152.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - Philosophy + High Performance Computing,152.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Philosophy + Nuclear Weapons And Strategy,152.0,PASS,CONSISTENT,0,0,44
+MAJOR_MINOR,Major/Minor - Philosophy + Philosophy,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Philosophy + Pre-Health Professions,152.0,PASS,CONSISTENT,0,0,54
+MAJOR_MINOR,Major/Minor - Philosophy + Quantum Technologies,152.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Philosophy + Religion Studies,152.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - Philosophy + Robotics And Autonomous Systems,152.0,PASS,CONSISTENT,0,0,43
+MAJOR_MINOR,Major/Minor - Philosophy + Space Warfighting,152.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Social Sciences + Aerospace Materials,152.0,PASS,CONSISTENT,0,0,38
+MAJOR_MINOR,Major/Minor - Social Sciences + Airpower Studies,152.0,PASS,CONSISTENT,0,0,39
+MAJOR_MINOR,Major/Minor - Social Sciences + American Studies,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Social Sciences + Foreign Language,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Social Sciences + Future Conflict,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Social Sciences + Global Logistics Management,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Social Sciences + High Performance Computing,152.0,PASS,CONSISTENT,0,0,55
+MAJOR_MINOR,Major/Minor - Social Sciences + Nuclear Weapons And Strategy,152.0,PASS,CONSISTENT,0,0,41
+MAJOR_MINOR,Major/Minor - Social Sciences + Philosophy,152.0,PASS,CONSISTENT,0,0,37
+MAJOR_MINOR,Major/Minor - Social Sciences + Pre-Health Professions,152.0,PASS,CONSISTENT,0,0,51
+MAJOR_MINOR,Major/Minor - Social Sciences + Quantum Technologies,152.0,PASS,CONSISTENT,0,0,50
+MAJOR_MINOR,Major/Minor - Social Sciences + Religion Studies,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Social Sciences + Robotics And Autonomous Systems,152.0,PASS,CONSISTENT,0,0,40
+MAJOR_MINOR,Major/Minor - Social Sciences + Space Warfighting,152.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Data Science + Sustainability,149.0,FAIL,INCONSISTENT,2,5,64
+MAJOR_MINOR,Major/Minor - Legal Studies + Sustainability,149.0,FAIL,INCONSISTENT,2,5,61
+MAJOR_MINOR,Major/Minor - Mathematics + Aerospace Materials,149.0,PASS,CONSISTENT,0,0,46
+MAJOR_MINOR,Major/Minor - Mathematics + Airpower Studies,149.0,PASS,CONSISTENT,0,0,47
+MAJOR_MINOR,Major/Minor - Mathematics + American Studies,149.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Mathematics + Foreign Language,149.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Mathematics + Future Conflict,149.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Mathematics + Global Logistics Management,149.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Mathematics + High Performance Computing,149.0,PASS,CONSISTENT,0,0,62
+MAJOR_MINOR,Major/Minor - Mathematics + Nuclear Weapons And Strategy,149.0,PASS,CONSISTENT,0,0,49
+MAJOR_MINOR,Major/Minor - Mathematics + Philosophy,149.0,PASS,CONSISTENT,0,0,45
+MAJOR_MINOR,Major/Minor - Mathematics + Pre-Health Professions,149.0,PASS,CONSISTENT,0,0,59
+MAJOR_MINOR,Major/Minor - Mathematics + Quantum Technologies,149.0,PASS,CONSISTENT,0,0,58
+MAJOR_MINOR,Major/Minor - Mathematics + Religion Studies,149.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Mathematics + Robotics And Autonomous Systems,149.0,PASS,CONSISTENT,0,0,48
+MAJOR_MINOR,Major/Minor - Mathematics + Space Warfighting,149.0,PASS,CONSISTENT,0,0,53
+MAJOR_MINOR,Major/Minor - Political Science + Sustainability,149.0,FAIL,INCONSISTENT,2,5,62
+MAJOR_MINOR,Major/Minor - Basic Sciences + Sustainability,146.0,FAIL,INCONSISTENT,2,5,57
+MAJOR_MINOR,Major/Minor - General Engineering + Sustainability,146.0,FAIL,INCONSISTENT,2,5,57
+MAJOR_MINOR,Major/Minor - Philosophy + Sustainability,146.0,FAIL,INCONSISTENT,2,5,60
+MAJOR_MINOR,Major/Minor - Social Sciences + Sustainability,146.0,FAIL,INCONSISTENT,2,5,57
+MAJOR_MINOR,Major/Minor - Mathematics + Sustainability,143.0,FAIL,INCONSISTENT,2,5,64
+MINOR,Minor - Aerospace Materials,116.0,FAIL,CONSISTENT,1,0,38
+MINOR,Minor - Airpower Studies,116.0,FAIL,CONSISTENT,1,0,39
+MINOR,Minor - American Studies,116.0,FAIL,CONSISTENT,1,0,37
+MINOR,Minor - Foreign Language,116.0,FAIL,CONSISTENT,1,0,37
+MINOR,Minor - Future Conflict,116.0,FAIL,CONSISTENT,1,0,41
+MINOR,Minor - Global Logistics Management,116.0,FAIL,CONSISTENT,1,0,40
+MINOR,Minor - High Performance Computing,116.0,FAIL,CONSISTENT,1,0,55
+MINOR,Minor - Nuclear Weapons And Strategy,116.0,FAIL,CONSISTENT,1,0,41
+MINOR,Minor - Philosophy,116.0,FAIL,CONSISTENT,1,0,37
+MINOR,Minor - Pre-Health Professions,116.0,FAIL,CONSISTENT,1,0,51
+MINOR,Minor - Quantum Technologies,116.0,FAIL,CONSISTENT,1,0,50
+MINOR,Minor - Religion Studies,116.0,FAIL,CONSISTENT,1,0,40
+MINOR,Minor - Robotics And Autonomous Systems,116.0,FAIL,CONSISTENT,1,0,40
+MINOR,Minor - Space Warfighting,116.0,FAIL,CONSISTENT,1,0,45
+MINOR,Minor - Sustainability,110.0,FAIL,INCONSISTENT,3,5,57

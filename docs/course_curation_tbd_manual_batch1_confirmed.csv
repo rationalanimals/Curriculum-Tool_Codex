@@ -1,0 +1,6 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,c050f189-3dac-4d25-81cd-bb701281eec0,Civ Engr 485,Civ Engr 485 (TBD Curate),3.0,Construction Engineering and Management,3.0,,,,,,,manual batch1 confirmed from COI snippets
+UPDATE,32f69dac-d990-4fa9-a3cf-7dc4171513e8,Physics 362,Physics 362 (TBD Curate),3.0,Electromagnetic Theory II,3.0,,,,,,,manual batch1 confirmed from COI snippets
+UPDATE,767c41443b5c43b198a9e98bc6a761d7,LAW 351,Law 351 (TBD Curate),3.0,U.S. Constitutional Law,3.0,,,,,,,manual batch1 confirmed from COI snippets
+UPDATE,c9fdc9d2-a752-485c-ad0e-2c5673d5fe59,Physics 499,Physics 499 (TBD Curate),3.0,Independent Study in Physics,3.0,,,,,,,manual batch1 confirmed from COI snippets
+UPDATE,49c9e857726c4d22a0e91b4759c220bc,PHILOS 365,Philos 365 (TBD Curate),3.0,C.S. Lewis and Philosophy,3.0,,,,,,,manual batch1 confirmed from COI snippets

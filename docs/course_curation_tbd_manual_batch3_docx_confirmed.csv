@@ -1,0 +1,11 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,cb52f8c0-2e59-4064-8f3d-74500a98fe77,Aero Engr 210S,Aero Engr 210S (TBD Curate),3.0,Fundamentals of Aeronautics for Scholars,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,fd7222c8-7379-4c24-95e8-00552b733a6e,Mgt 341,Mgt 341 (TBD Curate),3.0,Financial Accounting,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,e4609e5c-a2b4-4848-b624-4f976519f206,Pol Sci 469,Pol Sci 469 (TBD Curate),3.0,"Politics of Russia, Eastern Europe, and Eurasia",3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,6a8ecb1a-71fa-4142-8753-1d1b15ee7f66,Pol Sci 471,Pol Sci 471 (TBD Curate),3.0,Politics of Europe,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,15fdadce-706a-49df-82b9-d174bbb3514c,Philos 391,Philos 391 (TBD Curate),3.0,Ancient Western Philosophy,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,fad2fc02-00fc-463b-ab62-97050325ca10,Philos 382,Philos 382 (TBD Curate),3.0,American Philosophy,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,0db4f4bf-5cab-428e-a97d-cf089f7bb516,Law 340,Law 340 (TBD Curate),3.0,Business Law,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,4c7e85d6-97d4-460f-9ffe-f1450e10a5a3,Law 463,Law 463 (TBD Curate),3.0,Law of War,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,c4d9e6b0-5e46-44b4-b14d-fdd31e8f848c,Hum 461,Hum 461 (TBD Curate),3.0,Russian Literature,3.0,,,,,,,manual batch3 confirmed from COI docx
+UPDATE,21f86ae7-eb4e-48e7-a01d-3ad50627e177,Hum 463,Hum 463 (TBD Curate),3.0,Far Eastern Literature,3.0,,,,,,,manual batch3 confirmed from COI docx

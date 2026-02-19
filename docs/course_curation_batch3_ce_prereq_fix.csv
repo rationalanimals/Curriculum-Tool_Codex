@@ -1,0 +1,4 @@
+﻿action,course_number,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,CE 200,CE 100,,"Correct to prereq per COI"
+UPDATE,CE 300,CE 100,,"Correct to prereq per COI"
+UPDATE,CE 400,CE 100,,"Correct to prereq per COI"

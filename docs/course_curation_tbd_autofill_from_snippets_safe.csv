@@ -1,0 +1,81 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,fdc366fb-6712-49d8-a4f7-cae5e95bf86d,Philos 320,Philos 320 (TBD Curate),3.0,Ethics and Technology,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,c981669f-940a-4b6f-8263-e1cda83ddfdc,Cyber Sci 431,Cyber Sci 431 (TBD Curate),3.0,Cryptography,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,8ba691eb-50c0-4e1f-8d32-327786e7c7f8,Physics 242,Physics 242 (TBD Curate),3.0,Quantum,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,53d0b964-7c03-4f51-8b36-929e7c0f78f2,Physics 450,Physics 450 (TBD Curate),3.0,Nuclear Weapon Effects,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,a0514c74-48e9-4b2b-b632-6ac24888ddf4,Comp Sci 454,Comp Sci 454 (TBD Curate),3.0,Software Engineering Capstone Project II,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,0a12c171-fff5-4c24-a5e3-35014b59e123,Civ Engr 385,Civ Engr 385 (TBD Curate),3.0,Project Management and Contract Administration,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,709f4e8b-234c-431c-9069-3adaedcb72cd,Beh Sci 365,Beh Sci 365 (TBD Curate),3.0,Sociological Theory,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,4720bbd9-1401-4155-af3b-2d72695f0f05,Math 342,Math 342 (TBD Curate),3.0,Numerical Analysis,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,2991c043-1afb-4da8-ab5e-f8f119fbc8f9,Philos 370,Philos 370 (TBD Curate),3.0,Introduction to Symbolic Logic,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,9b30e13f-266d-4240-811f-b0bb739dd951,Mgt 478,Mgt 478 (TBD Curate),3.0,Supply Chain Management,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,6c2cd4c7-10e8-4c74-a1b6-fb444fd04b0d,Philos 311,Philos 311 (TBD Curate),3.0,"War, Morality, and the Military Profession",3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,3d47fb53-9e5a-4146-89b1-7a54f222ae40,Philos 330,Philos 330 (TBD Curate),3.0,Introduction to the Philosophy of Science,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,940284a1-fbf6-4600-a038-8aa90105bce1,Econ 450,Econ 450 (TBD Curate),3.0,International Economics,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,2c900499-0cbe-4479-b7f6-f36a4b9fc0fe,Law 419,Law 419 (TBD Curate),3.0,Space Law,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,59b1a53c-0ca1-45f7-b81a-8e3e81f1ca16,Philos 420,Philos 420 (TBD Curate),3.0,Religion Studies Capstone,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,0418b4f8-bb6e-4a48-b91b-4ba0fdd89c98,Philos 495,Philos 495 (TBD Curate),3.0,Special Topics for Philosophy majors,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,3c120f8a-6dd4-4490-9192-0d30f009995c,Physics 370,Physics 370 (TBD Curate),3.0,Upper Atmospheric and Geo-Space Physics,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,e918a904-96a4-43b2-9e3b-26eb06766b1a,Chem 440,Chem 440 (TBD Curate),3.0,Polymer Chemistry,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,52085587-33d1-4542-ba87-6a8459c78144,Econ 440,Econ 440 (TBD Curate),3.0,Development of Economic Thought,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,09dcd8dc-554b-4c02-946b-bda560bc2c64,Geo 366,Geo 366 (TBD Curate),3.0,Introduction to Urban Planning,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,1238faa2-4f25-42fe-9dc3-e381d15a499b,Physics 371,Physics 371 (TBD Curate),3.0,Astronomy,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,38e75b8f-984c-45d8-aa1d-88e094dc7998,Physics 356,Physics 356 (TBD Curate),3.0,Computational Physics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,350fd0a6-dad8-4c43-ad46-ef045e7d7c95,Physics 482,Physics 482 (TBD Curate),3.0,Laser Physics and Modern Optics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,5ca6199a-d068-4361-a43e-289d048ce382,Chem 491,Chem 491 (TBD Curate),3.0,Biochemistry Laboratory,4,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,aa3d4840-ad3c-463e-bbba-c884312f22ca,Econ 332,Econ 332 (TBD Curate),3.0,Intermediate Microeconomics I,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,d1ea7cef-a654-4caa-a959-dba97ddf797d,Econ 333,Econ 333 (TBD Curate),3.0,Intermediate Microeconomics II,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,96dc6674-968a-4d79-bca9-9841a94a8820,Econ 350,Econ 350 (TBD Curate),3.0,Intermediate Macroeconomics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,7039effb-053d-4945-b879-73549cd05fa4,Econ 361,Econ 361 (TBD Curate),3.0,Statistics and Research Methods for Economists,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,33e4a6d1-81eb-4daf-b5c0-09f158f060c2,Law 442,Law 442 (TBD Curate),3.0,Law and Emerging Technology,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,2e280026-55c2-4a2f-b94f-3ab3405a5a41,Biology 331,Biology 331 (TBD Curate),3.0,Botany,4,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,5046d0f3-d690-4b4a-8e7e-fbedc0be240e,Chem 482,Chem 482 (TBD Curate),3.0,Biochemistry II,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,a7bb4737-4498-486c-a809-fa2e821f6761,Law 321,Law 321 (TBD Curate),3.0,Legal Advocacy,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,03fb4e3a-a6fd-42e9-82ad-e092b4f5e5af,Law 485,Law 485 (TBD Curate),3.0,Legal Studies Capstone,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,907d07d8-c7c9-4d18-a2c8-3a94243b35b1,Mech Engr 441,Mech Engr 441 (TBD Curate),3.0,Heat Transfer,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,e7ac4ed1-827a-4154-95a3-bd6c540da963,Civ Engr 456,Civ Engr 456 (TBD Curate),3.0,Sustainability Capstone,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,ac688376-f9f5-48ac-81dd-7bcd4cb057c1,Interdis 350,Interdis 350 (TBD Curate),3.0,Adversary Doctrine,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,93fc8b44-6e75-45bc-9cf5-e337bdf19d11,Beh Sci 380,Beh Sci 380 (TBD Curate),3.0,Theories of Personality,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,918efbca-e556-40dc-9a7a-a3c42cd89a7a,Law 440,Law 440 (TBD Curate),3.0,Cyber Law,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,3e8c755d-f664-4c7c-8ab8-23ba90e4caee,Philos 393,Philos 393 (TBD Curate),3.0,Modern Western Philosophy,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,cf7ebf50-11f4-4c6c-b985-2e08089832d4,Chem 350,Chem 350 (TBD Curate),3.0,Chemistry of Weapons,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,36367704-45ed-4908-8b97-947ba295098e,Math 468,Math 468 (TBD Curate),3.0,Dynamical Systems,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,c1f9c56e-eb8b-4781-ba56-c3d6b0a801fb,Math 472,Math 472 (TBD Curate),3.0,Introduction to Number Theory,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,556e978b-de1e-4a00-8cdc-0d8c0fad9ad5,Philos 394,Philos 394 (TBD Curate),3.0,Contemporary Topics in Philosophy,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,ae203038-d410-4e5b-9ac9-5125689d4792,English 313,English 313 (TBD Curate),3.0,Seventeenth- and Eighteenth-Century Literature,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,1e21fed6-a1c1-472a-a863-9dd699a4f59b,English 345,English 345 (TBD Curate),3.0,Digital Humanities,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,4b668374-f565-480d-8902-4ffee6fa31ac,English 365,English 365 (TBD Curate),3.0,"Literature, Language, and Class",3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,076a38f5-19fb-404b-9de7-7c04a884196d,Philos 395,Philos 395 (TBD Curate),3.0,Philosophy of Law,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,5cdca445-4c73-4f25-8829-365efcc07992,Econ 351,Econ 351 (TBD Curate),3.0,Comparative Economic Systems,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,4643ca4f-12b1-4c5d-9c19-443e04992d13,Econ 367,Econ 367 (TBD Curate),3.0,Industrial Organization,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,e9b4205f-6fea-484d-b51f-02ea2638c170,Econ 476,Econ 476 (TBD Curate),3.0,The Economics of Sports,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,d860c9f3-db69-42c8-ae9c-4eaa9fc2fce1,Pol Sci 427,Pol Sci 427 (TBD Curate),3.0,The United States,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,042511fd-922f-483b-9d1a-822a875967eb,Econ 475,Econ 475 (TBD Curate),3.0,"Money, Banking and Financial Institutions",3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,c48e66f8-29c4-4593-9691-e92ebb910d80,Econ 481,Econ 481 (TBD Curate),3.0,Applied Economic Research Capstone I,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,8a71e8da-f446-4ffb-86f0-aeea8357ccf1,Econ 495,Econ 495 (TBD Curate),3.0,Special Topics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,753c3218-c42a-4933-b6b6-fd448c473576,Econ 499,Econ 499 (TBD Curate),3.0,Independent Study,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,f504ad9d-c350-4dd8-8848-90b835294480,Geo 498,Geo 498 (TBD Curate),3.0,Research in Geospatial Science,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,66f737b3-056e-42fc-9fc5-2d415d21bab6,Hum 430,Hum 430 (TBD Curate),3.0,The Holocaust,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,acdbc1dc-976a-4cd4-a755-b32c2d7a2f35,Econ 482,Econ 482 (TBD Curate),3.0,Applied Economic Research Capstone II,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,8b279606-dfd9-49ae-8646-7cf6583ec9e7,Law 331,Law 331 (TBD Curate),3.0,Criminal Law and Procedure,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,286f7239-c1b1-48eb-9c11-474f86340b14,Law 495,Law 495 (TBD Curate),3.0,Special Topics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,1cfc8c02-8220-4cb0-949e-7a19c91ba44a,Chem 222,Chem 222 (TBD Curate),3.0,Analytical Chemistry,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,996126e8-7264-4d1c-9071-6f19ff4c120d,Chem 381,Chem 381 (TBD Curate),3.0,Chemistry of the Environment,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,1b40369f-f093-4333-b146-fb4faf945d25,Chem 433,Chem 433 (TBD Curate),3.0,Advanced Organic Chemistry,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,76d82a37-4b6d-4851-ad0e-1a45d16357b1,Comp Sci 496,Comp Sci 496 (TBD Curate),3.0,Computer Science Seminar,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,4091d84f-13ff-455c-af1d-5a196ebfc733,Law 412,Law 412 (TBD Curate),3.0,Comparative Constitutional Law,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,90edc889-c4c2-4598-94cc-2078c6d8e18a,Law 466,Law 466 (TBD Curate),3.0,Advanced Law of War Topics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,e61b7748-917e-4d42-b423-9cb815e7e4be,Law 499,Law 499 (TBD Curate),3.0,Independent Study,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,94038c79-1c92-4ce7-81fa-c1acfb7d39cd,Mech Engr 490,Mech Engr 490 (TBD Curate),3.0,Automotive Systems Analysis for the Engineer,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,c85faf3a-7a1a-4b31-a2b3-f1c183394e54,Mech Engr 495,Mech Engr 495 (TBD Curate),3.0,Special Topics,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,1d8ab8b8-5df8-46ca-acfc-0e9121cd5752,Mgt 372,Mgt 372 (TBD Curate),3.0,Introduction to Investments,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,4fcb77ae-e0d0-4c91-b440-ad6d075ebb7a,Mgt 392,Mgt 392 (TBD Curate),3.0,Organizational Networks in Cyberspace,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,7775df85-e4aa-47b9-9782-7e135bb8ce33,Engr 443,Engr 443 (TBD Curate),3.0,Advanced Control Theory and Design,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,c586f391-00f3-4450-841e-cd0882620329,Aero Engr 206,Aero Engr 206 (TBD Curate),3.0,Fundamental Tools for Engineering,1,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,99c5b3b5-b7ac-48a8-828a-c5bb95f442fe,Ops Rsch 499,Ops Rsch 499 (TBD Curate),3.0,Independent Study,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,6526fcbf-848b-4565-aadb-90a29035d6f0,Aero Engr 210,Aero Engr 210 (TBD Curate),3.0,Fundamentals of Aeronautics for Engineering majors,3,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,4021276d-3990-456e-96c8-083683b447ba,Civ Engr 462,Civ Engr 462 (TBD Curate),3.0,Site Assessment & Remediation,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,32dab3a2ee7244c98467df8b27e70888,ENGR 341,Engr 341 (TBD Curate),3.0,Aeronautical Fluid Dynamics,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,926d07521cfe48d69f3effbbb7ca5a79,ECE 322,ECE 322 (TBD Curate),3.0,Electronics II,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,8efd383fae464b009ebb97d2302ed755,CHEM 381C,Chem 381C (TBD Curate),3.0,Chemistry of the Environment,3.0,,,,,,,autofill_tbd_from_manual_queue_snippets
+UPDATE,9282db6077214c139da96c4aea1ad9d4,HUM 200S,Hum 200S (TBD Curate),3.0,Introduction to the Humanities,3,,,,,,,autofill_tbd_from_manual_queue_snippets

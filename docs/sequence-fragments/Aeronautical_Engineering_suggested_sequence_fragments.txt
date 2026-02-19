@@ -1,0 +1,49 @@
+Major heading: AERONAUTICAL ENGINEERING
+Doc child window: 1796..1826
+
+01796 PAR: SUGGESTED COURSE SEQUENCE
+01798 PAR: Aeronautical Engineering Major
+01799 PAR: 4o hrs per 3o hrs per 2o hrs per 1o hrs per
+01800 TBL:
+      For Lang 1 || Beh Sci 110 || History 100 || Math 141
+      
+      Comp Sci 110
+01801 TBL:
+      Math 243
+      Aero Engr 210/S || Econ 201 || Mech Engr 220
+      Physics 215
+      Philos 210
+01802 TBL:
+      Pol Sci 211
+      ECE 315
+01803 TBL:
+      Soc Sci 311
+01804 PAR: 1 2 20.5 10 1 2 20.5 10 3 2 3 1 Aero Engr 341 3 1 Aero Engr 442 3 1
+01805 PAR: 3 1 3 1 Aero Engr 351 3 1 Aero Engr 471 3 2
+01806 PAR: Fall 3 1 3.5 2 Mech Engr 350 3 1 Aero Engr 480/1 3 2
+01807 PAR: 1 3 1 Engr 346 3 1 Aero Engr 436 3 1
+01808 PAR: 2 3 1 3 1
+01809 PAR: 3 1 3 1 3 1 Phy Ed 0.5 2
+01810 PAR: Phy Ed 0.5 2 Phy Ed Phy Ed 1 2
+01811 PAR: 15.5 8
+01812 TBL:
+       | 19 | 8 |  | 15.5 | 9
+      Aero Engr 342 | 3 | 2 | Aero Design Elective | 3 | 2
+01813 TBL:
+      History 300
+      Adv SocioCultural Optio
+      Astr Engr 310 || Ldrshp 400
+01814 TBL:
+      English 211
+      Math 356 || Law 220
+      Ldrshp 300
+01815 PAR: For Lang 2 3 2 Aero Engr 241 Chem 100 4 2 Mech Engr 330 English 111 3 1 Aero Engr 206 Math 142 3 1 Math 245 Physics 110  42 Chem 200 Ldrshp 100 0.75 0 MSS 251 Phy Ed 0.5 2 Ldrshp 200 18.25 0.5 2 19.75 10 For Lang 2 3 2 Aero Engr 241 Chem 100 4 2 Mech Engr 330 English 111 3 1 Aero Engr 206 Math 142 3 1 Math 245 Physics 110  42 Chem 200 Ldrshp 100 0.75 0 MSS 251 Phy Ed 0.5 2 Ldrshp 200 18.25 0.5 2 19.75 10 3 1 Aero Engr 352 3 1 Aero Engr Elective 3 1
+01816 PAR: 3 1 Aero Engr 361 3 1 3 1
+01817 PAR: Spring 1 1 3 1 3 1
+01818 PAR: 1 3 1 3 1
+01819 PAR: 2 3 1 0.75 0
+01820 PAR: 4.5 2 0.75 0 Phy Ed 0.5 2
+01821 PAR: 0.75 0 Phy Ed 0.5 2 16.5 8
+01822 PAR: 10 Phy Ed 19.25 9
+01823 TBL:
+       |

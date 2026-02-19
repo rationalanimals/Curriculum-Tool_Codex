@@ -1,4 +1,4 @@
-action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
 ,09b2fe0a-f040-4350-906a-70eb9d2c641c,GENR 105,Behavioral Sciences Option Placeholder,3.0,,,,,
 ,9c7a8d1b-dbc0-4c33-8207-7586778b50c0,GENR 107,Chemistry Option Placeholder,3.0,,,,,
 ,8f1c49ae-1736-4185-8f9a-c25faf65f9b4,GENR 112,Economics Option Placeholder,3.0,,,,,

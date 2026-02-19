@@ -1,0 +1,7 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,912eefae-a32d-4f5b-a8bf-f0c8bcb46537,Chem 100,General Chemistry I Lecture and Lab,3.0,,4.0,,,,,,,Starter deep-dive credit correction batch
+UPDATE,f75ed274-a2f8-4d2a-890e-d9223171d027,Physics 110,General Physics I with Laboratory,3.0,,4.0,,,,,,,Starter deep-dive credit correction batch
+UPDATE,25ae0715-710d-425b-8315-f1e4697206c5,Ldrshp 100,Interpersonal Foundations,3.0,,0.75,,,,,,,Starter deep-dive credit correction batch
+UPDATE,8d6281bf-de0a-4e86-a854-4737b5d4bd48,Ldrshp 200,Foundations for Interpersonal Leadership,3.0,,0.75,,,,,,,Starter deep-dive credit correction batch
+UPDATE,13244e39-8a28-4df3-857f-dca53ea5c440,Ldrshp 300,Foundations for Team Leadership,3.0,,0.75,,,,,,,Starter deep-dive credit correction batch
+UPDATE,07a26750-eae9-41d7-907f-39304f1f107a,Ldrshp 400,Leadership Capstone,3.0,,0.75,,,,,,,Starter deep-dive credit correction batch

@@ -1,0 +1,3 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,b65c679e-00cd-40ee-9438-433e984b00c5,Interdis 331,Interdis 331 (TBD Curate),3.0,Strategic Competition,3.0,,,,,,,autofill_tbd_from_coi
+UPDATE,982d70e3-ffde-4ee3-af2d-55fec1f9207c,Mech Engr 205,Mech Engr 205 (TBD Curate),3.0,Engineering Tools Seminar,1.0,,,,,,,autofill_tbd_from_coi

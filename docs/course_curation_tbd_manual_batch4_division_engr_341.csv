@@ -1,0 +1,2 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,851fc60b-e2ac-4709-a7c9-60c9abe478db,Division Engr 341,Division Engr 341 (TBD Curate),3.0,Division Engineering 341 (Program Placeholder),3.0,,,,COI shorthand placeholder; map to the department-approved 341-level engineering course for the selected pathway.,,,manual batch4 placeholder normalization

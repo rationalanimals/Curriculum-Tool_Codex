@@ -1,0 +1,7 @@
+action,course_id,course_number,current_title,current_credit_hours,new_title,new_credit_hours,new_designated_semester,new_offered_periods_json,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,ffa11a61-e980-4723-a38d-070b364307ff,Astr Engr 351,Astr Engr 351 (TBD Curate),3.0,Rocket Propulsion,3.0,,,,,,,manual batch2 high confidence from COI snippets
+UPDATE,23e92dc6-3e3b-457d-9d7e-4f2881168a74,Econ 454,Econ 454 (TBD Curate),3.0,Economics of Development and Conflict,3.0,,,,,,,manual batch2 high confidence from COI snippets
+UPDATE,c2287b5d-531d-4b88-bf28-d6eba16b3d36,Econ 377,Econ 377 (TBD Curate),3.0,Financial Markets,3.0,,,,,,,manual batch2 high confidence from COI snippets
+UPDATE,b5a6c711-bdf8-4965-9c9f-46cef0ea854c,Econ 447,Econ 447 (TBD Curate),3.0,Quantitative Economic Methods,3.0,,,,,,,manual batch2 high confidence from COI snippets
+UPDATE,6703d78382e047c588dd549f2874825e,ECON 477,Econ 477 (TBD Curate),3.0,Economics of Inequality,3.0,,,,,,,manual batch2 high confidence from COI snippets
+UPDATE,ddee80184def47579c52d3d3fdf6003c,FOR LANG 365,For Lang 365 (TBD Curate),3.0,Civilization and Culture,3.0,,,,,,,manual batch2 high confidence from COI snippets

@@ -1,0 +1,10 @@
+﻿action,course_number,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,Aero Engr 456,Department approval also required.,Aero Engr 351,,"COI Prereq Aero Engr 351 and department approval"
+UPDATE,Aero Engr 457,,Aero Engr 352,,"COI Prereq Aero Engr 352"
+UPDATE,Biology 440,,Biology 215,,"COI Prereq Biology 215"
+UPDATE,Chem 233,Concurrent enrollment in Chem 200 allowed with DFCH Department Head approval.,Chem 200,,"COI Prereq Chem 200 with conditional approval nuance"
+UPDATE,Chem 325,,Chem 200,,"COI Prereq Chem 200"
+UPDATE,Comp Sci 220,Requires C or better in Comp Sci 210.,Comp Sci 210,,"COI Prereq C or better in Comp Sci 210"
+UPDATE,Civ Engr 372,Department approval may substitute for listed prerequisite.,Civ Engr 330,,"COI Prereq C- or better in Civ Engr 330 or department approval"
+UPDATE,Civ Engr 452,Department approval may substitute for listed prerequisite.,Civ Engr 451,,"COI Prereq Civ Engr 451 or department approval"
+UPDATE,ECE 311,,ECE 245,,"COI Prereq ECE 245"

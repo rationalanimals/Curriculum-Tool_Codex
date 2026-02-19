@@ -1,0 +1,15 @@
+{
+  "majors": {
+    "Aeronautical Engineering": {
+      "S1": 15.5,
+      "S2": 18.25,
+      "S3": 20.5,
+      "S4": 19.75,
+      "S5": 19.0,
+      "S6": 19.25,
+      "S7": 15.5,
+      "S8": 16.5
+    }
+  },
+  "notes": "Populate all S1-S8 totals per major from COI before applying imports. These totals are used as QC gates in tools/import_suggested_sequence_one_by_one.py."
+}

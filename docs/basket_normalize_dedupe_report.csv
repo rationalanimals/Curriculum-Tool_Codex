@@ -1,0 +1,76 @@
+stage,basket_id,basket_name,action,details
+normalize,32543575-39fc-42b3-b83c-11dd213e3911,Social Sciences Major - Academy Option Pool,sync_to_canonical_academy_open,added=7 removed=2 final=862
+normalize,3895b5ae-8a14-444c-8000-d52d9021ffaf,Biology Major - Track - Academy Options: Pick N Options,sync_to_canonical_academy_open,added=7 removed=2 final=862
+normalize,596d452a-9d2e-4246-9b9a-ccd834cce4b4,Geospatial Science Major - Academy Options Pool,sync_to_canonical_academy_open,added=7 removed=2 final=862
+normalize,9fab78af-e08e-470a-b900-c1d336c877b7,Behavioral Sciences - Academy Options,sync_to_canonical_academy_open,added=7 removed=2 final=862
+normalize,c9e150d9-dcfa-4757-a82e-7278e4081c22,Economics Major - Academy Option Pool,sync_to_canonical_academy_open,added=0 removed=4 final=862
+normalize,c9f4c4f0-b3d8-404b-81e1-789f86610016,English Major - Academy Options Pool,sync_to_canonical_academy_open,added=7 removed=2 final=862
+normalize,d8fafbcb-e7c1-42d5-8c46-0715efa638c6,Philosophy Major - Open Academic Option Pool,sync_to_canonical_academy_open,added=0 removed=4 final=862
+normalize,f8afe0fb-3e98-4250-84d0-7d9dbc717805,Legal Studies Major - Academy Option Pool,sync_to_canonical_academy_open,added=0 removed=4 final=862
+dedupe,f546074a-ec53-4aea-9cdb-115f50f30fd4,Behavioral Sciences - Track - Cognition and Neuroscience Courses: Pick N Options (Psych),skipped,semantic_mismatch
+dedupe,1dd69a29-ee2d-4c4e-99c9-463a9d11dc22,Behavioral Sciences - Track - Cognition and Neuroscience Courses: Pick N Options (Soc),skipped,semantic_mismatch
+dedupe,333af6ad-afc8-4b58-a908-e124fdf74228,Behavioral Sciences - Track - Additional Cognition and Neuroscience Courses: Pick N Options (HF),skipped,semantic_mismatch
+dedupe,b080bcaf-67d1-4a43-ae64-fa092ac38db9,Behavioral Sciences - Track - Applied Psychology Courses: Pick N Options (Psych),merged_into_canonical,canonical=Behavioral Sciences - Track - Applied Psychology Courses: Pick N Options (Soc) moved_links=1 reason=same_requirement_name
+dedupe,f5604d45-eb0e-4d00-80e4-53151395ae13,Behavioral Sciences - Track - Applied Psychology Courses: Pick N Options (Soc),canonical_kept,same_requirement_name
+dedupe,81509a8e-9e6d-4fc4-aba7-b236888f944c,Behavioral Sciences - Track - Sociology Courses: Pick N Options (Psych),skipped,semantic_mismatch
+dedupe,0cd5e201-b064-418b-838a-54a43679cd50,Behavioral Sciences - Track - Additional Sociology Courses: Pick N Options (Soc),skipped,semantic_mismatch
+dedupe,9510926f-fb73-4d57-8241-891f0eebf2ad,Behavioral Sciences - Track - Sociology Courses: Pick N Options (HF),skipped,semantic_mismatch
+dedupe,79501776-0897-448e-9ebf-1de99cfc069a,Behavioral Sciences - Track - Behavioral Sciences Electives: Pick N Options (Psych),merged_into_canonical,canonical=Behavioral Sciences - Track - Behavioral Sciences Electives: Pick N Options (HF) moved_links=1 reason=same_requirement_name
+dedupe,f751ca04-9609-4ead-a536-ed0f5948b596,Behavioral Sciences - Track - Behavioral Sciences Electives: Pick N Options (Soc),merged_into_canonical,canonical=Behavioral Sciences - Track - Behavioral Sciences Electives: Pick N Options (HF) moved_links=1 reason=same_requirement_name
+dedupe,eb016363-062f-4b58-b43a-9bdf41c296f2,Behavioral Sciences - Track - Behavioral Sciences Electives: Pick N Options (HF),canonical_kept,same_requirement_name
+dedupe,9fab78af-e08e-470a-b900-c1d336c877b7,Behavioral Sciences - Academy Options,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,3895b5ae-8a14-444c-8000-d52d9021ffaf,Biology Major - Track - Academy Options: Pick N Options,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,c9f4c4f0-b3d8-404b-81e1-789f86610016,English Major - Academy Options Pool,canonical_kept,academy_open_family
+dedupe,596d452a-9d2e-4246-9b9a-ccd834cce4b4,Geospatial Science Major - Academy Options Pool,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,32543575-39fc-42b3-b83c-11dd213e3911,Social Sciences Major - Academy Option Pool,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,c9e150d9-dcfa-4757-a82e-7278e4081c22,Economics Major - Academy Option Pool,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,f8afe0fb-3e98-4250-84d0-7d9dbc717805,Legal Studies Major - Academy Option Pool,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,d8fafbcb-e7c1-42d5-8c46-0715efa638c6,Philosophy Major - Open Academic Option Pool,merged_into_canonical,canonical=English Major - Academy Options Pool moved_links=1 reason=academy_open_family
+dedupe,85b91dc9-ba41-4d72-b1bd-261a7868cee9,Biology Major - Track - Biology Option 2: Any One Options,skipped,semantic_mismatch
+dedupe,127ebee4-6466-4371-ae65-8d06839c5b5a,Biology Major - Track - Biology Option 3: Any One Options,skipped,semantic_mismatch
+dedupe,f74984f6-c53d-4b0d-b28f-cbd385accd33,Basic Sciences - Biology Non-Core Options,skipped,semantic_mismatch
+dedupe,b677c712-d207-417d-85f4-0acaec91bd8f,Basic Sciences - Track - Coherent Study Biology (12h): Pick N Pool,skipped,semantic_mismatch
+dedupe,2a6dcbfe-fb8c-4ab6-b0f1-7850236a1f7c,Basic Sciences - Chemistry Non-Core Options,skipped,semantic_mismatch
+dedupe,02c0c88d-f648-4f32-82de-6d7e7d1ae683,Basic Sciences - Track - Coherent Study Chemistry (12h): Pick N Pool,skipped,semantic_mismatch
+dedupe,0b3bf332-f8cb-4d6c-a768-4d29f4c5c80d,Basic Sciences - Mathematics Non-Core Options,skipped,semantic_mismatch
+dedupe,0804a702-26ff-44ad-bf56-53422c9ea4b3,Basic Sciences - Track - Coherent Study Mathematics (12h): Pick N Pool,skipped,semantic_mismatch
+dedupe,4e349054-a72a-4057-a51a-e5a111ca4916,Basic Sciences - Physics Non-Core Options,skipped,semantic_mismatch
+dedupe,12293954-099e-4f01-b202-43206982f4a9,Basic Sciences - Track - Coherent Study Physics (12h): Pick N Pool,skipped,semantic_mismatch
+dedupe,7d0db8ec-c42a-4d30-8c0f-da0ade311176,Cyber Science Major - Track - Math Foundation Option: Any One Options,canonical_kept,same_requirement_name
+dedupe,a5a45e40-3cd0-46aa-b387-88de3ba7803a,Computer Science Major - Track - Math Foundation Option: Any One Options,merged_into_canonical,canonical=Cyber Science Major - Track - Math Foundation Option: Any One Options moved_links=1 reason=same_requirement_name
+dedupe,aca44120-89bd-4f08-b900-acc71074ea37,Humanities Major - Distribution Philosophy Pool,skipped,semantic_mismatch
+dedupe,588d4fac-944d-40b0-9925-0b56bb21db7d,Philosophy Minor - Philosophy Options,skipped,semantic_mismatch
+dedupe,441f1f61-5ede-4e6b-a08d-427573b8bd69,Mathematics Major - Programming Requirement Pool,canonical_kept,same_requirement_name
+dedupe,e6a37ab8-c7b4-493f-b0c7-37b676e52f6f,Applied Mathematics Major - Programming Requirement Pool,merged_into_canonical,canonical=Mathematics Major - Programming Requirement Pool moved_links=1 reason=same_requirement_name
+dedupe,4d4a3352-94a2-47b9-9f00-81599074a018,Mathematics Major - Open Electives Pool,skipped,semantic_mismatch
+dedupe,65d13250-6d90-4466-9248-538eecd6311b,Applied Mathematics Major - Interdisciplinary Concentration Pool,skipped,semantic_mismatch
+dedupe,7e9709bf-3003-427d-bd46-ccae1b5fa9c3,Political Science Major - DF Option Pool,skipped,semantic_mismatch
+dedupe,eaa329bd-5088-4ed8-b839-77f399454bcd,MSS Major - 1 Pool,skipped,semantic_mismatch
+dedupe,09c9d819-211b-43c8-aa28-d1cd879f8d98,Track - Political Science Track: All Required - Additional Regional Requirement B Pool,skipped,semantic_mismatch
+dedupe,3d1fddae-0742-454a-9cd0-09e74c134fff,Track - History Track: All Required - Additional Regional Requirement B Pool,skipped,semantic_mismatch
+dedupe,99ea902f-2577-47b1-996c-ba86f7004783,Track - MSS Track: All Required - Regional Course Pool,skipped,semantic_mismatch
+dedupe,e2e3075c-9340-4c0f-8e24-d62d09a4b567,MSS Major - Breadth Electives Pool,skipped,semantic_mismatch
+dedupe,19516759-5b35-43b0-8a25-01d9c5cd291f,Social Sciences Major - Breadth MSS Pool,skipped,semantic_mismatch
+dedupe,fed673fb-9230-412a-9119-03c8e903ba70,Social Sciences Major - Breadth Pool,skipped,semantic_mismatch
+dedupe,af52b2df-6ed1-4c74-a724-9546bde18624,Social Sciences Major - Depth Pool,skipped,semantic_mismatch
+dedupe,3fb0e9c1-bdd0-4d63-99b3-22c68f7092b3,Social Sciences Major - Breadth PSC Pool,skipped,semantic_mismatch
+dedupe,79a19629-1611-4877-9c5c-3412475cf3e6,Political Science Major - Options 1-2 Pool,skipped,semantic_mismatch
+dedupe,bd5a0664-fe86-4aa1-8a2f-b8ec9b5accf7,FAS Major - Language Sequence Pool,skipped,semantic_mismatch
+dedupe,4e2decbe-01e5-4902-b2e7-2e8a2d7cee32,Foreign Language - Language Course Pool,skipped,semantic_mismatch
+dedupe,dfa92cb1-9252-4b45-90e7-2779171715f1,Track - Political Science Track: All Required - Regional Course Pool,skipped,semantic_mismatch
+dedupe,3aba87eb-59df-4713-8753-7cceafbc5feb,Track - History Track: All Required - Additional Regional Requirement A Pool,skipped,semantic_mismatch
+dedupe,3a275f8e-97c8-45d2-8f87-1552616d82d8,Track - MSS Track: All Required - Additional Regional Requirement B Pool,skipped,semantic_mismatch
+dedupe,8fc57c05-773e-4217-9437-085a84664b59,Track - Political Science Track: All Required - Additional Regional Requirement A Pool,skipped,semantic_mismatch
+dedupe,6ab35112-2e0c-40c1-8a1d-c2cd7c3d0606,Track - History Track: All Required - Regional Course Pool,skipped,semantic_mismatch
+dedupe,16c5fd3d-ccb4-4c65-be48-ab36667712ed,Track - MSS Track: All Required - Additional Regional Requirement A Pool,skipped,semantic_mismatch
+dedupe,43c277a3-0eba-4b08-a5db-b59dbd03729e,Track - Political Science Track: All Required - Foreign Policy Requirement Pool,merged_into_canonical,canonical=Track - MSS Track: All Required - Foreign Policy Requirement Pool moved_links=1 reason=same_requirement_name
+dedupe,84f04142-7477-48dd-b4bc-773cbdfe90c3,Track - History Track: All Required - Foreign Policy Requirement Pool,merged_into_canonical,canonical=Track - MSS Track: All Required - Foreign Policy Requirement Pool moved_links=1 reason=same_requirement_name
+dedupe,0333e872-f9d9-4c12-80a6-23e210e516f2,Track - MSS Track: All Required - Foreign Policy Requirement Pool,canonical_kept,same_requirement_name
+dedupe,966d303a-1915-4392-8030-06ea628ce6fe,Track - History Track: All Required - Economics Requirement Pool,merged_into_canonical,canonical=Track - MSS Track: All Required - Economics Requirement Pool moved_links=1 reason=same_requirement_name
+dedupe,fd4b4bb7-c582-4f05-a7c1-1a4d9b8f766a,Track - MSS Track: All Required - Economics Requirement Pool,canonical_kept,same_requirement_name
+dedupe,d06835ec-8b12-4d73-8a2b-765554b31a10,Philosophy Minor - History,skipped,semantic_mismatch
+dedupe,c5e47094-23c9-4752-b94d-c9cb9984aff8,Philosophy Major - Block 0 Pool,skipped,semantic_mismatch
+dedupe,6c8063e0-b45c-4b62-8b47-8311db050800,Philosophy Minor - Final Option,skipped,semantic_mismatch
+dedupe,351a3581-e50f-4b08-b4fb-cb75d166f1d7,Philosophy Major - Options Pool,skipped,semantic_mismatch
+dedupe,2a16aa93-8d41-4ea9-bf33-1e8727593b12,Mechanical Engineering Major - Option I-II Pool,skipped,semantic_mismatch
+dedupe,74e32b83-9d98-48c3-ac34-cb505400e060,Mechanical Engineering Major - Mech Engr Option III Pool,skipped,semantic_mismatch

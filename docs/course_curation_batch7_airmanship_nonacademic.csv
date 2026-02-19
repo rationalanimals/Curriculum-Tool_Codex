@@ -1,0 +1,7 @@
+﻿action,course_number,new_title,new_credit_hours,new_standing_requirement,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,Armnshp 401,Private Pilot Certificate (PPC) Training - The Academy,0,,No academic credit; prereq includes not on probation and FAA Class III medical certificate.,,"COI: Sem hrs 0 fall or spring"
+UPDATE,Armnshp 490,Basic Parachuting,0,,No academic credit; USAF Flight Medicine medical exam required.,,"COI: Sem hrs 0 fall/spring/summer"
+UPDATE,Armnshp 491,Advanced Parachute/Jumpmaster/Instructor Training,3,,Variable credit by term (0 fall or 3 spring); Armnshp 490 highly desired but waiverable.,,"COI variable credit/prereq nuance"
+UPDATE,Armnshp 496,Parachute Team,0,,No academic credit; USAF Flight Medicine medical exam required.,Armnshp 491,,"COI: Sem hrs 0 fall/spring/summer"
+UPDATE,Aviation 300,Powered Flight Training Ground School,0,,No academic credit; prereq includes Aviation 100 and (Armnshp 251 or Armnshp 201).,Aviation 100,,"Replace over-strict prereqs with model-safe baseline + note"
+UPDATE,Aviation 400,Introduction to T-6 Operations,0,,No academic credit; prereq is Aviation 100 and Armnshp 201 or Course Director approval.,,"COI title + prereq nuance in note"

@@ -1,0 +1,5 @@
+﻿action,course_number,new_additional_requirements_text,prereq_numbers_semicolon,coreq_numbers_semicolon,notes
+UPDATE,ECE 215,,,"Comp Sci 110;Math 142","COI: Coreq Comp Sci 110 and Math 142"
+UPDATE,ECE 448,,ECE 447,ECE 447,"COI: Prereq/Coreq ECE 447"
+UPDATE,ECE 487,Department approval may substitute for listed prerequisites.,,,"COI: Prereq ECE 346 and Math 356/377 or department approval"
+UPDATE,Math 253,Offered fall only. Placement into Math 253 for fourth-class cadets via math placement exam.,,,"COI: Math 253 offered fall only; placement note"

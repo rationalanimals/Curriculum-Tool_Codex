@@ -8,6 +8,7 @@ import {
 } from "./coreRulesUtils";
 import { buildCoreRuleRequirementMeta, buildInitialCoreRuleRows } from "./coreRulesBuilderUtils";
 import { buildCoreRuleGroupsFromRows, getCoreRuleSelectedIds } from "./coreRulesSaveUtils";
+import { buildBasketDisplayGroups } from "./requirementTreeUtils";
 import {
   buildSubstituteGroupsFromRows,
   computeBasketValidationErrors,
@@ -3425,73 +3426,25 @@ export function DesignStudioPage() {
           </div>
         ),
         children: (() => {
-          const courses = [...(b.courses || [])];
-          if (!courses.length) return [];
-          const byCourseId = {};
-          courses.forEach((bc) => {
-            byCourseId[bc.course_id] = bc;
-          });
-          const setIds = new Set(courses.map((bc) => bc.course_id).filter(Boolean));
-          const adj = {};
           const basketSubRows = (b.substitutions || []).filter(
-            (s) => setIds.has(s.primary_course_id) && setIds.has(s.substitute_course_id)
+            (s) => s?.primary_course_id && s?.substitute_course_id
           );
           const fallbackReqSubRows = (requirementSubstitutionsVersionQ.data || []).filter(
-            (s) => s.requirement_id === n.id && setIds.has(s.primary_course_id) && setIds.has(s.substitute_course_id)
+            (s) => s.requirement_id === n.id
           );
-          const subRows = basketSubRows.length ? basketSubRows : fallbackReqSubRows;
-          for (const s of subRows) {
-            if (!adj[s.primary_course_id]) adj[s.primary_course_id] = new Set();
-            if (!adj[s.substitute_course_id]) adj[s.substitute_course_id] = new Set();
-            adj[s.primary_course_id].add(s.substitute_course_id);
-            adj[s.substitute_course_id].add(s.primary_course_id);
-          }
-          const seen = new Set();
-          const groups = [];
-          for (const bc of courses) {
-            const cid = bc.course_id;
-            if (!cid || seen.has(cid)) continue;
-            if (!adj[cid] || !adj[cid].size) {
-              seen.add(cid);
-              groups.push([cid]);
-              continue;
-            }
-            const q = [cid];
-            const comp = [];
-            seen.add(cid);
-            while (q.length) {
-              const cur = q.shift();
-              comp.push(cur);
-              for (const nxt of Array.from(adj[cur] || [])) {
-                if (seen.has(nxt)) continue;
-                seen.add(nxt);
-                q.push(nxt);
-              }
-            }
-            groups.push(comp);
-          }
-          const displayRows = groups.map((groupIds, groupIdx) => {
-              const orderedIds = [...groupIds].sort((a, b2) =>
-                String(courseMapById[a]?.course_number || courseMapById[a]?.title || a)
-                  .localeCompare(String(courseMapById[b2]?.course_number || courseMapById[b2]?.title || b2), undefined, { sensitivity: "base" })
-              );
-              const titleParts = orderedIds.map((cid) => {
-                const item = byCourseId[cid];
-                return item?.course_number || item?.course_title || courseMapById[cid]?.course_number || courseMapById[cid]?.title || "Missing course";
-              });
-              const firstItem = byCourseId[orderedIds[0]];
-              return {
-                key: `basket-course:${b.id}:${firstItem?.id || groupIdx}`,
-                sortLabel: titleParts.join(" / "),
-                title: renderCourseCodeSeries(titleParts),
-                isLeaf: true,
-                selectable: false,
-                disableCheckbox: true,
-              };
-            });
-          return displayRows
-            .sort((a, b2) => String(a.sortLabel || "").localeCompare(String(b2.sortLabel || ""), undefined, { sensitivity: "base" }))
-            .map(({ sortLabel, ...row }) => row);
+          return buildBasketDisplayGroups({
+            basketId: b.id,
+            courses: b.courses || [],
+            basketSubRows,
+            fallbackReqSubRows,
+            courseMapById,
+          }).map((row) => ({
+            key: row.key,
+            title: renderCourseCodeSeries(row.titleParts || []),
+            isLeaf: true,
+            selectable: false,
+            disableCheckbox: true,
+          }));
         })(),
         disableCheckbox: true,
         selectable: false,

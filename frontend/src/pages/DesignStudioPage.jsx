@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AutoComplete, Button, Card, Input, InputNumber, List, Modal, Select, Space, Switch, Table, Tabs, Tag, Tooltip, Tree, Typography } from "antd";
 import { formatRequirementName, normalizeStatusToken, withDot } from "./designStudioUtils";
+import {
+  isFullChoiceGroupSelection,
+  normalizeCoreRuleCourseNumbers,
+} from "./coreRulesUtils";
 
 const API = "http://127.0.0.1:8000";
 const DEFAULT_PERIOD_ROWS = [
@@ -2458,7 +2462,7 @@ export function DesignStudioPage() {
           || selected[0];
         const selectedChoice = candidateOptions.find((o) => o.value === representative);
         const groupIds = new Set((selectedChoice?.group_course_ids || []));
-        const fullGroupSelected = isFullChoiceGroupSelection(reqId, selected);
+        const fullGroupSelected = isFullChoiceGroupSelection(reqId, selected, coreRuleChoiceOptionsByReq);
         const sanitizedSubs = groupIds.size > 1
           ? selected.filter((id) => id && groupIds.has(id))
           : [];
@@ -3736,7 +3740,7 @@ export function DesignStudioPage() {
                     const slotLabel = showChoice ? ` - Choice ${Number(g.slot_index) + 1}` : "";
                     return `${withDot(`${n.node_code || "R1"}.C1.R${idx + 1}`)} ${srcName}${slotLabel}: `;
                   })()}
-                  {renderCourseCodeSeries(normalizeCoreRuleCourseNumbers(g.course_numbers || []))}
+                  {renderCourseCodeSeries(normalizeCoreRuleCourseNumbers(g.course_numbers || [], coreRuleHelperDeps))}
                 </span>
                 {formatSemesterConstraint(g) ? <Tag>{formatSemesterConstraint(g)}</Tag> : null}
               </Space>
@@ -4440,59 +4444,15 @@ export function DesignStudioPage() {
       </Space>
     );
   }
-  function resolveCourseIdFromToken(token) {
-    const raw = String(token || "").trim();
-    if (!raw) return undefined;
-    if (courseMapById[raw]) return raw;
-    const byExact = courseIdByNumber[raw];
-    if (byExact) return byExact;
-    const byNorm = courseIdByNormalizedNumber[normalizeCourseNumber(raw)];
-    if (byNorm) return byNorm;
-    return undefined;
-  }
-  function normalizeCoreRuleCourseNumbers(tokens) {
-    return (tokens || [])
-      .map((t) => String(t || "").trim())
-      .filter(Boolean)
-      .map((t) => {
-        const cid = resolveCourseIdFromToken(t);
-        return cid ? (courseMapById[cid]?.course_number || t) : t;
-      });
-  }
-  function inferCoreRequirementIdFromCourseIds(courseIds) {
-    const ids = Array.from(new Set((courseIds || []).filter(Boolean)));
-    if (!ids.length) return null;
-    let bestReq = null;
-    let bestScore = -1;
-    for (const [reqId, opts] of Object.entries(coreRuleChoiceOptionsByReq || {})) {
-      const allowed = new Set((opts || []).flatMap((o) => o.group_course_ids || []));
-      const score = ids.filter((id) => allowed.has(id)).length;
-      if (score > bestScore) {
-        bestScore = score;
-        bestReq = reqId;
-      }
-    }
-    return bestScore > 0 ? bestReq : null;
-  }
-  function isFullChoiceGroupSelection(reqId, selectedIds) {
-    if (!reqId) return false;
-    const sel = new Set((selectedIds || []).filter(Boolean));
-    if (sel.size <= 1) return false;
-    for (const o of coreRuleChoiceOptionsByReq[reqId] || []) {
-      const grp = new Set((o.group_course_ids || []).filter(Boolean));
-      if (grp.size > 1 && grp.size === sel.size) {
-        let same = true;
-        for (const id of grp) {
-          if (!sel.has(id)) {
-            same = false;
-            break;
-          }
-        }
-        if (same) return true;
-      }
-    }
-    return false;
-  }
+  const coreRuleHelperDeps = useMemo(
+    () => ({
+      courseMapById,
+      courseIdByNumber,
+      courseIdByNormalizedNumber,
+      normalizeCourseNumber,
+    }),
+    [courseMapById, courseIdByNumber, courseIdByNormalizedNumber]
+  );
   function requirementOptionTotal(node) {
     if (!node) return 0;
     const mappedRows = (requirementFulfillmentVersionQ.data || []).filter((m) => m.requirement_id === node.id);
